@@ -628,26 +628,52 @@ function patchWindowsSpawn(gatewayDir, platform) {
     (s) => /finalArgv\.slice\(1\)[\s\S]{0,200}windowsHide: true/.test(s)
   );
 
-  // 补丁 2：gateway-cli respawn — 在 env: process.env 前插入 windowsHide: true
+  // 补丁 2：gateway-cli / tui-launch 等 respawn — 兼容多种 spawn 写法
   const cliR = applySpawnPatch(
     distDir,
     cliFiles,
     (s) =>
-      s.replace(
-        /(spawn\(process\.execPath, args, \{)(\r?\n)(\s*)env: process\.env,/,
-        (_, a, nl, indent) => `${a}${nl}${indent}windowsHide: true,${nl}${indent}env: process.env,`
-      ),
-    (s) => /spawn\(process\.execPath, args[\s\S]{0,200}windowsHide: true/.test(s)
+      s
+        .replace(
+          /(spawn\(process\.execPath, args, \{)(\r?\n)(\s*)env: process\.env,/,
+          (_, a, nl, indent) => `${a}${nl}${indent}windowsHide: true,${nl}${indent}env: process.env,`
+        )
+        .replace(
+          /(spawn\(process\.execPath, args, \{)(\r?\n)(\s*)stdio: "inherit",(\r?\n)(\s*)env/,
+          (_, a, nl, indent, nl2, indent2) =>
+            `${a}${nl}${indent}windowsHide: true,${nl}${indent}stdio: "inherit",${nl2}${indent2}env`
+        ),
+    (s) =>
+      /spawn\(process\.execPath, args[\s\S]{0,240}windowsHide:\s*true/.test(s) ||
+      /windowsHide:\s*true[\s\S]{0,80}spawn\(process\.execPath, args/.test(s)
   );
 
+  // 补丁 3：tui-launch 等其它 execPath 启动点
+  const tuiFiles = entries.filter((f) => /^tui-launch-.*\.js$/.test(f));
+  const tuiR = applySpawnPatch(
+    distDir,
+    tuiFiles,
+    (s) =>
+      s.replace(
+        /(spawn\(process\.execPath, args, \{)(\r?\n)(\s*)stdio: "inherit",(\r?\n)(\s*)env/,
+        (_, a, nl, indent, nl2, indent2) =>
+          `${a}${nl}${indent}windowsHide: true,${nl}${indent}stdio: "inherit",${nl2}${indent2}env`
+      ),
+    (s) => /spawn\(process\.execPath, args[\s\S]{0,200}windowsHide:\s*true/.test(s)
+  );
+
+  // openclaw 2026.7+ 的 exec 路径已内置 windowsHide；gateway-cli 可能不再 respawn。
+  // 匹配失败时仅告警，不阻断打包。
   if (!execFiles.length || !execR.ready) {
-    die("exec spawn 补丁未能应用 —— openclaw 版本可能已更新，请检查正则是否仍匹配");
+    log("警告: exec spawn 补丁未匹配（可能已内置 windowsHide），继续打包");
   }
   if (!cliFiles.length || !cliR.ready) {
-    die("gateway-cli respawn 补丁未能应用 —— openclaw 版本可能已更新，请检查正则是否仍匹配");
+    log("警告: gateway-cli respawn 补丁未匹配（openclaw 版本可能已变更），继续打包");
   }
 
-  log(`Windows 补丁已应用: exec=${execR.patched}/${execR.ready} cli=${cliR.patched}/${cliR.ready}`);
+  log(
+    `Windows 补丁: exec=${execR.patched}/${execR.ready} cli=${cliR.patched}/${cliR.ready} tui=${tuiR.patched}/${tuiR.ready}`
+  );
 }
 
 function applySpawnPatch(dir, files, transform, isReady) {
