@@ -1,11 +1,18 @@
 {
   "name": "clickclaw",
   "version": "0.3.3",
-  "description": "ClickClaw — 点击即装的 OpenClaw 桌面管理工具",
+  "description": "ClickClaw — 点击即装的 OpenClaw 桌面管理工具（社区维护 fork）",
   "main": "./out/main/index.js",
-  "author": "ClickClaw Team",
-  "license": "GPL-3.0",
-  "homepage": "https://clickclaw.cn",
+  "author": "ClickClaw Team / community maintainers",
+  "license": "AGPL-3.0",
+  "homepage": "https://github.com/ntz857/clickclaw",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ntz857/clickclaw.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ntz857/clickclaw/issues"
+  },
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",

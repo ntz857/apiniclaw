@@ -14,7 +14,8 @@
   <img src="https://img.shields.io/badge/electron-40+-47848F?logo=electron" alt="Electron" />
   <img src="https://img.shields.io/badge/react-19-61DAFB?logo=react" alt="React" />
   <img src="https://img.shields.io/badge/antd-6.x-1677FF?logo=antdesign" alt="Ant Design" />
-  <img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="License" />
+  <img src="https://img.shields.io/badge/license-AGPL--3.0-blue" alt="License" />
+  <img src="https://img.shields.io/badge/maintained-community%20fork-orange" alt="Community fork" />
 </p>
 
 <p align="center">
@@ -22,12 +23,31 @@
 </p>
 
 <p align="center">
-  Website: <a href="https://www.clickclaw.cn">clickclaw.cn</a> ·
-  Mirrors: <a href="https://www.clickclaw.cloud">clickclaw.cloud</a> /
-  <a href="https://www.clickclaw.icu">clickclaw.icu</a><br/>
-  Source Code: <a href="https://github.com/clickclaw/clickclaw">GitHub</a> ·
-  <a href="https://atomgit.com/clickclaw/clickclaw">AtomGit</a>
+  <strong>This repository (community fork)</strong>:
+  <a href="https://github.com/ntz857/clickclaw">github.com/ntz857/clickclaw</a><br/>
+  Upstream:
+  <a href="https://github.com/clickclaw/clickclaw">clickclaw/clickclaw</a>
+  · Site (reference):
+  <a href="https://www.clickclaw.cn">clickclaw.cn</a>
 </p>
+
+---
+
+## About this fork
+
+This is a **community-maintained fork** of [ClickClaw](https://github.com/clickclaw/clickclaw).
+
+While upstream desktop releases have slowed, this fork keeps working against **newer OpenClaw Gateway versions (e.g. 2026.7+)** and improves chat / channel UX. License remains **AGPL-3.0** (see root `LICENSE`).
+
+**Notable changes vs upstream include:**
+
+- Gateway runtime resolution and protocol handshake aligned with system OpenClaw
+- Chat: local `MEDIA:` paths and image preview/save; Mermaid / LaTeX
+- Channel message display: Feishu-style envelope stripping, reply quotes, `media:document` file cards
+- MessagePresentation card preview (limited desktop interactions)
+- Cron / payload fixes and verification helpers
+
+> For official binaries and product site, prefer [upstream](https://github.com/clickclaw/clickclaw). This fork focuses on source maintenance and self-built packages.
 
 ---
 
@@ -199,7 +219,7 @@ The Setup Wizard guides you through all configuration:
 ### Development
 
 ```bash
-git clone https://github.com/clickclaw/clickclaw.git
+git clone https://github.com/ntz857/clickclaw.git
 cd clickclaw
 npm install
 npm run dev

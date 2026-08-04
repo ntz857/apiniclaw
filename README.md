@@ -14,7 +14,8 @@
   <img src="https://img.shields.io/badge/electron-40+-47848F?logo=electron" alt="Electron" />
   <img src="https://img.shields.io/badge/react-19-61DAFB?logo=react" alt="React" />
   <img src="https://img.shields.io/badge/antd-6.x-1677FF?logo=antdesign" alt="Ant Design" />
-  <img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="License" />
+  <img src="https://img.shields.io/badge/license-AGPL--3.0-blue" alt="License" />
+  <img src="https://img.shields.io/badge/maintained-community%20fork-orange" alt="Community fork" />
 </p>
 
 <p align="center">
@@ -22,12 +23,31 @@
 </p>
 
 <p align="center">
-  官网：<a href="https://www.clickclaw.cn">clickclaw.cn</a> ·
-  镜像：<a href="https://www.clickclaw.cloud">clickclaw.cloud</a> /
-  <a href="https://www.clickclaw.icu">clickclaw.icu</a><br/>
-  代码仓库：<a href="https://github.com/clickclaw/clickclaw">GitHub</a> ·
-  <a href="https://atomgit.com/clickclaw/clickclaw">AtomGit</a>
+  <strong>本仓库（社区维护 fork）</strong>：
+  <a href="https://github.com/ntz857/clickclaw">github.com/ntz857/clickclaw</a><br/>
+  上游原项目：
+  <a href="https://github.com/clickclaw/clickclaw">clickclaw/clickclaw</a>
+  · 官网参考：
+  <a href="https://www.clickclaw.cn">clickclaw.cn</a>
 </p>
+
+---
+
+## 关于本仓库
+
+本仓库是 [ClickClaw](https://github.com/clickclaw/clickclaw) 的 **社区维护 fork**。
+
+上游桌面端更新放缓后，这里继续维护与 **较新 OpenClaw Gateway（如 2026.7+）** 的适配，以及聊天 / 渠道相关体验修复。代码仍基于原项目，许可证与上游一致（仓库内 `LICENSE` 为 **AGPL-3.0**）。
+
+**相对上游，本 fork 重点改动包括：**
+
+- Gateway 运行时解析与协议握手（device auth / 与系统 OpenClaw 对齐）
+- 聊天：`MEDIA:` 本地路径与图片预览、保存；Mermaid / LaTeX
+- 渠道消息展示：飞书等信封剥离、回复引用条、`media:document` 附件卡片
+- MessagePresentation 交互卡片预览（桌面端有限交互）
+- Cron 等配置/载荷相关修复与校验脚本
+
+> 若你只需要官方发行版，请仍以 [上游仓库](https://github.com/clickclaw/clickclaw) 与官网为准。本 fork 以源码维护与自用/二次打包为主。
 
 ---
 
@@ -199,7 +219,7 @@ Setup 向导会引导你完成所有配置：
 ### 开发
 
 ```bash
-git clone https://github.com/clickclaw/clickclaw.git
+git clone https://github.com/ntz857/clickclaw.git
 cd clickclaw
 npm install
 npm run dev
@@ -232,32 +252,42 @@ npm run dev
 
 ## 参与贡献
 
-欢迎各种形式的贡献——Bug 修复、新功能、文档改进、翻译。
+欢迎 Bug 修复、功能改进、文档与翻译。
 
-1. Fork 本仓库
+1. Fork 本仓库：https://github.com/ntz857/clickclaw
 2. 创建功能分支（`git checkout -b feature/xxx`）
 3. 提交变更
-4. 创建 Pull Request
+4. 向本仓库创建 Pull Request
 
-> 贡献规范：遵循 ESLint + Prettier 代码风格，所有 UI 文本使用 i18n，新功能需附带测试。
+> 规范：遵循 ESLint + Prettier；UI 文案走 i18n；尽量附带测试。
+
+与上游对照（可选）：
+
+```bash
+git remote add upstream https://github.com/clickclaw/clickclaw.git
+git fetch upstream
+```
 
 ---
 
 ## 致谢
 
+- [ClickClaw 原项目](https://github.com/clickclaw/clickclaw) — 桌面端基础
 - [OpenClaw](https://github.com/OpenClaw) — AI 智能体运行时
 - [Electron](https://www.electronjs.org/) — 跨平台桌面框架
-- [React](https://react.dev/) — UI 组件库
-- [Ant Design](https://ant.design/) — 企业级 UI 设计体系
+- [React](https://react.dev/) — UI 库
+- [Ant Design](https://ant.design/) / [Ant Design X](https://x.ant.design/) — 界面与聊天组件
 
 ---
 
 ## 许可证
 
-ClickClaw 基于 [GPL-3.0 许可证](LICENSE) 发布。
+本项目基于 [AGPL-3.0](LICENSE) 发布（见仓库根目录 `LICENSE`）。  
+衍生自 [clickclaw/clickclaw](https://github.com/clickclaw/clickclaw)；对外分发或提供网络服务时请遵守 AGPL 义务（含提供对应源码等）。
 
 ---
 
 <p align="center">
-  <sub>ClickClaw — 点击即装 OpenClaw</sub>
+  <sub>ClickClaw community fork — OpenClaw 桌面管理</sub><br/>
+  <sub><a href="https://github.com/ntz857/clickclaw">ntz857/clickclaw</a></sub>
 </p>
