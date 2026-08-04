@@ -1,6 +1,6 @@
-# Build Windows x64 + macOS arm64 and attach to an existing GitHub Release.
+# Build Windows x64 + macOS arm64/x64 (Intel) and attach to an existing GitHub Release.
 # Designed for community forks without Apple Developer / R2 secrets.
-name: Release packages (win-x64 + mac-arm64)
+name: Release packages (win + mac)
 
 on:
   workflow_dispatch:
@@ -133,24 +133,103 @@ jobs:
           if-no-files-found: error
           retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
 
+  # macOS Intel (x64). Built on macos-14 with --x64 (cross-arch on Apple Silicon runners).
+  build-mac-x64:
+    runs-on: macos-14
+    env:
+      BASH_ENV: /tmp/bash_setup.sh
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+
+      - name: Raise file descriptor limit
+        run: echo "ulimit -n 65536" >> /tmp/bash_setup.sh
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check package version
+        run: npm run release:check-version
+
+      - name: Restore resource cache
+        id: cache-resources
+        uses: actions/cache@v4
+        with:
+          path: resources/targets/darwin-x64
+          key: resources-darwin-x64-openclaw-${{ env.OPENCLAW_PACKAGE_SOURCE }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Package Node + openclaw resources
+        if: steps.cache-resources.outputs.cache-hit != 'true'
+        env:
+          OPENCLAW_PACKAGE_SOURCE: ${{ env.OPENCLAW_PACKAGE_SOURCE }}
+        run: node scripts/package-resources.js --platform darwin --arch x64
+
+      - name: Build macOS x64 (Intel) packages (unsigned)
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: |
+          npm run build
+          npx electron-builder --mac --x64 --publish never
+
+      - name: Validate artifacts
+        run: node scripts/check-release-artifacts.js --platform mac --dir dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-mac-x64
+          path: |
+            dist/ClickClaw-*.dmg
+            dist/ClickClaw-*.zip
+            dist/latest-mac.yml
+          if-no-files-found: error
+          retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
+
   upload-release:
-    needs: [build-win-x64, build-mac-arm64]
+    needs: [build-win-x64, build-mac-arm64, build-mac-x64]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+
       - uses: actions/download-artifact@v4
         with:
           path: release
 
-      - name: Collect files
+      - name: Collect and merge release files
         run: |
+          set -euo pipefail
           mkdir -p release/final
-          cp release/dist-win-x64/ClickClaw-Setup-*.exe release/final/ || true
-          cp release/dist-win-x64/latest.yml release/final/ || true
-          cp release/dist-mac-arm64/ClickClaw-*.dmg release/final/ || true
-          cp release/dist-mac-arm64/ClickClaw-*.zip release/final/ || true
-          cp release/dist-mac-arm64/latest-mac.yml release/final/ || true
+
+          cp release/dist-win-x64/ClickClaw-Setup-*.exe release/final/
+          cp release/dist-win-x64/latest.yml release/final/
+
+          # macOS: both arches (filenames include arch, e.g. ClickClaw-0.3.3-arm64.dmg / -x64.dmg)
+          cp release/dist-mac-arm64/ClickClaw-*.dmg release/final/
+          cp release/dist-mac-arm64/ClickClaw-*.zip release/final/
+          cp release/dist-mac-x64/ClickClaw-*.dmg release/final/
+          cp release/dist-mac-x64/ClickClaw-*.zip release/final/
+
+          # Merge multi-arch auto-update manifests when helper exists
+          if [ -f scripts/merge-latest-yml.js ]; then
+            npm install --no-save js-yaml
+            node scripts/merge-latest-yml.js \
+              --out release/final/latest-mac.yml \
+              --in release/dist-mac-arm64/latest-mac.yml \
+              --in release/dist-mac-x64/latest-mac.yml
+          else
+            cp release/dist-mac-arm64/latest-mac.yml release/final/latest-mac.yml
+          fi
+
+          echo "=== release/final ==="
           ls -lah release/final/
 
       - name: Upload assets to GitHub Release
