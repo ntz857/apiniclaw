@@ -1,0 +1,169 @@
+# Build Windows x64 + macOS arm64 and attach to an existing GitHub Release.
+# Designed for community forks without Apple Developer / R2 secrets.
+name: Release packages (win-x64 + mac-arm64)
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to upload assets into (e.g. v0.3.3)'
+        required: true
+        default: 'v0.3.3'
+      openclaw_version:
+        description: 'openclaw package version for bundled runtime'
+        required: true
+        default: '2026.7.1-2'
+
+env:
+  OPENCLAW_PACKAGE_SOURCE: ${{ inputs.openclaw_version }}
+  ARTIFACT_RETENTION_DAYS: 7
+
+jobs:
+  build-win-x64:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check package version
+        run: npm run release:check-version
+
+      - name: Restore resource cache
+        id: cache-resources
+        uses: actions/cache@v4
+        with:
+          path: resources/targets/win32-x64
+          key: resources-win32-x64-openclaw-${{ env.OPENCLAW_PACKAGE_SOURCE }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Use bash for npm scripts on Windows
+        run: npm config set script-shell "$(which bash)"
+
+      - name: Package Node + openclaw resources
+        if: steps.cache-resources.outputs.cache-hit != 'true'
+        env:
+          OPENCLAW_PACKAGE_SOURCE: ${{ env.OPENCLAW_PACKAGE_SOURCE }}
+        run: node scripts/package-resources.js --platform win32 --arch x64
+
+      - name: Build Windows x64 installer
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: |
+          npm run build
+          npx electron-builder --win --x64 --publish never
+
+      - name: Validate artifacts
+        run: node scripts/check-release-artifacts.js --platform win --dir dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-win-x64
+          path: |
+            dist/ClickClaw-Setup-*.exe
+            dist/latest.yml
+          if-no-files-found: error
+          retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
+
+  build-mac-arm64:
+    runs-on: macos-14
+    env:
+      BASH_ENV: /tmp/bash_setup.sh
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+
+      - name: Raise file descriptor limit
+        run: echo "ulimit -n 65536" >> /tmp/bash_setup.sh
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check package version
+        run: npm run release:check-version
+
+      - name: Restore resource cache
+        id: cache-resources
+        uses: actions/cache@v4
+        with:
+          path: resources/targets/darwin-arm64
+          key: resources-darwin-arm64-openclaw-${{ env.OPENCLAW_PACKAGE_SOURCE }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Package Node + openclaw resources
+        if: steps.cache-resources.outputs.cache-hit != 'true'
+        env:
+          OPENCLAW_PACKAGE_SOURCE: ${{ env.OPENCLAW_PACKAGE_SOURCE }}
+        run: node scripts/package-resources.js --platform darwin --arch arm64
+
+      # Community builds: unsigned (no Apple Developer secrets required).
+      # Users may need to right-click → Open the first time on macOS.
+      - name: Build macOS arm64 packages (unsigned)
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: |
+          npm run build
+          npx electron-builder --mac --arm64 --publish never
+
+      - name: Validate artifacts
+        run: node scripts/check-release-artifacts.js --platform mac --dir dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-mac-arm64
+          path: |
+            dist/ClickClaw-*.dmg
+            dist/ClickClaw-*.zip
+            dist/latest-mac.yml
+          if-no-files-found: error
+          retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
+
+  upload-release:
+    needs: [build-win-x64, build-mac-arm64]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release
+
+      - name: Collect files
+        run: |
+          mkdir -p release/final
+          cp release/dist-win-x64/ClickClaw-Setup-*.exe release/final/ || true
+          cp release/dist-win-x64/latest.yml release/final/ || true
+          cp release/dist-mac-arm64/ClickClaw-*.dmg release/final/ || true
+          cp release/dist-mac-arm64/ClickClaw-*.zip release/final/ || true
+          cp release/dist-mac-arm64/latest-mac.yml release/final/ || true
+          ls -lah release/final/
+
+      - name: Upload assets to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(release/final/*)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No files to upload" >&2
+            exit 1
+          fi
+          gh release upload "$TAG" "${files[@]}" --repo "${{ github.repository }}" --clobber
+          echo "Uploaded to https://github.com/${{ github.repository }}/releases/tag/${TAG}"
