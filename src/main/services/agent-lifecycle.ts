@@ -6,16 +6,12 @@
  * - 作为 renderer 端 WS 调用失败时的兜底路径
  */
 
-import { execFile } from 'child_process'
 import { homedir } from 'os'
 import { join } from 'path'
-import { promisify } from 'util'
 import { createLogger } from '../logger'
-import { getRuntime } from '../runtime'
 import { OPENCLAW_HOME } from '../constants'
 import { getAgents, readConfig, saveAgent, type AgentConfig } from '../config'
 
-const execFileAsync = promisify(execFile)
 const log = createLogger('agent-lifecycle')
 
 interface CliAddResult {
@@ -88,29 +84,17 @@ function parseCliJson<T>(stdout: string, action: string): T {
 }
 
 async function runOpenclawCli(args: string[]): Promise<string> {
-  const runtime = getRuntime()
-  const nodePath = runtime.getNodePath()
-  const gatewayEntry = runtime.getGatewayEntry()
-  const gatewayCwd = runtime.getGatewayCwd()
-  const runtimeEnv = runtime.getEnv()
-
-  const { stdout, stderr } = await execFileAsync(nodePath, [gatewayEntry, ...args], {
-    cwd: gatewayCwd,
-    timeout: 30_000,
-    env: {
-      ...process.env,
-      ...runtimeEnv,
-      NODE_ENV: 'production',
-      OPENCLAW_NO_RESPAWN: '1',
-      OPENCLAW_LENIENT_CONFIG: '1',
-      ELECTRON_RUN_AS_NODE: '1',
-    },
-  })
-
-  if (stderr?.trim()) {
-    log.warn(`openclaw cli stderr: ${stderr.trim()}`)
+  const { runOpenclawCli: runCli } = await import('./openclaw-resolve')
+  const result = await runCli(args, { timeoutMs: 60_000 })
+  if (result.stderr?.trim()) {
+    log.warn(`openclaw cli [${result.source}] stderr: ${result.stderr.trim()}`)
   }
-  return stdout
+  if (result.code !== 0) {
+    throw new Error(
+      `openclaw CLI failed (exit ${result.code}, source=${result.source}): ${(result.stderr || result.stdout).trim().slice(0, 400)}`
+    )
+  }
+  return result.stdout
 }
 
 export async function createAgentViaCli(

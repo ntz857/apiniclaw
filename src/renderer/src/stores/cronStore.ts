@@ -29,10 +29,9 @@ export interface CronJob {
   sessionTarget?: 'main' | 'isolated'
   wakeMode?: string
   payload: {
-    kind: 'agentTurn' | 'systemEvent'
+    kind: 'agentTurn' | 'systemEvent' | 'command'
     message?: string // agentTurn
     text?: string // systemEvent
-    agentId?: string
   }
   // 运行状态嵌套在 state 字段（实际 API 格式）
   state?: {
@@ -198,15 +197,21 @@ export const useCronStore = create<CronStore>((set) => ({
   },
 
   createJob: async (callRpc, form) => {
+    // OpenClaw ≥2026.4 CronAddParamsSchema:
+    // - agentId / sessionKey 在任务顶层（不在 payload 内）
+    // - agentTurn 必填 sessionTarget=isolated|current|session:* 与 wakeMode
+    // - payload.agentTurn 仅允许 message（及 model/thinking 等），additionalProperties=false
     const schedule = formToSchedule(form)
     await callRpc('cron.add', {
       name: form.name,
-      description: form.description,
+      description: form.description || undefined,
+      ...(form.agentId ? { agentId: form.agentId } : {}),
       schedule,
+      sessionTarget: 'isolated',
+      wakeMode: 'now',
       payload: {
         kind: 'agentTurn',
         message: form.message,
-        ...(form.agentId ? { agentId: form.agentId } : {}),
       },
       enabled: form.enabled,
     })
@@ -223,12 +228,15 @@ export const useCronStore = create<CronStore>((set) => ({
       id,
       patch: {
         name: form.name,
-        description: form.description,
+        description: form.description || undefined,
+        // null 显式清空 agent；undefined 表示不改（此处用 null 以支持「默认 agent」）
+        agentId: form.agentId ? form.agentId : null,
         schedule,
+        sessionTarget: 'isolated',
+        wakeMode: 'now',
         payload: {
           kind: 'agentTurn',
           message: form.message,
-          ...(form.agentId ? { agentId: form.agentId } : {}),
         },
         enabled: form.enabled,
       },

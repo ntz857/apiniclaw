@@ -81,8 +81,9 @@ export default function CronFormDrawer({
         form.setFieldsValue({
           name: editJob.name,
           description: editJob.description,
-          message: editJob.payload?.message,
-          agentId: editJob.payload?.agentId,
+          // OpenClaw 2026.7：message 在 payload；agentId 在任务顶层
+          message: editJob.payload?.message ?? editJob.payload?.text,
+          agentId: editJob.agentId ?? undefined,
           enabled: editJob.enabled,
           ...schedPart,
           runAt: schedPart.runAt,

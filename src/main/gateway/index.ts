@@ -18,6 +18,9 @@ export {
   maskToken,
   buildTokenInjectionScript,
   buildConnectFrame,
+  GATEWAY_PROTOCOL_MIN,
+  GATEWAY_PROTOCOL_MAX,
+  OPERATOR_SCOPES,
 } from './auth'
 
 export { loadOrCreateDeviceIdentity, signDevicePayload } from './device-identity'

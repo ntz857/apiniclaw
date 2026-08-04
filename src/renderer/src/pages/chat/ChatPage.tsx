@@ -162,6 +162,10 @@ function ChatPage(): React.ReactElement {
     showToolCalls,
     showUsage,
     onCopied: () => msg.success(t('common.copied')),
+    onSendCommand: (command) => {
+      // 卡片 command 按钮：当作用户消息发出
+      sendMessage(command)
+    },
   })
   const slashMenu = useSlashCommandMenu({
     commands: slashCommands,

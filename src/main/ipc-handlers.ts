@@ -708,8 +708,12 @@ export function registerIpcHandlers(): void {
     return getChannels()
   })
 
-  ipcMain.handle('channel:save', (_event, key: string, config: Record<string, unknown>) => {
+  ipcMain.handle('channel:save', async (_event, key: string, config: Record<string, unknown>) => {
     setChannel(key, config)
+    // OpenClaw 2026.5+：飞书等渠道为独立插件，仅写配置不会收消息
+    const { ensureChannelPlugin } = await import('./services/channel-plugins')
+    const result = await ensureChannelPlugin(key)
+    return result
   })
 
   ipcMain.handle('channel:delete', (_event, key: string) => {
@@ -771,8 +775,10 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle(
     'channel:save-account',
-    (_event, channelKey: string, accountId: string, data: Record<string, unknown>) => {
+    async (_event, channelKey: string, accountId: string, data: Record<string, unknown>) => {
       saveChannelAccount(channelKey, accountId, data)
+      const { ensureChannelPlugin } = await import('./services/channel-plugins')
+      return await ensureChannelPlugin(channelKey)
     }
   )
 
@@ -981,21 +987,19 @@ export function registerIpcHandlers(): void {
     restoreFromSnapshot(fileName)
   })
 
-  // 完整归档（调用 openclaw backup create CLI）
+  // 完整归档（调用 openclaw backup create CLI — 与系统 Gateway 同版本）
   ipcMain.handle('backup:create-full', async (_e, outputDir: string) => {
-    const runtime = getRuntime()
-    const env = runtime.getEnv()
-
-    const nodePath = runtime.getNodePath()
-    const gatewayEntry = runtime.getGatewayEntry()
-    const args = [gatewayEntry, 'backup', 'create', '--output', outputDir, '--verify']
     try {
-      const { stdout } = await execFileAsync(nodePath, args, {
-        timeout: 60000,
-        env: { ...process.env, ...env },
-      })
-      log.info(`full backup created: ${stdout.trim()}`)
-      const match = stdout.match(/([^\s]+\.tar\.gz)/)
+      const { runOpenclawCli } = await import('./services/openclaw-resolve')
+      const result = await runOpenclawCli(
+        ['backup', 'create', '--output', outputDir, '--verify'],
+        { timeoutMs: 120_000 }
+      )
+      if (result.code !== 0) {
+        throw new Error(result.stderr || result.stdout || `exit ${result.code}`)
+      }
+      log.info(`full backup created [${result.source}]: ${result.stdout.trim()}`)
+      const match = result.stdout.match(/([^\s]+\.tar\.gz)/)
       return { success: true, archivePath: match ? match[1] : outputDir }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
@@ -1180,6 +1184,53 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('dialog:show-save', async (_e, opts: Electron.SaveDialogOptions) => {
     return dialog.showSaveDialog(opts)
   })
+
+  /**
+   * 另存为：从本地路径复制，或写入 base64 内容。
+   * 目标路径必须经系统保存对话框选定。
+   */
+  ipcMain.handle(
+    'fs:save-as',
+    async (
+      _e,
+      opts: {
+        defaultPath?: string
+        filters?: Electron.FileFilter[]
+        title?: string
+        /** 从本地文件复制（绝对路径） */
+        sourcePath?: string
+        /** 直接写入文件内容（base64） */
+        dataBase64?: string
+      }
+    ) => {
+      const { copyFileSync, writeFileSync, existsSync: fsExists } = await import('fs')
+      const { normalize: pathNormalize, isAbsolute } = await import('path')
+
+      const { canceled, filePath } = await dialog.showSaveDialog({
+        title: opts.title || '保存文件',
+        defaultPath: opts.defaultPath,
+        filters: opts.filters,
+      })
+      if (canceled || !filePath) return { canceled: true as const }
+
+      try {
+        if (opts.sourcePath) {
+          const src = pathNormalize(opts.sourcePath)
+          if (!isAbsolute(src) || !fsExists(src)) {
+            throw new Error('源文件不存在或路径无效')
+          }
+          copyFileSync(src, filePath)
+        } else if (opts.dataBase64) {
+          writeFileSync(filePath, Buffer.from(opts.dataBase64, 'base64'))
+        } else {
+          throw new Error('缺少 sourcePath 或 dataBase64')
+        }
+        return { canceled: false as const, filePath }
+      } catch (err) {
+        throw new Error(err instanceof Error ? err.message : String(err))
+      }
+    }
+  )
 
   // ========== Remote Presets ==========
 

@@ -21,6 +21,17 @@
  */
 
 import { useEffect, useRef, useCallback, useState } from 'react'
+import {
+  attachmentsFromMediaFields,
+  mergeMediaHintsAsAttachments,
+  normalizeDisplayContent,
+  resolveLocalPathForImageRef,
+} from '../pages/chat/channel-display'
+import {
+  extractPresentationsFromText,
+  extractPresentationsFromToolArgs,
+  type MessagePresentation,
+} from '../pages/chat/presentation-display'
 
 // ========== 类型定义 ==========
 
@@ -44,6 +55,16 @@ export interface ChatMessage {
   id: string
   role: 'user' | 'assistant'
   content: string
+  /**
+   * 渠道「回复引用」原文（如飞书 [Replying to: "…"]）。
+   * 已从 content 剥离，由气泡顶部引用条展示。
+   */
+  replyTo?: string
+  /**
+   * OpenClaw MessagePresentation 卡片（多来自 message 工具的 presentation/interactive 参数）。
+   * 桌面端只读渲染 + 有限交互（链接 / command）。
+   */
+  presentations?: MessagePresentation[]
   /** 思考内容（assistant） */
   thinking?: string
   /** 工具调用链（assistant） */
@@ -67,7 +88,10 @@ export interface AttachmentPayload {
   category: 'image' | 'document' | 'video' | 'audio'
   mimeType: string
   fileName: string
-  content: string // base64
+  /** base64 内容；若仅有 localPath 可为空串 */
+  content: string
+  /** 本机绝对路径（渠道/托管媒体解析后） */
+  localPath?: string
 }
 
 /** 会话列表项 */
@@ -106,6 +130,13 @@ interface ContentBlock {
   toolCallId?: string
   content?: unknown
   isError?: boolean
+  /** image blocks */
+  data?: string
+  mimeType?: string
+  url?: string
+  openUrl?: string
+  alt?: string
+  source?: { type?: string; data?: string; media_type?: string; path?: string }
 }
 
 interface WsFrame {
@@ -243,25 +274,128 @@ function stringifyForDebugLog(value: unknown, maxLen = DEBUG_LOG_MAX_LEN): strin
   return `${json.slice(0, maxLen)}...<truncated ${json.length - maxLen} chars>`
 }
 
+function getOpenclawHomeSync(): string {
+  // 渲染进程默认猜用户主目录；ensureOpenclawHome 会用 main 返回值覆盖
+  try {
+    const env = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process
+      ?.env
+    const home = env?.USERPROFILE || env?.HOME || ''
+    if (home) {
+      const sep = home.includes('\\') ? '\\' : '/'
+      return `${home.replace(/[\\/]+$/, '')}${sep}.openclaw`
+    }
+  } catch {
+    /* ignore */
+  }
+  return ''
+}
+
+let cachedOpenclawHome = getOpenclawHomeSync()
+
+async function ensureOpenclawHome(): Promise<string> {
+  if (cachedOpenclawHome) return cachedOpenclawHome
+  try {
+    const paths = (await window.api.appPaths.get()) as { openclawDir?: string }
+    if (paths?.openclawDir) {
+      cachedOpenclawHome = paths.openclawDir
+    }
+  } catch {
+    /* ignore */
+  }
+  return cachedOpenclawHome
+}
+
+/** 把 imageRefs 尽量落成本地附件（media/outbound/<alt> 等） */
+function materializeImageRefs(
+  refs: ReturnType<typeof normalizeDisplayContent>['imageRefs']
+): AttachmentPayload[] {
+  const home = cachedOpenclawHome
+  const out: AttachmentPayload[] = []
+  for (const ref of refs) {
+    const local = resolveLocalPathForImageRef(ref, home)
+    if (!local) continue
+    const fileName = ref.alt || local.replace(/^.*[\\/]/, '') || 'image.png'
+    out.push({
+      category: 'image',
+      mimeType: ref.mimeType || 'image/png',
+      fileName,
+      content: '',
+      localPath: local,
+    })
+  }
+  return out
+}
+
+function mergeAttachments(
+  ...lists: Array<AttachmentPayload[] | undefined>
+): AttachmentPayload[] | undefined {
+  const merged: AttachmentPayload[] = []
+  const seen = new Set<string>()
+  for (const list of lists) {
+    if (!list?.length) continue
+    for (const att of list) {
+      const key = `${att.localPath || ''}|${att.fileName}|${att.content.slice(0, 32)}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      merged.push(att)
+    }
+  }
+  return merged.length > 0 ? merged : undefined
+}
+
+function mergePresentations(
+  ...lists: Array<MessagePresentation[] | undefined>
+): MessagePresentation[] | undefined {
+  const out: MessagePresentation[] = []
+  const seen = new Set<string>()
+  for (const list of lists) {
+    if (!list?.length) continue
+    for (const p of list) {
+      const key = JSON.stringify({ t: p.title, b: p.blocks, s: p.source })
+      if (seen.has(key)) continue
+      seen.add(key)
+      out.push(p)
+    }
+  }
+  return out.length > 0 ? out : undefined
+}
+
 function normalizeAssistantContent(content: string | ContentBlock[] | undefined): {
   text: string
+  replyTo?: string
   thinking?: string
   toolCalls?: ChatToolCall[]
+  attachments?: AttachmentPayload[]
+  presentations?: MessagePresentation[]
 } {
   if (!content) return { text: '' }
-  if (typeof content === 'string') return { text: content }
+  if (typeof content === 'string') {
+    const display = normalizeDisplayContent(content, 'assistant')
+    return {
+      text: display.text,
+      replyTo: display.replyTo,
+      presentations: extractPresentationsFromText(display.text),
+    }
+  }
 
   const textParts: string[] = []
   const thinkingParts: string[] = []
   const toolCalls: ChatToolCall[] = []
+  const imageBlocks: unknown[] = []
+  const presentations: MessagePresentation[] = []
 
   for (const block of content) {
     if (block.type === 'text' && block.text) {
       textParts.push(block.text)
+      presentations.push(...extractPresentationsFromText(block.text))
       continue
     }
     if (block.type === 'thinking' && block.thinking) {
       thinkingParts.push(block.thinking)
+      continue
+    }
+    if (block.type === 'image') {
+      imageBlocks.push(block)
       continue
     }
     if (block.type === 'toolCall') {
@@ -273,6 +407,7 @@ function normalizeAssistantContent(content: string | ContentBlock[] | undefined)
         argumentsText: toJsonText(block.arguments),
         status: 'loading',
       })
+      presentations.push(...extractPresentationsFromToolArgs(name, block.arguments))
       continue
     }
     if (block.type === 'toolResult') {
@@ -280,18 +415,52 @@ function normalizeAssistantContent(content: string | ContentBlock[] | undefined)
       if (!targetId) continue
       const idx = toolCalls.findIndex((t) => t.id === targetId)
       if (idx < 0) continue
+      // 工具结果里也可能带图
+      const resultDisplay = normalizeDisplayContent(block.content, 'toolResult')
+      const resultImages = [
+        ...resultDisplay.imageAttachments,
+        ...materializeImageRefs(resultDisplay.imageRefs),
+      ]
+      const text = resultDisplay.text || extractToolResultText(block.content)
+      if (text) presentations.push(...extractPresentationsFromText(text))
+      // details 字段（若网关带回）
+      const details = (block as { details?: unknown }).details
+      if (details) {
+        presentations.push(
+          ...extractPresentationsFromToolArgs(toolCalls[idx]?.name || 'tool', details)
+        )
+      }
       toolCalls[idx] = {
         ...toolCalls[idx],
-        resultText: extractToolResultText(block.content),
+        resultText:
+          resultImages.length > 0
+            ? [text, ...resultImages.map((a) => (a.localPath ? `MEDIA:${a.localPath}` : ''))]
+                .filter(Boolean)
+                .join('\n')
+            : text,
         status: block.isError ? 'error' : 'success',
       }
     }
   }
 
+  const display = normalizeDisplayContent(
+    [
+      ...textParts.map((t) => ({ type: 'text', text: t })),
+      ...imageBlocks,
+    ],
+    'assistant'
+  )
+
   return {
-    text: textParts.join(''),
+    text: display.text,
+    replyTo: display.replyTo,
     thinking: thinkingParts.length > 0 ? thinkingParts.join('\n\n') : undefined,
     toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
+    attachments: mergeAttachments(
+      display.imageAttachments,
+      materializeImageRefs(display.imageRefs)
+    ),
+    presentations: mergePresentations(presentations),
   }
 }
 
@@ -431,6 +600,8 @@ export function useGatewayWs(): UseGatewayWsReturn {
   const reconnectCountRef = useRef(0)
   const intentionalCloseRef = useRef(false)
   const currentRunIdRef = useRef<string | null>(null)
+  /** 与 isStreaming 同步，供会话过滤器在回调外读取 */
+  const isStreamingRef = useRef(false)
   const portRef = useRef<number>(0)
   const tokenRef = useRef<string>('')
   const sessionKeyRef = useRef<string | null>(null)
@@ -475,6 +646,9 @@ export function useGatewayWs(): UseGatewayWsReturn {
   useEffect(() => {
     statusRef.current = status
   }, [status])
+  useEffect(() => {
+    isStreamingRef.current = isStreaming
+  }, [isStreaming])
   useEffect(() => {
     draftSessionsRef.current = draftSessions
   }, [draftSessions])
@@ -568,6 +742,7 @@ export function useGatewayWs(): UseGatewayWsReturn {
     (key: string, options?: { silent?: boolean }): void => {
       const silent = options?.silent === true
       if (!silent) setHistoryLoading(true)
+      void ensureOpenclawHome()
       rpc('chat.history', { sessionKey: key, limit: 200 })
         .then((result) => {
           const data = result as { messages?: unknown[] } | null
@@ -593,11 +768,13 @@ export function useGatewayWs(): UseGatewayWsReturn {
 
             if (msg.role === 'assistant') {
               const normalized = normalizeAssistantContent(msg.content)
+              const attachments = mergeAttachments(msg.attachments, normalized.attachments)
               if (
                 !normalized.text &&
                 !normalized.thinking &&
                 !normalized.toolCalls?.length &&
-                !msg.attachments?.length
+                !attachments?.length &&
+                !normalized.presentations?.length
               ) {
                 continue
               }
@@ -608,12 +785,16 @@ export function useGatewayWs(): UseGatewayWsReturn {
               const incomingHasText = Boolean(normalized.text?.trim())
               const prevHasMeta = Boolean(
                 prevIsAssistant &&
-                (prev.thinking?.trim() || prev.toolCalls?.length || prev.attachments?.length)
+                (prev.thinking?.trim() ||
+                  prev.toolCalls?.length ||
+                  prev.attachments?.length ||
+                  prev.presentations?.length)
               )
               const incomingHasMeta = Boolean(
                 normalized.thinking?.trim() ||
                 normalized.toolCalls?.length ||
-                msg.attachments?.length
+                attachments?.length ||
+                normalized.presentations?.length
               )
 
               // 历史里同一轮 assistant 可能被拆成多段（工具段 + 正文段），这里合并为一个气泡
@@ -633,9 +814,11 @@ export function useGatewayWs(): UseGatewayWsReturn {
                     : normalized.thinking
                 }
                 prev.toolCalls = mergeToolCalls(prev.toolCalls, normalized.toolCalls)
-                if (msg.attachments?.length) {
-                  prev.attachments = [...(prev.attachments || []), ...msg.attachments]
-                }
+                prev.attachments = mergeAttachments(prev.attachments, attachments)
+                prev.presentations = mergePresentations(
+                  prev.presentations,
+                  normalized.presentations
+                )
                 prev.usage = normalizeUsage(msg.usage) ?? prev.usage
                 prev.durationMs = toNumber(msg.durationMs) ?? prev.durationMs
                 prev.model = pickText(msg.model, prev.model) ?? prev.model
@@ -652,9 +835,11 @@ export function useGatewayWs(): UseGatewayWsReturn {
                 id: msg.id || nextId('hist'),
                 role: 'assistant',
                 content: normalized.text,
+                replyTo: normalized.replyTo,
                 thinking: normalized.thinking,
                 toolCalls: normalized.toolCalls,
-                attachments: msg.attachments,
+                attachments,
+                presentations: normalized.presentations,
                 usage: normalizeUsage(msg.usage),
                 durationMs: toNumber(msg.durationMs),
                 model: pickText(msg.model),
@@ -686,13 +871,33 @@ export function useGatewayWs(): UseGatewayWsReturn {
             }
 
             if (msg.role === 'user') {
-              const text = extractText(msg.content as string | ContentBlock[] | undefined)
-              if (!text && !msg.attachments?.length) continue
+              const display = normalizeDisplayContent(msg.content, 'user')
+              // 飞书/渠道入站文件：transcript 带 MediaPath(s)，正文常有 <media:document> + 全文
+              const mediaFieldAtts = attachmentsFromMediaFields(
+                msg as {
+                  MediaPath?: unknown
+                  MediaPaths?: unknown
+                  MediaType?: unknown
+                  MediaTypes?: unknown
+                }
+              )
+              const fromHints = mergeMediaHintsAsAttachments(
+                display.mediaHints,
+                mediaFieldAtts
+              )
+              const attachments = mergeAttachments(
+                msg.attachments,
+                display.imageAttachments,
+                materializeImageRefs(display.imageRefs),
+                fromHints
+              )
+              if (!display.text && !attachments?.length && !display.replyTo) continue
               loaded.push({
                 id: msg.id || nextId('hist'),
                 role: 'user',
-                content: text,
-                attachments: msg.attachments,
+                content: display.text,
+                replyTo: display.replyTo,
+                attachments,
                 usage: normalizeUsage(msg.usage),
                 durationMs: toNumber(msg.durationMs),
                 model: pickText(msg.model),
@@ -769,7 +974,8 @@ export function useGatewayWs(): UseGatewayWsReturn {
    */
   const handleConnectError = useCallback((err: Error): void => {
     const msg = err.message
-    if (/TOKEN_MISMATCH/i.test(msg) && retryMismatchRef.current < 1) {
+    // Gateway may say TOKEN_MISMATCH or "gateway token mismatch" / "token_mismatch"
+    if (/token[\s_-]*mismatch/i.test(msg) && retryMismatchRef.current < 1) {
       retryMismatchRef.current++
       window.api.gateway.clearDeviceToken(deviceIdRef.current, 'operator')
       doConnectRef.current?.()
@@ -813,8 +1019,65 @@ export function useGatewayWs(): UseGatewayWsReturn {
 
   // ========== 事件处理 ==========
 
+  /**
+   * 判断网关事件是否应写入「当前打开的」消息列表。
+   *
+   * 历史 bug：handleChatEvent 不校验 sessionKey，飞书等其它会话的 delta/final
+   * 会灌进当前 UI；切换会话后 loadHistory 又恢复正确，表现为「错乱但不稳定」。
+   */
+  const shouldApplyEventToActiveMessages = useCallback(
+    (eventSessionKey?: string, runId?: string): boolean => {
+      const activeKey = sessionKeyRef.current
+      if (!activeKey) return false
+
+      const eventKey = eventSessionKey?.trim()
+      if (eventKey) {
+        return eventKey === activeKey
+      }
+
+      // 事件未带 sessionKey：仅当能对应本会话进行中的 run，或本会话刚发起的流
+      if (runId && currentRunIdRef.current) {
+        return runId === currentRunIdRef.current
+      }
+      // 本地 send 后、首个 delta 尚未带回 runId 前的极短窗口
+      if (isStreamingRef.current) return true
+
+      // 无 sessionKey、非本会话流 → 不写当前气泡（其它会话仍可通过 final 刷新列表）
+      return false
+    },
+    []
+  )
+
+  /** 更新当前会话消息并同步 messageCache，避免切换会话时缓存被污染/过期 */
+  const patchActiveMessages = useCallback(
+    (updater: (prev: ChatMessage[]) => ChatMessage[]): void => {
+      setMessages((prev) => {
+        const next = updater(prev)
+        const key = sessionKeyRef.current
+        if (key) messageCacheRef.current.set(key, next)
+        return next
+      })
+    },
+    []
+  )
+
   const handleChatEvent = useCallback(
     (payload: ChatEventPayload): void => {
+      const eventSessionKey = pickText(payload.sessionKey) || undefined
+      const applies = shouldApplyEventToActiveMessages(eventSessionKey, payload.runId)
+
+      // 其它会话的完成事件：只刷新侧栏列表，不改当前消息区
+      if (!applies) {
+        if (payload.state === 'final') {
+          setTimeout(refreshSessions, 500)
+        }
+        writeDebugLog(
+          `chat-event dropped (session mismatch) state=${payload.state} eventKey=${eventSessionKey || '-'} active=${sessionKeyRef.current || '-'}`,
+          { runId: payload.runId }
+        )
+        return
+      }
+
       const normalized = normalizeAssistantContent(payload.message?.content)
       const model = pickText(payload.model, payload.message?.model)
       const provider = pickText(payload.provider, payload.message?.provider)
@@ -832,7 +1095,8 @@ export function useGatewayWs(): UseGatewayWsReturn {
       if (payload.state === 'delta') {
         currentRunIdRef.current = payload.runId
         setIsStreaming(true)
-        setMessages((prev) => {
+        isStreamingRef.current = true
+        patchActiveMessages((prev) => {
           // 优先按 runId 命中，避免 lifecycle 抢先结束后产生重复气泡
           const idxByRunId = prev.findIndex((m) => m.role === 'assistant' && m.id === payload.runId)
           const idxStreaming =
@@ -846,6 +1110,11 @@ export function useGatewayWs(): UseGatewayWsReturn {
               content: normalized.text,
               thinking: normalized.thinking ?? updated[idx].thinking,
               toolCalls: normalized.toolCalls ?? updated[idx].toolCalls,
+              attachments: mergeAttachments(updated[idx].attachments, normalized.attachments),
+              presentations: mergePresentations(
+                updated[idx].presentations,
+                normalized.presentations
+              ),
               model,
               provider,
             }
@@ -860,6 +1129,8 @@ export function useGatewayWs(): UseGatewayWsReturn {
               content: normalized.text,
               thinking: normalized.thinking,
               toolCalls: normalized.toolCalls,
+              attachments: normalized.attachments,
+              presentations: normalized.presentations,
               streaming: true,
               model,
               provider,
@@ -869,8 +1140,9 @@ export function useGatewayWs(): UseGatewayWsReturn {
       } else if (payload.state === 'final') {
         currentRunIdRef.current = null
         setIsStreaming(false)
-        const currentSessionKey = payload.sessionKey || sessionKeyRef.current || ''
-        setMessages((prev) => {
+        isStreamingRef.current = false
+        const historyKey = eventSessionKey || sessionKeyRef.current || ''
+        patchActiveMessages((prev) => {
           const idxByRunId = prev.findIndex((m) => m.role === 'assistant' && m.id === payload.runId)
           const idxStreaming =
             idxByRunId >= 0 ? -1 : prev.findIndex((m) => m.role === 'assistant' && m.streaming)
@@ -883,6 +1155,11 @@ export function useGatewayWs(): UseGatewayWsReturn {
               content: normalized.text,
               thinking: normalized.thinking ?? updated[idx].thinking,
               toolCalls: normalized.toolCalls ?? updated[idx].toolCalls,
+              attachments: mergeAttachments(updated[idx].attachments, normalized.attachments),
+              presentations: mergePresentations(
+                updated[idx].presentations,
+                normalized.presentations
+              ),
               streaming: false,
               usage,
               durationMs,
@@ -896,17 +1173,18 @@ export function useGatewayWs(): UseGatewayWsReturn {
         // 消息完成后刷新会话列表（更新时间戳排序）
         setTimeout(refreshSessions, 500)
         // realtime 帧可能不带 thinking/usage，静默回读 history 补齐元信息
-        if (currentSessionKey) {
+        if (historyKey) {
           setTimeout(() => {
-            if (sessionKeyRef.current === currentSessionKey) {
-              loadHistory(currentSessionKey, { silent: true })
+            if (sessionKeyRef.current === historyKey) {
+              loadHistory(historyKey, { silent: true })
             }
           }, 350)
         }
       } else if (payload.state === 'aborted') {
         currentRunIdRef.current = null
         setIsStreaming(false)
-        setMessages((prev) =>
+        isStreamingRef.current = false
+        patchActiveMessages((prev) =>
           prev.map((m) =>
             m.streaming ? { ...m, content: normalized.text || m.content, streaming: false } : m
           )
@@ -914,19 +1192,31 @@ export function useGatewayWs(): UseGatewayWsReturn {
       } else if (payload.state === 'error') {
         currentRunIdRef.current = null
         setIsStreaming(false)
+        isStreamingRef.current = false
         const errText = payload.errorMessage || payload.error?.message || '未知错误'
-        setMessages((prev) =>
+        patchActiveMessages((prev) =>
           prev.map((m) => (m.streaming ? { ...m, content: errText, streaming: false } : m))
         )
       }
     },
-    [loadHistory, refreshSessions, writeDebugLog]
+    [
+      loadHistory,
+      patchActiveMessages,
+      refreshSessions,
+      shouldApplyEventToActiveMessages,
+      writeDebugLog,
+    ]
   )
 
   const handleRealtimeMessageEvent = useCallback(
     (messagePayload: RealtimeMessagePayload, containerPayload?: Record<string, unknown>): void => {
       const targetSessionKey = pickText(messagePayload.sessionKey, containerPayload?.sessionKey)
-      if (targetSessionKey && sessionKeyRef.current && targetSessionKey !== sessionKeyRef.current) {
+      if (
+        !shouldApplyEventToActiveMessages(
+          targetSessionKey || undefined,
+          pickText(messagePayload.id, containerPayload?.runId) || undefined
+        )
+      ) {
         return
       }
 
@@ -950,7 +1240,7 @@ export function useGatewayWs(): UseGatewayWsReturn {
           }
         )
 
-        setMessages((prev) => {
+        patchActiveMessages((prev) => {
           const idxById = messagePayload.id
             ? prev.findIndex((m) => m.role === 'assistant' && m.id === messagePayload.id)
             : -1
@@ -1001,7 +1291,7 @@ export function useGatewayWs(): UseGatewayWsReturn {
           messagePayload,
           containerPayload,
         })
-        setMessages((prev) => {
+        patchActiveMessages((prev) => {
           for (let i = prev.length - 1; i >= 0; i--) {
             const message = prev[i]
             if (message.role !== 'assistant' || !message.toolCalls?.length) continue
@@ -1024,15 +1314,18 @@ export function useGatewayWs(): UseGatewayWsReturn {
         })
       }
     },
-    [writeDebugLog]
+    [patchActiveMessages, shouldApplyEventToActiveMessages, writeDebugLog]
   )
 
   const handleAgentToolEvent = useCallback(
     (payload: AgentToolEventPayload): void => {
       if (payload.stream !== 'tool') return
       const targetSessionKey = pickText(payload.sessionKey)
-      if (targetSessionKey && sessionKeyRef.current && targetSessionKey !== sessionKeyRef.current)
+      if (
+        !shouldApplyEventToActiveMessages(targetSessionKey || undefined, payload.runId || undefined)
+      ) {
         return
+      }
 
       const data = payload.data || {}
       const toolCallId = pickText(data.toolCallId)
@@ -1062,7 +1355,8 @@ export function useGatewayWs(): UseGatewayWsReturn {
       )
 
       setIsStreaming(true)
-      setMessages((prev) => {
+      isStreamingRef.current = true
+      patchActiveMessages((prev) => {
         const streamingIdx = prev.findIndex((m) => m.role === 'assistant' && m.streaming)
         const idx = streamingIdx >= 0 ? streamingIdx : prev.length
         const next = [...prev]
@@ -1107,7 +1401,7 @@ export function useGatewayWs(): UseGatewayWsReturn {
         return next
       })
     },
-    [writeDebugLog]
+    [patchActiveMessages, shouldApplyEventToActiveMessages, writeDebugLog]
   )
 
   const handleMessage = useCallback(
@@ -1180,10 +1474,10 @@ export function useGatewayWs(): UseGatewayWsReturn {
             const assistantText = pickText(nestedData.text)
             const assistantDelta = pickText(nestedData.delta)
             if (assistantText || assistantDelta) {
+              // 禁止用 sessionKeyRef 回填：会把其它会话事件「伪装」成当前会话
               handleChatEvent({
                 state: 'delta',
-                sessionKey:
-                  pickText(payload.sessionKey, nestedData.sessionKey, sessionKeyRef.current) || '',
+                sessionKey: pickText(payload.sessionKey, nestedData.sessionKey) || '',
                 runId: pickText(payload.runId, nestedData.runId) || nextId('agent'),
                 message: { content: assistantText ?? assistantDelta ?? '' },
                 usage: nestedData.usage ?? payload.usage,
@@ -1221,9 +1515,8 @@ export function useGatewayWs(): UseGatewayWsReturn {
           ) {
             const content = nestedData.content ?? nestedData.message ?? payload.data
             handleChatEvent({
-              state: streamState,
-              sessionKey:
-                pickText(payload.sessionKey, nestedData.sessionKey, sessionKeyRef.current) || '',
+              state: streamState as ChatEventPayload['state'],
+              sessionKey: pickText(payload.sessionKey, nestedData.sessionKey) || '',
               runId: pickText(payload.runId, nestedData.runId) || nextId('agent'),
               message: { content: content as string | ContentBlock[] },
               usage: nestedData.usage ?? payload.usage,

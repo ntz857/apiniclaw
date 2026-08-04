@@ -723,6 +723,17 @@ declare global {
       showSaveDialog: (opts: Electron.SaveDialogOptions) => Promise<Electron.SaveDialogReturnValue>
     }
 
+    /** 文件系统（受限：仅用户选定的另存路径） */
+    fs: {
+      saveAs: (opts: {
+        defaultPath?: string
+        filters?: { name: string; extensions: string[] }[]
+        title?: string
+        sourcePath?: string
+        dataBase64?: string
+      }) => Promise<{ canceled: true } | { canceled: false; filePath: string }>
+    }
+
     /** Skill 市场管理 */
     skill: {
       /** 列出所有已注册的 skill 市场 */

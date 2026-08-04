@@ -160,18 +160,27 @@ export class GatewayProcess {
       this.token = resolveGatewayToken()
       log.info('[startup] phase=auth done')
 
-      // 获取 Runtime
+      // 获取 Runtime / 统一 openclaw 解析（优先系统 2026.7）
       log.info('[startup] phase=runtime begin')
+      const { getOpenclawSpawnSpec } = await import('../services/openclaw-resolve')
+      const spec = getOpenclawSpawnSpec([
+        'gateway',
+        'run',
+        '--port',
+        String(this.port),
+        '--bind',
+        DEFAULT_BIND,
+        '--force',
+      ])
       const runtime = getRuntime()
-      const gatewayCwd = runtime.getGatewayCwd()
       const runtimeEnv = runtime.getEnv()
       log.info('[startup] phase=runtime done')
 
       // 世代递增
       const gen = ++this.generation
 
-      const nodeBin = runtime.getNodePath()
-      const gatewayEntry = runtime.getGatewayEntry()
+      const nodeBin = spec.command
+      const gatewayEntry = spec.entryPath
 
       if (!existsSync(nodeBin)) {
         throw new Error(`node binary not found: ${nodeBin}`)
@@ -180,36 +189,29 @@ export class GatewayProcess {
         throw new Error(`gateway entry not found: ${gatewayEntry}`)
       }
 
-      const args = [
-        gatewayEntry,
-        'gateway',
-        'run',
-        '--port',
-        String(this.port),
-        '--bind',
-        DEFAULT_BIND,
-        '--force',
-      ]
+      const args = spec.args
 
       const env: Record<string, string | undefined> = {
         ...process.env,
         ...runtimeEnv,
+        ...spec.envExtra,
         ...buildProxyEnv(getSettings()),
         NODE_ENV: 'production',
-        OPENCLAW_NO_RESPAWN: '1',
-        OPENCLAW_LENIENT_CONFIG: '1',
         OPENCLAW_GATEWAY_TOKEN: this.token,
-        ELECTRON_RUN_AS_NODE: '1',
+      }
+      // 仅在用 Electron Helper 当 node 时需要
+      if (spec.source === 'bundled' && process.platform === 'darwin') {
+        env.ELECTRON_RUN_AS_NODE = '1'
       }
 
-      log.info('--- gateway start (bundled mode) ---')
+      log.info(`--- gateway start (source=${spec.source} v${spec.version}) ---`)
       log.info(`platform=${process.platform} arch=${process.arch}`)
       log.info(`nodeBin=${nodeBin}`)
       log.info(`entry=${gatewayEntry}`)
       log.info(`token=${maskToken(this.token)} port=${this.port}`)
 
       this.proc = spawn(nodeBin, args, {
-        cwd: gatewayCwd,
+        cwd: spec.cwd,
         env,
         stdio: ['ignore', 'pipe', 'pipe'],
         windowsHide: true,

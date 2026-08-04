@@ -11,16 +11,15 @@
  * 拒绝：本地 sidecar 忽略（openclaw 暂无 reject 命令）
  */
 
-import { spawn } from 'child_process'
 import { watch as fsWatch } from 'fs'
 import type { FSWatcher } from 'fs'
 import { join } from 'path'
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs'
 import { createLogger } from '../logger'
-import { getRuntime } from '../runtime'
 import { readConfig } from '../config'
 import { OPENCLAW_HOME, CLICKCLAW_HOME } from '../constants'
 import type { GatewayProcess } from '../gateway/process'
+import { runOpenclawCli } from './openclaw-resolve'
 
 const log = createLogger('pairing')
 
@@ -200,46 +199,8 @@ function getPairingChannels(): string[] {
 
 // ========== CLI 执行（仅用于 approve）==========
 
-interface CliResult {
-  code: number
-  stdout: string
-  stderr: string
-}
-
-async function runOpenclawCli(args: string[]): Promise<CliResult> {
-  const runtime = getRuntime()
-  if (!runtime) throw new Error('Runtime not initialized')
-
-  const cwd = runtime.getGatewayCwd()
-  const cmd = runtime.getNodePath()
-  const cmdArgs = [runtime.getGatewayEntry(), ...args]
-
-  return new Promise((resolve, reject) => {
-    const child = spawn(cmd, cmdArgs, {
-      cwd,
-      env: {
-        ...process.env,
-        ...runtime.getEnv(),
-        OPENCLAW_NO_RESPAWN: '1',
-        FORCE_COLOR: '0',
-      },
-      stdio: ['ignore', 'pipe', 'pipe'],
-      windowsHide: true,
-    })
-
-    let stdout = ''
-    let stderr = ''
-    child.stdout?.on('data', (chunk: Buffer) => {
-      stdout += chunk.toString()
-    })
-    child.stderr?.on('data', (chunk: Buffer) => {
-      stderr += chunk.toString()
-    })
-    child.on('error', reject)
-    child.on('close', (exitCode) => {
-      resolve({ code: typeof exitCode === 'number' ? exitCode : -1, stdout, stderr })
-    })
-  })
+function isApproveSuccessText(text: string): boolean {
+  return /\bApproved\b/i.test(text) || /已批准|审批成功|配对成功/.test(text)
 }
 
 export async function approvePairingRequest(
@@ -247,11 +208,24 @@ export async function approvePairingRequest(
   code: string
 ): Promise<PairingApproveResult> {
   try {
-    const result = await runOpenclawCli(['pairing', 'approve', channel, code, '--notify'])
-    if (result.code === 0) return { success: true }
+    // 统一走 openclaw-resolve（系统 npm 优先，与 Gateway 同版本）
+    // 不带 --notify：飞书可能不支持 pairing 通知
+    const result = await runOpenclawCli(['pairing', 'approve', channel, code])
+    const combined = `${result.stdout}\n${result.stderr}`.trim()
+    log.debug(`[pairing] approve via ${result.source}: exit=${result.code}`)
+
+    if (result.code === 0 || isApproveSuccessText(combined)) {
+      try {
+        await runOpenclawCli(['pairing', 'approve', channel, code, '--notify'])
+      } catch {
+        /* notify best-effort */
+      }
+      return { success: true }
+    }
+
     return {
       success: false,
-      message: `exit ${result.code}: ${(result.stderr || result.stdout).trim().slice(0, 200)}`,
+      message: `exit ${result.code}: ${combined.slice(0, 300)}`,
     }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)

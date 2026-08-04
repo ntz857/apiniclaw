@@ -97,10 +97,32 @@ export function buildTokenInjectionScript(port: number, token: string): string {
 }
 
 /**
- * 构建标准 Ed25519 connect 握手帧（v3 签名协议）
+ * Gateway WebSocket 协议协商范围
  *
- * payload 格式（与 Gateway 服务端 buildDeviceAuthPayload 完全一致）：
+ * - OpenClaw ≤2026.3.x 期望 protocol=3（校验：max>=3 && min<=3）
+ * - OpenClaw ≥2026.4/2026.7 期望 protocol=4（校验：max>=4 && min<=4）
+ * 发送 [3,4] 可同时兼容新旧 Gateway；设备签名 payload 仍为 v3 格式。
+ */
+export const GATEWAY_PROTOCOL_MIN = 3
+export const GATEWAY_PROTOCOL_MAX = 4
+
+/** Control UI / 桌面端声明的 operator 权限集合 */
+export const OPERATOR_SCOPES = [
+  'operator.admin',
+  'operator.approvals',
+  'operator.pairing',
+  'operator.read',
+  'operator.talk.secrets',
+  'operator.write',
+] as const
+
+/**
+ * 构建标准 Ed25519 connect 握手帧
+ *
+ * 设备签名 payload 格式（与 Gateway 服务端 buildDeviceAuthPayloadV3 一致）：
  * v3|deviceId|clientId|clientMode|role|scopes|signedAt|token|nonce|platform|deviceFamily
+ *
+ * 线协议版本由 minProtocol/maxProtocol 协商（当前 3–4），与签名 payload 的 v3 前缀无关。
  *
  * - 优先复用已存储的 deviceToken，无需重签
  * - 不存在 deviceToken 时，使用 gatewayToken 作为 auth.token 并进行设备签名
@@ -114,13 +136,7 @@ export function buildConnectFrame(nonce: string): object {
   const clientVersion = resolveClientVersion()
 
   const role = 'operator'
-  const scopes = [
-    'operator.admin',
-    'operator.approvals',
-    'operator.pairing',
-    'operator.read',
-    'operator.write',
-  ]
+  const scopes = [...OPERATOR_SCOPES]
   const signedAtMs = Date.now()
   const deviceFamily = 'desktop'
   // Node.js process.platform 用 win32/darwin，Gateway 期望 windows/macos/linux
@@ -151,8 +167,8 @@ export function buildConnectFrame(nonce: string): object {
     id,
     method: 'connect',
     params: {
-      minProtocol: 3,
-      maxProtocol: 3,
+      minProtocol: GATEWAY_PROTOCOL_MIN,
+      maxProtocol: GATEWAY_PROTOCOL_MAX,
       client: {
         id: 'openclaw-control-ui', // GATEWAY_CLIENT_IDS 枚举值，Gateway 侧硬校验
         version: clientVersion,

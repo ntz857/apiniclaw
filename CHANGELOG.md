@@ -4,8 +4,24 @@
 
 ## [Unreleased]
 
-### Added
-- 暂无
+### Fixed
+- 实时聊天 WebSocket 握手兼容 OpenClaw **2026.7.x**：`connect` 协议协商由仅 `3` 扩展为 `minProtocol=3` / `maxProtocol=4`，修复对接新版 Gateway 时的 `protocol mismatch`（code 1002）与「未连接」状态。
+- 设备签名仍使用 Gateway 的 `buildDeviceAuthPayloadV3` 格式；线协议版本与签名 payload 前缀解耦。
+- 补充 `operator.talk.secrets` 等 operator scope，减少新版 Gateway 下部分 RPC 缺 scope 失败。
+- 握手失败重试：识别 `gateway token mismatch` / `token_mismatch`（不仅是 `TOKEN_MISMATCH`），自动清除过期 deviceToken 后重连。
+- 定时任务 `cron.add` / `cron.update` 对齐 OpenClaw 2026.7 schema：`agentId` 改到任务顶层；`payload` 仅保留 `kind`+`message`；补齐必填 `sessionTarget`/`wakeMode`。
+- 渠道保存时自动安装/启用对应 channel 插件（如飞书 `@openclaw/feishu`），避免「绑定成功但聊天无响应」（Gateway `no-channel-owner`）。
+- 配对审批改用系统/npm 全局 openclaw（与 Gateway 同版本），避免内置 2026.3 读 2026.7 配置报 `Config invalid`；`--notify` 改为尽力而为，不因飞书不支持通知而把审批标成失败。
+- **统一 OpenClaw 运行时解析**（`openclaw-resolve`）：Gateway 启动、Agent CLI、配对、渠道插件安装、备份、PATH wrapper 一律优先系统/npm openclaw，其次 `~/.clickclaw/gateway`，最后才回退安装包内置版本，消除 2026.3 / 2026.7 双轨。
+- **聊天消息串会话**：`handleChatEvent` 增加 `sessionKey`/`runId` 隔离；其它会话（如飞书）的流式事件不再写入当前打开的聊天；禁止 agent 事件用当前 session 回填 sessionKey；同步 messageCache。
+- **聊天内本地文件链接可点击打开**：Markdown 链接原先仅有 hover、点击走 `openExternal` 无效；现拦截本地路径并用 `shell.openPath` 打开；`app://local-file` 可读范围扩展到整个 `~/.openclaw`（含 workspace 产物）。
+- **聊天内 `MEDIA:` / 裸路径展示**：识别 OpenClaw 的 `MEDIA:C:\...` 指令与裸 Windows 路径；图片内嵌预览 + 可点文件名，避免只显示一行无法打开的灰色路径。
+
+## [0.3.3] - 2026-08-03
+
+### Fixed
+- Gateway 协议协商支持 OpenClaw 2026.3（protocol 3）与 2026.7（protocol 4）。
+- token mismatch 文案匹配与 operator scope 补全。
 
 ## [0.2.1] - 2026-03-22
 

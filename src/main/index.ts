@@ -123,7 +123,28 @@ function createWindow(): void {
   mainWindow.on('moved', saveBounds)
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
+    const target = details.url || ''
+    // 本地文件：用系统默认应用打开，而不是 openExternal（对 file/app 协议无效）
+    if (target.startsWith('app://local-file') || target.startsWith('file://')) {
+      try {
+        let fsPath = ''
+        if (target.startsWith('app://local-file')) {
+          const u = new URL(target)
+          fsPath = decodeURIComponent(u.searchParams.get('path') || '')
+        } else {
+          const u = new URL(target)
+          fsPath = decodeURIComponent(u.pathname || '')
+          if (/^\/[A-Za-z]:\//.test(fsPath)) fsPath = fsPath.slice(1)
+        }
+        if (fsPath) {
+          void shell.openPath(normalize(fsPath))
+        }
+      } catch (err) {
+        log.warn('open local path from windowOpen failed:', err)
+      }
+      return { action: 'deny' }
+    }
+    void shell.openExternal(target)
     return { action: 'deny' }
   })
 
@@ -172,11 +193,22 @@ if (!gotTheLock) {
       if (url.host === 'local-file') {
         const rawPath = url.searchParams.get('path')
         const decodedPath = rawPath ? decodeURIComponent(rawPath) : ''
+        // Windows：统一比较用小写；normalize 保留真实盘符路径
         const normalizedPath = normalize(decodedPath)
-        const mediaRoot = join(OPENCLAW_HOME, 'media')
+        const openclawRoot = normalize(OPENCLAW_HOME)
+        const mediaRoot = join(openclawRoot, 'media')
 
-        // 仅允许读取 ~/.openclaw/media 下的本地媒体，避免任意文件泄露
-        if (!decodedPath || !isAbsolute(normalizedPath) || !normalizedPath.startsWith(mediaRoot)) {
+        // 允许读取范围：
+        // 1) ~/.openclaw/media（历史媒体）
+        // 2) 整个 ~/.openclaw（workspace / agents 产物，agent 生成文件常见于此）
+        // 点击「打开文件」走 shell.openPath IPC，不经过此 handler。
+        const allowed =
+          decodedPath &&
+          isAbsolute(normalizedPath) &&
+          (normalizedPath.toLowerCase().startsWith(mediaRoot.toLowerCase()) ||
+            normalizedPath.toLowerCase().startsWith(openclawRoot.toLowerCase()))
+
+        if (!allowed) {
           log.warn('Blocked local-file request:', decodedPath)
           return new Response('Forbidden', { status: 403 })
         }

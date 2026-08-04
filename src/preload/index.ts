@@ -246,6 +246,18 @@ const api = {
       ipcRenderer.invoke('dialog:show-save', opts),
   },
 
+  fs: {
+    /** 另存为：复制本地文件或写入 base64 数据 */
+    saveAs: (opts: {
+      defaultPath?: string
+      filters?: { name: string; extensions: string[] }[]
+      title?: string
+      sourcePath?: string
+      dataBase64?: string
+    }): Promise<{ canceled: true } | { canceled: false; filePath: string }> =>
+      ipcRenderer.invoke('fs:save-as', opts),
+  },
+
   skill: {
     listMarketplaces: (): Promise<unknown> => ipcRenderer.invoke('skill:list-marketplaces'),
     search: (marketplaceId: string, query: string, opts?: { limit?: number }): Promise<unknown> =>

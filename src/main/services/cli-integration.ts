@@ -24,11 +24,10 @@ import {
   IS_WIN,
   CLICKCLAW_HOME,
   resolveAppDataDir,
-  resolveBundledNodeBin,
-  resolveBundledGatewayEntry,
   resolveBundledClawhubEntry,
 } from '../constants'
 import { createLogger } from '../logger'
+import { resolveOpenclawLaunch } from './openclaw-resolve'
 
 const log = createLogger('cli')
 
@@ -322,11 +321,13 @@ export function installCli(): void {
   const binDir = resolveBinDir()
   const wrapperPath = resolveWrapperPath()
   const clawhubWrapperPath = resolveClawhubWrapperPath()
-  const nodeBin = resolveBundledNodeBin()
-  const gatewayEntry = resolveBundledGatewayEntry()
+  // 优先系统/npm openclaw，与 Gateway 同版本；避免 wrapper 指向安装包内 2026.3
+  const launch = resolveOpenclawLaunch()
+  const nodeBin = launch.nodePath
+  const gatewayEntry = launch.entryPath
   const clawhubEntry = resolveBundledClawhubEntry()
 
-  log.info(`安装 CLI wrapper`)
+  log.info(`安装 CLI wrapper (openclaw source=${launch.source} v${launch.version})`)
   log.info(`  bin 目录:       ${binDir}`)
   log.info(`  openclaw:       ${wrapperPath}`)
   log.info(`  clawhub:        ${clawhubWrapperPath}`)
