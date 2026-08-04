@@ -252,32 +252,42 @@ npm run dev
 
 ## Contributing
 
-Contributions of all kinds are welcome — bug fixes, features, docs, translations.
+Bug fixes, features, docs, and translations are welcome.
 
-1. Fork the repository
+1. Fork https://github.com/ntz857/clickclaw
 2. Create a feature branch (`git checkout -b feature/xxx`)
 3. Commit your changes
-4. Create a Pull Request
+4. Open a Pull Request against **this** repository
 
-> Guidelines: Follow ESLint + Prettier code style, all UI text must use i18n, new features need tests.
+> Style: ESLint + Prettier; UI strings via i18n; tests when practical.
+
+Optional: track upstream
+
+```bash
+git remote add upstream https://github.com/clickclaw/clickclaw.git
+git fetch upstream
+```
 
 ---
 
 ## Acknowledgements
 
+- [Original ClickClaw](https://github.com/clickclaw/clickclaw) — desktop app foundation
 - [OpenClaw](https://github.com/OpenClaw) — AI agent runtime
-- [Electron](https://www.electronjs.org/) — Cross-platform desktop framework
+- [Electron](https://www.electronjs.org/) — cross-platform desktop framework
 - [React](https://react.dev/) — UI library
-- [Ant Design](https://ant.design/) — Enterprise UI design system
+- [Ant Design](https://ant.design/) / [Ant Design X](https://x.ant.design/) — UI and chat components
 
 ---
 
 ## License
 
-ClickClaw is released under the [GPL-3.0 License](LICENSE).
+Released under [AGPL-3.0](LICENSE) (see root `LICENSE`).  
+Derived from [clickclaw/clickclaw](https://github.com/clickclaw/clickclaw). If you distribute binaries or offer the software as a network service, comply with AGPL obligations (including providing corresponding source).
 
 ---
 
 <p align="center">
-  <sub>ClickClaw — Click to deploy OpenClaw</sub>
+  <sub>ClickClaw community fork — OpenClaw desktop manager</sub><br/>
+  <sub><a href="https://github.com/ntz857/clickclaw">ntz857/clickclaw</a></sub>
 </p>
