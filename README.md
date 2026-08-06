@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="src/renderer/src/assets/logo.svg" width="128" height="128" alt="ApiniClaw Logo" />
+  <img src="src/renderer/src/assets/logo.svg" width="160" height="160" alt="ApiniClaw Logo" />
 </p>
 
 <h1 align="center">ApiniClaw</h1>

@@ -8,7 +8,7 @@ import {
 } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import type { SetupData } from './SetupPage'
-import logoSvg from '../../assets/logo.png'
+import logo from '../../assets/logo.png'
 
 const { Title, Paragraph, Text } = Typography
 
@@ -113,7 +113,7 @@ function StepWelcome({ data, updateData, onNext }: Props): React.ReactElement {
     <div style={{ textAlign: 'center', maxWidth: 520, width: '100%' }}>
       {/* Logo */}
       <img
-        src={logoSvg}
+        src={logo}
         alt="ApiniClaw"
         style={{ width: 96, height: 96, marginBottom: 16, borderRadius: 16 }}
       />

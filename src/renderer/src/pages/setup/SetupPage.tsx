@@ -9,7 +9,7 @@ import StepChannel from './StepChannel'
 import StepConfirm from './StepConfirm'
 import StepLaunch from './StepLaunch'
 import SetupActionBar from './SetupActionBar'
-import logoSvg from '../../assets/logo.png'
+import logo from '../../assets/logo.png'
 import LanguageSelect from '../../components/LanguageSelect'
 import AppVersion from '../../components/AppVersion'
 
@@ -105,7 +105,7 @@ function SetupPage(): React.ReactElement {
         {/* Logo + 品牌名 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 40 }}>
           <img
-            src={logoSvg}
+            src={logo}
             alt="ApiniClaw"
             style={{ width: 28, height: 28, borderRadius: 6 }}
           />
