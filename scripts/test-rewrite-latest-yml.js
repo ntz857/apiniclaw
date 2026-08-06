@@ -37,9 +37,9 @@ function runFixtureTest() {
   const before = [
     "version: 0.1.0",
     "files:",
-    "  - url: ClickClaw-Setup-0.1.0-x64.exe",
-    "  - url: ClickClaw-Setup-0.1.0-arm64.exe",
-    "path: ClickClaw-Setup-0.1.0-x64.exe",
+    "  - url: ApiniClaw-Setup-0.1.0-x64.exe",
+    "  - url: ApiniClaw-Setup-0.1.0-arm64.exe",
+    "path: ApiniClaw-Setup-0.1.0-x64.exe",
     "releaseDate: '2026-03-18T11:44:42.922Z'",
     "",
   ].join("\n");
@@ -48,17 +48,17 @@ function runFixtureTest() {
 
   assertContains(
     after,
-    "  - url: 0.1.0/ClickClaw-Setup-0.1.0-x64.exe",
+    "  - url: 0.1.0/ApiniClaw-Setup-0.1.0-x64.exe",
     "支持重写列表字段 - url"
   );
   assertContains(
     after,
-    "  - url: 0.1.0/ClickClaw-Setup-0.1.0-arm64.exe",
+    "  - url: 0.1.0/ApiniClaw-Setup-0.1.0-arm64.exe",
     "支持重写列表字段 - url（arm64）"
   );
   assertContains(
     after,
-    "path: 0.1.0/ClickClaw-Setup-0.1.0-x64.exe",
+    "path: 0.1.0/ApiniClaw-Setup-0.1.0-x64.exe",
     "支持重写顶层 path"
   );
 }

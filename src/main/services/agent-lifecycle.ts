@@ -127,7 +127,7 @@ export async function createAgentViaCli(
     throw new Error('创建智能体失败：未返回 agentId')
   }
 
-  // 用 ClickClaw 现有补丁能力补齐 identity/tools/theme 等字段
+  // 用 ApiniClaw 现有补丁能力补齐 identity/tools/theme 等字段
   return saveAgent({ ...agent, id: createdId })
 }
 

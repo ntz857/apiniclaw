@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="src/renderer/src/assets/logo.svg" width="128" height="128" alt="ClickClaw Logo" />
+  <img src="src/renderer/src/assets/logo.svg" width="128" height="128" alt="ApiniClaw Logo" />
 </p>
 
-<h1 align="center">ClickClaw</h1>
+<h1 align="center">ApiniClaw</h1>
 
 <p align="center">
   <strong>One-click OpenClaw deployment for everyone</strong><br/>
@@ -23,39 +23,33 @@
 </p>
 
 <p align="center">
-  <strong>This repository (community fork)</strong>:
-  <a href="https://github.com/ntz857/clickclaw">github.com/ntz857/clickclaw</a><br/>
-  Upstream:
-  <a href="https://github.com/clickclaw/clickclaw">clickclaw/clickclaw</a>
-  · Site (reference):
+  <strong>Repository</strong>:
+  <a href="https://github.com/ntz857/apiniclaw">github.com/ntz857/apiniclaw</a>
+  · Site:
   <a href="https://www.apiniclaw.com">www.apiniclaw.com</a>
 </p>
 
 ---
 
-## About this fork
+## About this project
 
-This is a **community-maintained fork** of [ClickClaw](https://github.com/clickclaw/clickclaw).
+**ApiniClaw** is an OpenClaw desktop manager for non-technical users (AGPL-3.0). This repository keeps pace with **newer OpenClaw Gateway versions (e.g. 2026.7+)** and improves chat / channel UX.
 
-While upstream desktop releases have slowed, this fork keeps working against **newer OpenClaw Gateway versions (e.g. 2026.7+)** and improves chat / channel UX. License remains **AGPL-3.0** (see root `LICENSE`).
-
-**Notable changes vs upstream include:**
+**Highlights:**
 
 - Gateway runtime resolution and protocol handshake aligned with system OpenClaw
 - Chat: local `MEDIA:` paths and image preview/save; Mermaid / LaTeX
 - Channel message display: Feishu-style envelope stripping, reply quotes, `media:document` file cards
 - MessagePresentation card preview (limited desktop interactions)
-- Cron / payload fixes and verification helpers
-
-> For official binaries and product site, prefer [upstream](https://github.com/clickclaw/clickclaw). This fork focuses on source maintenance and self-built packages.
+- Full Chinese agent presets, cron / payload fixes
 
 ---
 
-## What is ClickClaw
+## What is ApiniClaw
 
 [OpenClaw](https://github.com/OpenClaw) is a powerful AI agent framework, but its installation and configuration can be challenging — requiring Node.js, command-line operations, and manual JSON editing.
 
-**ClickClaw** exists to eliminate that barrier. It wraps the entire deployment process into a visual desktop app, bundling Node.js 22 + OpenClaw runtime, so anyone can have their own AI assistant up and running in minutes.
+**ApiniClaw** exists to eliminate that barrier. It wraps the entire deployment process into a visual desktop app, bundling Node.js 22 + OpenClaw runtime, so anyone can have their own AI assistant up and running in minutes.
 
 **Core features:**
 
@@ -184,7 +178,7 @@ Language switch, proxy config, auto-update (desktop + engine), live logs, smart 
 
 ### Download
 
-Grab the installer for your platform from [Releases](https://github.com/clickclaw/clickclaw/releases):
+Grab the installer for your platform from [Releases](https://github.com/ntz857/apiniclaw/releases):
 
 | Platform | Architectures |
 |----------|--------------|
@@ -193,9 +187,9 @@ Grab the installer for your platform from [Releases](https://github.com/clickcla
 
 ### Uninstall & Data Directories
 
-- On Windows uninstall, a checkbox is shown: `Delete ClickClaw local data (~/.clickclaw)` (unchecked by default)
-- If unchecked, only the app is removed and `~/.clickclaw` is kept
-- `~/.openclaw` (OpenClaw config and credentials) is always preserved and is never deleted by ClickClaw uninstall
+- On Windows uninstall, a checkbox is shown: `Delete ApiniClaw local data (~/.apiniclaw)` (unchecked by default)
+- If unchecked, only the app is removed and `~/.apiniclaw` is kept
+- `~/.openclaw` (OpenClaw config and credentials) is always preserved and is never deleted by ApiniClaw uninstall
 
 ### First Launch
 
@@ -219,8 +213,8 @@ The Setup Wizard guides you through all configuration:
 ### Development
 
 ```bash
-git clone https://github.com/ntz857/clickclaw.git
-cd clickclaw
+git clone https://github.com/ntz857/apiniclaw.git
+cd apiniclaw
 npm install
 npm run dev
 ```
@@ -254,40 +248,33 @@ npm run dev
 
 Bug fixes, features, docs, and translations are welcome.
 
-1. Fork https://github.com/ntz857/clickclaw
+1. Fork https://github.com/ntz857/apiniclaw
 2. Create a feature branch (`git checkout -b feature/xxx`)
 3. Commit your changes
 4. Open a Pull Request against **this** repository
 
 > Style: ESLint + Prettier; UI strings via i18n; tests when practical.
 
-Optional: track upstream
-
-```bash
-git remote add upstream https://github.com/clickclaw/clickclaw.git
-git fetch upstream
-```
-
 ---
 
 ## Acknowledgements
 
-- [Original ClickClaw](https://github.com/clickclaw/clickclaw) — desktop app foundation
 - [OpenClaw](https://github.com/OpenClaw) — AI agent runtime
 - [Electron](https://www.electronjs.org/) — cross-platform desktop framework
 - [React](https://react.dev/) — UI library
 - [Ant Design](https://ant.design/) / [Ant Design X](https://x.ant.design/) — UI and chat components
+- Community contributors and earlier desktop client work
 
 ---
 
 ## License
 
 Released under [AGPL-3.0](LICENSE) (see root `LICENSE`).  
-Derived from [clickclaw/clickclaw](https://github.com/clickclaw/clickclaw). If you distribute binaries or offer the software as a network service, comply with AGPL obligations (including providing corresponding source).
+If you distribute binaries or offer the software as a network service, comply with AGPL obligations (including providing corresponding source).
 
 ---
 
 <p align="center">
-  <sub>ClickClaw community fork — OpenClaw desktop manager</sub><br/>
-  <sub><a href="https://github.com/ntz857/clickclaw">ntz857/clickclaw</a></sub>
+  <sub>ApiniClaw — OpenClaw desktop manager</sub><br/>
+  <sub><a href="https://github.com/ntz857/apiniclaw">ntz857/apiniclaw</a></sub>
 </p>

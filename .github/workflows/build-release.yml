@@ -354,7 +354,7 @@ jobs:
         env:
           VERSION: ${{ steps.version.outputs.version }}
           # 可选：若设置该变量，则 latest 中写完整 URL；否则写相对路径（版本号/文件名）
-          # 例如: https://update.clickclaw.cn
+          # 例如: https://update.apiniclaw.com
           R2_PUBLIC_BASE_URL: ${{ vars.R2_PUBLIC_BASE_URL }}
         run: |
           node <<'NODE'

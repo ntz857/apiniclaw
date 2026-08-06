@@ -1,7 +1,7 @@
 /**
  * OpenClaw MessagePresentation / InteractiveReply 解析与展示辅助。
  *
- * 渠道（飞书等）真实卡片由插件转成飞书 schema；ClickClaw 桌面聊天线拿到的是
+ * 渠道（飞书等）真实卡片由插件转成飞书 schema；ApiniClaw 桌面聊天线拿到的是
  * 便携 presentation（tool 参数 / 偶发 JSON），先做可读渲染 + 有限交互。
  */
 

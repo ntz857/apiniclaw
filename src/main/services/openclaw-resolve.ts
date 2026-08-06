@@ -3,8 +3,8 @@
  *
  * 优先级（与「正在跑的 Gateway 应尽量同版本」一致）：
  *   1. 系统/npm 全局 openclaw（如 2026.7.x）
- *   2. 用户升级目录 ~/.clickclaw/gateway/...
- *   3. ClickClaw 安装包内置 openclaw（可能偏旧，如 2026.3.x）
+ *   2. 用户升级目录 ~/.apiniclaw/gateway/...
+ *   3. ApiniClaw 安装包内置 openclaw（可能偏旧，如 2026.3.x）
  *
  * 所有 CLI / Gateway spawn 应优先走本模块，避免双轨版本导致 Config invalid、协议不兼容。
  */
@@ -15,7 +15,7 @@ import { join } from 'path'
 import { promisify } from 'util'
 import { createLogger } from '../logger'
 import {
-  CLICKCLAW_GATEWAY_DIR,
+  APINICLAW_GATEWAY_DIR,
   IS_WIN,
   resolveBundledGatewayCwd,
   resolveBundledGatewayEntry,
@@ -102,7 +102,7 @@ function resolveSystemOpenclawEntry(): { entry: string; cwd: string } | null {
 }
 
 function resolveUserOpenclawEntry(): { entry: string; cwd: string } | null {
-  const cwd = join(CLICKCLAW_GATEWAY_DIR, 'node_modules', 'openclaw')
+  const cwd = join(APINICLAW_GATEWAY_DIR, 'node_modules', 'openclaw')
   const entry = join(cwd, 'openclaw.mjs')
   if (existsSync(entry)) return { entry, cwd }
   return null

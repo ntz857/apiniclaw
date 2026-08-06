@@ -1,6 +1,6 @@
 export const app = {
-  getPath: (): string => '/tmp/clickclaw-test',
-  getAppPath: (): string => '/tmp/clickclaw-test-app',
+  getPath: (): string => '/tmp/apiniclaw-test',
+  getAppPath: (): string => '/tmp/apiniclaw-test-app',
   isPackaged: false,
   getVersion: (): string => '2026.3.9',
 }

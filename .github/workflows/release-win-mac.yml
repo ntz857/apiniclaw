@@ -212,7 +212,7 @@ jobs:
           cp release/dist-win-x64/ApiniClaw-Setup-*.exe release/final/
           cp release/dist-win-x64/latest.yml release/final/
 
-          # macOS: both arches (filenames include arch, e.g. ClickClaw-0.3.3-arm64.dmg / -x64.dmg)
+          # macOS: both arches (filenames include arch, e.g. ApiniClaw-0.3.3-arm64.dmg / -x64.dmg)
           cp release/dist-mac-arm64/ApiniClaw-*.dmg release/final/
           cp release/dist-mac-arm64/ApiniClaw-*.zip release/final/
           cp release/dist-mac-x64/ApiniClaw-*.dmg release/final/

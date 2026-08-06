@@ -339,7 +339,7 @@ export function registerIpcHandlers(): void {
       // 写入必要的 Gateway 配置：
       // - mode: 'local' — openclaw 要求必须显式设置，否则拒绝启动
       // - allowInsecureAuth: true — 跳过 Ed25519 设备签名，仅凭 token 认证
-      // - allowedOrigins: ["app://localhost"] — 仅允许 ClickClaw 自定义协议页面连接
+      // - allowedOrigins: ["app://localhost"] — 仅允许 ApiniClaw 自定义协议页面连接
       //   （打包后 renderer 通过 app:// 协议加载，Origin 头为 "app://localhost"）
       configUpdate.gateway = {
         mode: 'local',
@@ -563,7 +563,7 @@ export function registerIpcHandlers(): void {
     setLaunchAtLoginEnabled(enabled)
   })
 
-  // ========== 自动更新（ClickClaw 本体） ==========
+  // ========== 自动更新（ApiniClaw 本体） ==========
 
   ipcMain.handle('update:get-info', () => getUpdateInfo())
   ipcMain.handle('update:check', () => {
@@ -911,8 +911,8 @@ export function registerIpcHandlers(): void {
 
   // ========== Log ==========
 
-  // 读取 ClickClaw 日志文件（倒序，最多 1000 行）
-  ipcMain.handle('log:read-clickclaw', async () => {
+  // 读取 ApiniClaw 日志文件（倒序，最多 1000 行）
+  ipcMain.handle('log:read-apiniclaw', async () => {
     try {
       const logPath = resolveLogPath()
       if (!existsSync(logPath)) return []
@@ -963,7 +963,7 @@ export function registerIpcHandlers(): void {
     }
   })
 
-  // 渲染进程调试日志（统一写入 clickclaw.log，便于排查前端事件流）
+  // 渲染进程调试日志（统一写入 apiniclaw.log，便于排查前端事件流）
   ipcMain.handle(
     'log:write',
     (

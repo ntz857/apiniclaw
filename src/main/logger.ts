@@ -2,7 +2,7 @@
  * 全局日志管理器
  * 基于 electron-log，自动写入文件 + 控制台输出
  *
- * 日志文件位置：~/.clickclaw/logs/clickclaw.log（全平台统一）
+ * 日志文件位置：~/.apiniclaw/logs/apiniclaw.log（全平台统一）
  */
 
 import log from 'electron-log'

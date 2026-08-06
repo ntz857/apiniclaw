@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Alert, Button, Card, Col, Row, Skeleton, Tag, Typography } from 'antd'
-import { ApiOutlined, GithubOutlined, GlobalOutlined, LinkOutlined } from '@ant-design/icons'
+import { ApiOutlined, GithubOutlined, GlobalOutlined } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
-import { CLICKCLAW_API_BASE_URL, CLICKCLAW_DOCS_URL, CLICKCLAW_WEBSITE_URL } from '@shared/urls'
-import { getBrandLogo } from '../../assets/brand-logos'
+import { APINICLAW_API_BASE_URL, APINICLAW_DOCS_URL, APINICLAW_WEBSITE_URL } from '@shared/urls'
 import PageHeader from '../../components/PageHeader'
 
 interface AboutApiPayload {
@@ -42,7 +41,6 @@ const DEFAULT_GROUPS: CommunityGroup[] = []
 
 export default function AboutPage(): React.ReactElement {
   const { t } = useTranslation()
-  const atomgitLogo = getBrandLogo('atomgit')
   const [loading, setLoading] = useState(true)
   const [aboutPayload, setAboutPayload] = useState<AboutApiPayload | null>(null)
   const [communityGroups, setCommunityGroups] = useState<CommunityGroup[]>(DEFAULT_GROUPS)
@@ -53,10 +51,10 @@ export default function AboutPage(): React.ReactElement {
     const load = async (): Promise<void> => {
       try {
         const [aboutRes, channelsRes] = await Promise.allSettled([
-          fetch(`${CLICKCLAW_API_BASE_URL}/v1/about`, {
+          fetch(`${APINICLAW_API_BASE_URL}/v1/about`, {
             headers: { Accept: 'application/json' },
           }),
-          fetch(`${CLICKCLAW_API_BASE_URL}/v1/channels`, {
+          fetch(`${APINICLAW_API_BASE_URL}/v1/channels`, {
             headers: { Accept: 'application/json' },
           }),
         ])
@@ -97,9 +95,9 @@ export default function AboutPage(): React.ReactElement {
 
   const productName = aboutPayload?.about?.productName || 'ApiniClaw'
   const slogan = aboutPayload?.about?.slogan || t('aboutPage.defaultSlogan')
-  // 官网/文档固定为 ApiniClaw 域名，避免远程 about 配置覆盖为旧 clickclaw 域名
-  const website = CLICKCLAW_WEBSITE_URL
-  const docs = CLICKCLAW_DOCS_URL
+  // 官网/文档固定为 ApiniClaw 域名，避免远程 about 配置覆盖为旧域名
+  const website = APINICLAW_WEBSITE_URL
+  const docs = APINICLAW_DOCS_URL
 
   const announcement = useMemo(() => {
     const title = aboutPayload?.announcement?.title
@@ -154,30 +152,10 @@ export default function AboutPage(): React.ReactElement {
                 <Button
                   icon={<GithubOutlined />}
                   onClick={() =>
-                    window.api.shell.openExternal('https://github.com/clickclaw/clickclaw')
+                    window.api.shell.openExternal('https://github.com/ntz857/apiniclaw')
                   }
                 >
                   GitHub
-                </Button>
-              </Col>
-              <Col>
-                <Button
-                  icon={
-                    atomgitLogo ? (
-                      <img
-                        src={atomgitLogo}
-                        alt="atomgit-logo"
-                        style={{ width: 14, height: 14, objectFit: 'contain' }}
-                      />
-                    ) : (
-                      <LinkOutlined />
-                    )
-                  }
-                  onClick={() =>
-                    window.api.shell.openExternal('https://atomgit.com/clickclaw/clickclaw')
-                  }
-                >
-                  AtomGit
                 </Button>
               </Col>
             </Row>
@@ -260,30 +238,10 @@ export default function AboutPage(): React.ReactElement {
                 <Button
                   icon={<GithubOutlined />}
                   onClick={() =>
-                    window.api.shell.openExternal('https://github.com/clickclaw/clickclaw/issues')
+                    window.api.shell.openExternal('https://github.com/ntz857/apiniclaw/issues')
                   }
                 >
                   GitHub Issues
-                </Button>
-              </Col>
-              <Col>
-                <Button
-                  icon={
-                    atomgitLogo ? (
-                      <img
-                        src={atomgitLogo}
-                        alt="atomgit-logo"
-                        style={{ width: 14, height: 14, objectFit: 'contain' }}
-                      />
-                    ) : (
-                      <LinkOutlined />
-                    )
-                  }
-                  onClick={() =>
-                    window.api.shell.openExternal('https://atomgit.com/clickclaw/clickclaw/issues')
-                  }
-                >
-                  AtomGit Issues
                 </Button>
               </Col>
             </Row>

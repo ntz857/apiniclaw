@@ -16,11 +16,11 @@ const BIN_DIR = '/home/user/.openclaw/bin'
 
 describe('posixBuildRcBlock', () => {
   it('包含开始标记', () => {
-    expect(posixBuildRcBlock(BIN_DIR)).toContain('# >>> clickclaw-cli >>>')
+    expect(posixBuildRcBlock(BIN_DIR)).toContain('# >>> apiniclaw-cli >>>')
   })
 
   it('包含结束标记', () => {
-    expect(posixBuildRcBlock(BIN_DIR)).toContain('# <<< clickclaw-cli <<<')
+    expect(posixBuildRcBlock(BIN_DIR)).toContain('# <<< apiniclaw-cli <<<')
   })
 
   it('包含 export PATH 并引用传入的 binDir', () => {
@@ -63,7 +63,7 @@ describe('posixStripRcBlock', () => {
     const content = prefix + block + '\n'
     const result = posixStripRcBlock(content)
     expect(result).toContain('export EDITOR=vim')
-    expect(result).not.toContain('clickclaw-cli')
+    expect(result).not.toContain('apiniclaw-cli')
   })
 
   it('块在文件开头时，删除块后后面的内容保留', () => {
@@ -72,7 +72,7 @@ describe('posixStripRcBlock', () => {
     const content = block + suffix
     const result = posixStripRcBlock(content)
     expect(result).toContain('export EDITOR=vim')
-    expect(result).not.toContain('clickclaw-cli')
+    expect(result).not.toContain('apiniclaw-cli')
   })
 
   it('块在文件中间时，前后内容均保留', () => {
@@ -83,7 +83,7 @@ describe('posixStripRcBlock', () => {
     const result = posixStripRcBlock(content)
     expect(result).toContain('export FOO=bar')
     expect(result).toContain('export BAZ=qux')
-    expect(result).not.toContain('clickclaw-cli')
+    expect(result).not.toContain('apiniclaw-cli')
   })
 
   it('幂等：连续删除两次，结果与删除一次相同', () => {
@@ -97,12 +97,12 @@ describe('posixStripRcBlock', () => {
 
   it('删除后不含开始标记', () => {
     const content = 'line1\n' + posixBuildRcBlock(BIN_DIR) + '\nline2\n'
-    expect(posixStripRcBlock(content)).not.toContain('# >>> clickclaw-cli >>>')
+    expect(posixStripRcBlock(content)).not.toContain('# >>> apiniclaw-cli >>>')
   })
 
   it('删除后不含结束标记', () => {
     const content = 'line1\n' + posixBuildRcBlock(BIN_DIR) + '\nline2\n'
-    expect(posixStripRcBlock(content)).not.toContain('# <<< clickclaw-cli <<<')
+    expect(posixStripRcBlock(content)).not.toContain('# <<< apiniclaw-cli <<<')
   })
 })
 
@@ -133,6 +133,6 @@ describe('RC 块注入 → 清除 往返一致性', () => {
     // 最终清除
     const result = posixStripRcBlock(afterSecond)
     expect(result.trim()).toBe(original.trim())
-    expect(result).not.toContain('clickclaw-cli')
+    expect(result).not.toContain('apiniclaw-cli')
   })
 })

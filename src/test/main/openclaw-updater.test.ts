@@ -20,7 +20,7 @@ vi.mock('fs', () => ({
 }))
 
 vi.mock('../../main/constants', () => ({
-  CLICKCLAW_GATEWAY_DIR: '/tmp/clickclaw/gateway',
+  APINICLAW_GATEWAY_DIR: '/tmp/apiniclaw/gateway',
   CONFIG_PATH: '/tmp/openclaw/openclaw.json',
   resolveBundledNodeBin: (): string => '/tmp/runtime/node',
   resolveBundledNpmBin: (): string => '/tmp/runtime/npm-cli.js',
@@ -65,7 +65,7 @@ describe('openclaw updater bundled weixin helpers', () => {
           },
         },
       },
-      { source: 'auto', summary: '启用内置微信插件' }
+      { source: 'auto', summary: '启用内置微信插件' },
     )
   })
 
@@ -90,14 +90,19 @@ describe('openclaw updater bundled weixin helpers', () => {
   })
 
   it('状态查询会同时返回 bundled、用户目录和 enabled 状态', async () => {
-    existsSyncMock.mockImplementation(
-      (file: string) =>
-        file === '/tmp/openclaw/openclaw.json' ||
-        file ===
-          '/tmp/resources/gateway/node_modules/openclaw/extensions/openclaw-weixin/openclaw.plugin.json' ||
-        file ===
-          '/tmp/clickclaw/gateway/node_modules/openclaw/extensions/openclaw-weixin/openclaw.plugin.json'
-    )
+    existsSyncMock.mockImplementation((file: string) => {
+      const n = String(file).replace(/\\/g, '/')
+      return (
+        n.includes('/tmp/openclaw/openclaw.json') ||
+        n.endsWith('openclaw/openclaw.json') ||
+        n.includes(
+          'resources/gateway/node_modules/openclaw/extensions/openclaw-weixin/openclaw.plugin.json',
+        ) ||
+        n.includes(
+          'apiniclaw/gateway/node_modules/openclaw/extensions/openclaw-weixin/openclaw.plugin.json',
+        )
+      )
+    })
     readConfigMock.mockReturnValue({
       plugins: {
         entries: {

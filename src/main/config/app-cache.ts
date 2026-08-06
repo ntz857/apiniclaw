@@ -1,7 +1,7 @@
 /**
- * ClickClaw 本地缓存管理
+ * ApiniClaw 本地缓存管理
  *
- * 文件位置：~/.clickclaw/
+ * 文件位置：~/.apiniclaw/
  *   app-state.json     — UI 状态持久化（侧栏折叠、窗口尺寸）
  *
  * 设计原则：
@@ -12,7 +12,7 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { dirname } from 'path'
-import { CLICKCLAW_HOME, APP_STATE_PATH, SKILL_VET_CACHE_PATH } from '../constants'
+import { APINICLAW_HOME, APP_STATE_PATH, SKILL_VET_CACHE_PATH } from '../constants'
 import { createLogger } from '../logger'
 
 const log = createLogger('app-cache')
@@ -22,7 +22,7 @@ const log = createLogger('app-cache')
 /** app-state.json 的结构 */
 export interface AppState {
   schemaVersion: number
-  /** 是否已完成 ClickClaw 首次初始化（独立于 OpenClaw 配置探测） */
+  /** 是否已完成 ApiniClaw 首次初始化（独立于 OpenClaw 配置探测） */
   setupCompleted?: boolean
   /** 侧栏折叠状态 */
   sidebarCollapsed: boolean
@@ -140,7 +140,7 @@ export function saveAppState(patch: Partial<Omit<AppState, 'schemaVersion'>>): v
 }
 
 // ========== 导出目录路径供外部使用 ==========
-export { CLICKCLAW_HOME }
+export { APINICLAW_HOME }
 
 // ========== Skill 安全审查设置 ==========
 

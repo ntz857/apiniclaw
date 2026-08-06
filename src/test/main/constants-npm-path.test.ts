@@ -10,7 +10,7 @@ vi.mock('electron', () => ({
   app: {
     isPackaged: false,
     getAppPath: (): string => '/app',
-    getPath: (): string => '/tmp/clickclaw-test',
+    getPath: (): string => '/tmp/apiniclaw-test',
   },
 }))
 

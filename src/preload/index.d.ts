@@ -455,7 +455,7 @@ declare global {
 
   // ========== API 定义 ==========
 
-  interface ClickClawAPI {
+  interface ApiniClawAPI {
     getVersion: () => Promise<string>
 
     /** 应用级操作 */
@@ -711,7 +711,7 @@ declare global {
 
     /** 日志读取 */
     log: {
-      readClickclaw: () => Promise<string[]>
+      readApiniclaw: () => Promise<string[]>
       getOpenclawLogPath: () => Promise<string>
       readOpenclaw: (opts?: { limit?: number; level?: string }) => Promise<OpenclawLogEntry[]>
       write: (entry: {
@@ -890,6 +890,6 @@ declare global {
 
   interface Window {
     electron: ElectronAPI
-    api: ClickClawAPI
+    api: ApiniClawAPI
   }
 }

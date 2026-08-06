@@ -5,7 +5,7 @@
  * 签名和生成安装包之前，将预构建的 Node.js + openclaw 资源注入到 app bundle。
  *
  * 目录结构（注入后）:
- *   macOS: ClickClaw.app/Contents/Resources/gateway/
+ *   macOS: ApiniClaw.app/Contents/Resources/gateway/
  *   Windows: resources/gateway/ + resources/runtime/
  *
  * macOS 不需要注入 runtime/node，因为打包模式下 constants.ts 直接复用
@@ -29,7 +29,7 @@ function resolveArchName(arch) {
 
 function resolveTargetId(context) {
   // 环境变量覆盖（调试/CI 场景）
-  const fromEnv = process.env.CLICKCLAW_TARGET;
+  const fromEnv = process.env.APINICLAW_TARGET;
   if (fromEnv) return fromEnv;
   const platform = context.electronPlatformName;
   const arch = resolveArchName(context.arch);
@@ -164,7 +164,7 @@ exports.default = async function afterPack(context) {
       appOutDir
     );
 
-    // 强制写入 exe 图标，避免任务栏仍显示旧 ClickClaw 图标
+    // 强制写入 exe 图标，避免任务栏仍显示旧 ApiniClaw 图标
     try {
       const productName = context.packager.appInfo.productFilename || "ApiniClaw";
       const exePath = path.join(appOutDir, `${productName}.exe`);

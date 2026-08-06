@@ -32,7 +32,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { dirname } from 'path'
 import { REMOTE_PRESETS_CACHE_PATH } from '../constants'
-import { CLICKCLAW_API_BASE_URL } from '../../shared/urls'
+import { APINICLAW_API_BASE_URL } from '../../shared/urls'
 import { PROVIDER_PRESETS } from '../config/provider-presets.data'
 import type { ProviderPreset } from '../config/provider-presets'
 import { createLogger } from '../logger'
@@ -44,7 +44,7 @@ const FETCH_TIMEOUT_MS = 8_000
 const SCHEMA_VERSION = 1
 
 /** 官方远程预设地址（开发者维护，用户不可修改） */
-const REMOTE_PRESETS_URL = `${CLICKCLAW_API_BASE_URL}/ai/provider.json`
+const REMOTE_PRESETS_URL = `${APINICLAW_API_BASE_URL}/ai/provider.json`
 
 /**
  * 本地强制品牌：远程预设不得覆盖这些 key（例如把 AIGC2D 换成万事屋）
@@ -164,7 +164,7 @@ export async function fetchAndCachePresets(): Promise<{ success: boolean; error?
     try {
       res = await proxyFetch(REMOTE_PRESETS_URL, {
         signal: controller.signal,
-        headers: { Accept: 'application/json', 'User-Agent': 'ClickClaw' },
+        headers: { Accept: 'application/json', 'User-Agent': 'ApiniClaw' },
       })
     } finally {
       clearTimeout(timer)

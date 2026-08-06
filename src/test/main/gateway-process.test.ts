@@ -91,7 +91,7 @@ describe('GatewayProcess', () => {
       getNodePath: () => '/tmp/node',
       getGatewayEntry: () => '/tmp/openclaw.mjs',
     })
-    resolveGatewayTokenMock.mockReturnValue('clickclaw-token')
+    resolveGatewayTokenMock.mockReturnValue('apiniclaw-token')
     readConfigMock.mockReturnValue({})
     getSettingsMock.mockReturnValue({})
     buildProxyEnvMock.mockReturnValue({})

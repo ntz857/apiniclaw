@@ -1,20 +1,53 @@
-# ClickClaw — 项目规则
+# ApiniClaw — 项目规则
 
 > 本文件是 AI 开发助手的持久记忆。每次打开项目时自动加载。
+>
+> **产品 / npm / 技术标识统一为 ApiniClaw / apiniclaw。**
 
 ---
 
 ## 产品信息
 
-- **产品名称：** ClickClaw（Click + Claw — "点击即装 OpenClaw"）
-- **包名 / App ID：** `cn.clickclaw.app`
-- **域名：** 官网 https://www.apiniclaw.com ；API https://api.apiniclaw.com ；文档 https://docs.apiniclaw.com ；更新 https://update.apiniclaw.com 
-- **版本策略：** ClickClaw 应用本体使用 semver `x.y.z`；内置 OpenClaw 版本继续沿用其上游日历版本
-- **目标平台：** macOS（arm64 + x64）、Windows（x64 + arm64）
+| 项 | 当前值 |
+|----|--------|
+| **产品名称** | ApiniClaw |
+| **npm name** | `apiniclaw` |
+| **App ID / AUMID** | `com.apiniclaw.app` |
+| **数据目录** | `~/.apiniclaw/`（日志 `apiniclaw.log`；用户 openclaw 升级目录 `~/.apiniclaw/gateway/`） |
+| **可执行文件** | Windows：`ApiniClaw.exe`；产物名：`ApiniClaw-Setup-*` / `ApiniClaw-*` |
+| **当前版本** | `0.3.4`（semver `x.y.z`） |
+| **OpenClaw** | 内置/打包资源沿用上游日历版本（如 `2026.7.x`）；与应用 semver 解耦 |
+| **目标平台** | macOS（arm64 + x64）、Windows（x64 + arm64） |
+| **Git 仓库** | https://github.com/ntz857/apiniclaw |
+| **许可证** | AGPL-3.0 |
+
+### 官方域名（唯一来源：`src/shared/urls.ts`）
+
+| 用途 | URL | 常量 |
+|------|-----|------|
+| 官网 | https://www.apiniclaw.com | `APINICLAW_WEBSITE_URL` |
+| API | https://api.apiniclaw.com | `APINICLAW_API_BASE_URL` |
+| 文档 | https://docs.apiniclaw.com | `APINICLAW_DOCS_URL` |
+| 自动更新 CDN | https://update.apiniclaw.com | `APINICLAW_UPDATE_BASE_URL` |
+
+技术标识一律使用 `APINICLAW_*` / `apiniclaw` / `~/.apiniclaw`。
+
+---
 
 ## 产品定位
 
-ClickClaw 是面向**小白用户**的 OpenClaw 桌面管理工具，内置 Node.js 22 + openclaw，零依赖安装即用。
+ApiniClaw 是面向**小白用户**的 OpenClaw 桌面管理工具：内置 Node.js + openclaw 运行时，零依赖安装即用。  
+核心能力：Gateway 管理、智能体/会话/模型/技能/定时任务/渠道接入、自动更新。
+
+### 智能体预设
+
+- 模板库来源：社区 [awesome-openclaw-agents](https://github.com/mergisi/awesome-openclaw-agents) 全量中文本地化（约 **196** 个）。
+- 数据文件：`src/renderer/src/pages/agents/agent-presets.data.ts`（由脚本生成，勿手改大段 SOUL）。
+- i18n：`agents.presets.items.*`（`zh-CN.json` / `en.json`）。
+- 重建流程：
+  1. `node scripts/translate-awesome-souls.mjs`（默认读 Reasonix `DEEPSEEK_API_KEY` → `https://api.deepseek.com/v1`，模型 `deepseek-chat`）
+  2. `node scripts/build-presets-from-zh.mjs`
+- 质检缓存：`.cache/awesome-souls/`（gitignore，勿提交）。
 
 ---
 
@@ -23,7 +56,7 @@ ClickClaw 是面向**小白用户**的 OpenClaw 桌面管理工具，内置 Node
 | 层级 | 技术 | 版本 |
 |------|------|------|
 | 桌面框架 | Electron | 40+ |
-| 构建工具 | electron-vite | 5 |
+| 构建工具 | electron-vite | 5 / 7.x |
 | 渲染层 | React + TypeScript | 19 / 5.9+ |
 | UI 组件库 | **Ant Design** | **6.x** |
 | 状态管理 | Zustand | 5 |
@@ -80,6 +113,13 @@ ClickClaw 是面向**小白用户**的 OpenClaw 桌面管理工具，内置 Node
 - Gateway 端口解析顺序：env `OPENCLAW_GATEWAY_PORT` > config `gateway.port` > 默认 `18789`
 - 内置 Provider 无需 `models.providers`，只需 `.env` 中设 auth 环境变量
 - Auth 凭证写入 `~/.openclaw/.env`，**不写入 openclaw.json**
+- **运行时解析**（`openclaw-resolve`）：优先系统/npm openclaw → `~/.apiniclaw/gateway` → 安装包内置
+
+### Gateway 协议
+
+- 需兼容 OpenClaw **2026.3（protocol 3）与 2026.7（protocol 4）**
+- WS `connect` 使用 `minProtocol=3` / `maxProtocol=4`
+- 设备签名与线协议版本解耦；token mismatch 需识别多种文案并清 token 重连
 
 ### Runtime 接口
 
@@ -105,23 +145,29 @@ interface OpenclawRuntime {
 ```
 src/
 ├── main/                  # Electron 主进程
-│   ├── index.ts           #   入口、生命周期、单实例锁
-│   ├── ipc-handlers.ts    #   IPC 注册中心（所有 handler）
-│   ├── config/            #   配置管理（JSON5 读写、.env、快照、预设）
-│   ├── gateway/           #   Gateway 进程管理 + 认证
-│   ├── runtime/           #   Runtime 抽象（System / Bundled）
-│   └── services/          #   业务服务（更新、CLI、Skills、扫码等）
-├── preload/               # contextBridge API（index.ts + index.d.ts）
-├── renderer/src/          # React 渲染层
-│   ├── App.tsx            #   路由 + Theme
-│   ├── MainLayout.tsx     #   侧边栏导航布局
-│   ├── contexts/          #   GatewayContext（全局 WS 状态）
-│   ├── hooks/             #   useGatewayWs（WebSocket 连接）
-│   ├── pages/             #   各页面（每个页面遵循模块化规范）
-│   ├── components/        #   通用组件
-│   └── i18n/              #   中英双语
-├── shared/                # 主进程与渲染层共享类型
-└── test/                  # Vitest 单元测试
+│   ├── index.ts
+│   ├── ipc-handlers.ts
+│   ├── config/
+│   ├── gateway/
+│   ├── runtime/
+│   └── services/
+├── preload/
+├── renderer/src/
+│   ├── App.tsx
+│   ├── layouts/
+│   ├── pages/agents/      # agent-presets.data.ts
+│   └── i18n/
+├── shared/                # urls.ts 等
+└── test/
+
+scripts/
+├── package-resources.js
+├── afterPack.js
+├── translate-awesome-souls.mjs
+├── build-presets-from-zh.mjs
+└── check-release-artifacts.js
+
+electron-builder.yml       # productName: ApiniClaw；appId: com.apiniclaw.app
 ```
 
 ---
@@ -129,75 +175,78 @@ src/
 ## 构建与运行
 
 ```bash
-npm run dev              # electron-vite 开发服务（热更新）
-npm run build:win        # Windows 完整打包
-npm run lint             # ESLint + TypeScript 类型检查
-npm run typecheck        # 仅 TypeScript 类型检查
-npm test                 # Vitest 单次运行
+npm run dev
+npm run build
+npm run build:win
+npm run build:unpack
+npm run lint
+npm run typecheck
+npm test
 ```
+
+### 本地固定路径打包
+
+```bash
+npm run build
+$env:CSC_IDENTITY_AUTO_DISCOVERY='false'
+npx electron-builder --dir --x64 --config.directories.output=dist-apini --config.win.signAndEditExecutable=false
+# dist-apini\win-unpacked\ApiniClaw.exe
+```
+
+`dist/`、`dist-apini*` 已 gitignore。
 
 ### 提交前检查（必须）
 
-- 每次提交 commit 前，必须先执行并通过：
-  - `npm run format:check`
-  - `npm run lint`
-- 任一命令失败时，不允许提交；需先修复后再提交。
+- `npm run format:check`
+- `npm run lint`
+
+### 发版
+
+1. bump `package.json` + `CHANGELOG.md`
+2. commit → tag `vX.Y.Z` → push
+3. GitHub Release；CI 上传 `ApiniClaw-*` 产物
+4. workflow：`Release packages (win + mac)`（`release-win-mac.yml`）
+
 ---
 
 ## 代码规范
 
-- TypeScript strict 模式
-- ESM 模块（renderer）/ CommonJS（main + preload，Electron 要求）
+- TypeScript strict
+- ESM（renderer）/ CommonJS（main + preload）
 - 中文注释优先
-- 组件文件名：PascalCase（如 `SetupPage.tsx`）
-- 工具/服务文件名：kebab-case（如 `gateway-process.ts`）
-- i18n key 格式：`page.section.label`（如 `setup.provider.title`）
-- 所有 UI 文本必须使用 i18n，不得硬编码中文/英文字符串到组件中
+- 组件 PascalCase；服务 kebab-case
+- i18n key：`page.section.label`；UI 文案禁止硬编码
+- 品牌与技术标识：`ApiniClaw` / `apiniclaw` / `APINICLAW_*`
 
-### 页面模块化规范
-
-页面拆分遵循统一模式（详见 `.rule/page-architecture-rules.md`）：
+### 页面模块化
 
 ```
 pages/<name>/
-├── <Name>Page.tsx              # 编排层（仅状态连接 + 渲染拼装）
-├── <name>-page.types.ts        # 页面局部类型
-├── <name>-page.utils.ts        # 纯函数
+├── <Name>Page.tsx
+├── <name>-page.types.ts
+├── <name>-page.utils.ts
 ├── hooks/
-│   ├── use<Name>Page.ts        # 组合层 hook
-│   └── use<SubDomain>.ts       # 子域 hook
 └── components/
-    └── <ComponentName>.tsx      # 拆出的子组件
 ```
 
 ---
 
-## 测试规范（Vitest）
+## 测试（Vitest）
 
 ```bash
-npm test              # 单次运行
-npm run test:watch    # 监听模式
-npm run test:coverage # 覆盖率
+npm test
+npm run test:watch
+npm run test:coverage
 ```
 
-**必须测试：** 配置读写、.env 解析、CLI RC 注入/清除、复杂条件分支纯函数
-
-**不需要测试：** Gateway 进程启停、Windows PATH 修改、文件系统完整流程
-
-### Mock 规范
-
-- `electron` 和 `electron-log` 在 `src/test/mocks/` 全局 mock，**不在单个测试文件中重复**
-- 纯函数测试不 mock 文件系统，直接传入字符串参数
-- 需要文件 I/O 的测试使用临时目录（`os.tmpdir()`），测试后清理
-
-### 纯函数导出约定
-
-main 进程中需要测试的内部函数，**添加 `export` 导出**（不新建 utils 文件）。
+**必须测：** 配置读写、.env、CLI RC、复杂纯函数  
+**不必测：** Gateway 启停、PATH、完整 FS 流程
 
 ---
 
 ## 文档约定
 
-- 讨论/方案/功能文档 → `discuss/` 目录
-- 开发规则文档 → `.rule/` 目录
-- 所有文档使用简体中文
+- 讨论/方案 → `discuss/`
+- 开发规则 → `.rule/`
+- 文档使用简体中文
+- `AGENTS.md` 指向本文件

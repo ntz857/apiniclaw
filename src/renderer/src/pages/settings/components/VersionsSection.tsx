@@ -120,7 +120,7 @@ export function VersionsSection({
 
   return (
     <Section title={t('settings.versions.title')}>
-      <SubGroupHeader label={t('settings.versions.clickclawGroup')} />
+      <SubGroupHeader label={t('settings.versions.apiniclawGroup')} />
       <SettingRow
         label={t('settings.versions.appVersion')}
         desc={t('settings.versions.appVersionDesc')}

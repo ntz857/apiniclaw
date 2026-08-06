@@ -1,5 +1,5 @@
 /**
- * Patch installed ClickClaw app.asar SkillHub marketplace to use api.skillhub.cn
+ * Patch installed ApiniClaw app.asar SkillHub marketplace to use api.skillhub.cn
  */
 import { createRequire } from 'module'
 import fs from 'fs'
@@ -11,10 +11,10 @@ const asar = require('@electron/asar')
 
 const asarPath =
   process.argv[2] ||
-  path.join(process.env.LOCALAPPDATA, 'Programs', 'ClickClaw', 'resources', 'app.asar')
+  path.join(process.env.LOCALAPPDATA, 'Programs', 'ApiniClaw', 'resources', 'app.asar')
 
 const fixedMainPath = path.resolve('out/main/index.js')
-const workDir = path.join(process.env.TEMP || '/tmp', `clickclaw-asar-patch-${Date.now()}`)
+const workDir = path.join(process.env.TEMP || '/tmp', `apiniclaw-asar-patch-${Date.now()}`)
 
 function readAsarHeader(src) {
   const fd = fs.openSync(src, 'r')
@@ -211,7 +211,7 @@ try {
   const verify = extractFileByParts(asarPath, ['out', 'main', 'index.js']).toString('utf8')
   console.log('verify api.skillhub.cn', verify.includes('api.skillhub.cn'))
   console.log('verify old cos gone', !verify.includes('skillhub-1388575217.cos'))
-  console.log('OK — restart ClickClaw')
+  console.log('OK — restart ApiniClaw')
 } catch (e) {
   console.error('in-place patch failed:', e.message)
   console.log('falling back to full extract+pack...')

@@ -1,6 +1,6 @@
 /**
  * Live handshake check against a running OpenClaw Gateway.
- * Verifies ClickClaw connect frame (protocol 3–4 + device v3 signature) succeeds.
+ * Verifies ApiniClaw connect frame (protocol 3–4 + device v3 signature) succeeds.
  *
  * Usage:
  *   node scripts/verify-gateway-protocol.mjs [ws://127.0.0.1:18789] [token]
@@ -26,7 +26,7 @@ function loadToken() {
   const cfgPath = join(homedir(), '.openclaw', 'openclaw.json')
   if (!existsSync(cfgPath)) throw new Error(`no token and missing ${cfgPath}`)
   const raw = readFileSync(cfgPath, 'utf8')
-  // openclaw.json is often JSON5 (unquoted keys) after ClickClaw/doctor rewrites
+  // openclaw.json is often JSON5 (unquoted keys) after ApiniClaw/doctor rewrites
   try {
     const cfg = JSON.parse(raw)
     const token = cfg?.gateway?.auth?.token
@@ -117,7 +117,7 @@ function buildConnectFrame(nonce, token, identity) {
       auth: { token },
       caps: ['tool-events'],
       locale: 'zh-CN',
-      userAgent: 'clickclaw/0.3.3-verify',
+      userAgent: 'apiniclaw/0.3.3-verify',
     },
   }
 }

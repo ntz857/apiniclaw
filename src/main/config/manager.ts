@@ -20,7 +20,7 @@ const log = createLogger('config')
 // ========== 类型定义 ==========
 
 /**
- * ClickClaw 关注的配置子集
+ * ApiniClaw 关注的配置子集
  * OpenClaw 配置字段非常多，我们只操作需要的部分，其余透传保留
  */
 export interface OpenclawConfig {

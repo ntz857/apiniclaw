@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 const { Sider } = Layout
 
-const WIDTH_STORAGE_KEY = 'clickclaw.chat.sessionsSiderWidth'
+const WIDTH_STORAGE_KEY = 'apiniclaw.chat.sessionsSiderWidth'
 const MIN_WIDTH = 180
 const MAX_WIDTH = 480
 const DEFAULT_WIDTH = 240

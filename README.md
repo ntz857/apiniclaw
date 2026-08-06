@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="src/renderer/src/assets/logo.svg" width="128" height="128" alt="ClickClaw Logo" />
+  <img src="src/renderer/src/assets/logo.svg" width="128" height="128" alt="ApiniClaw Logo" />
 </p>
 
-<h1 align="center">ClickClaw</h1>
+<h1 align="center">ApiniClaw</h1>
 
 <p align="center">
   <strong>一键部署 OpenClaw，小白轻松上手</strong><br/>
@@ -23,10 +23,8 @@
 </p>
 
 <p align="center">
-  <strong>本仓库（社区维护 fork）</strong>：
-  <a href="https://github.com/ntz857/clickclaw">github.com/ntz857/clickclaw</a><br/>
-  上游原项目：
-  <a href="https://github.com/clickclaw/clickclaw">clickclaw/clickclaw</a>
+  <strong>仓库</strong>：
+  <a href="https://github.com/ntz857/apiniclaw">github.com/ntz857/apiniclaw</a>
   · 官网：
   <a href="https://www.apiniclaw.com">www.apiniclaw.com</a>
 </p>
@@ -35,27 +33,23 @@
 
 ## 关于本仓库
 
-本仓库是 [ClickClaw](https://github.com/clickclaw/clickclaw) 的 **社区维护 fork**。
+**ApiniClaw** 是面向小白用户的 OpenClaw 桌面管理客户端（AGPL-3.0）。在社区维护基础上持续适配 **较新 OpenClaw Gateway（如 2026.7+）**，并改进聊天 / 渠道体验。
 
-上游桌面端更新放缓后，这里继续维护与 **较新 OpenClaw Gateway（如 2026.7+）** 的适配，以及聊天 / 渠道相关体验修复。代码仍基于原项目，许可证与上游一致（仓库内 `LICENSE` 为 **AGPL-3.0**）。
-
-**相对上游，本 fork 重点改动包括：**
+**本仓库重点能力包括：**
 
 - Gateway 运行时解析与协议握手（device auth / 与系统 OpenClaw 对齐）
 - 聊天：`MEDIA:` 本地路径与图片预览、保存；Mermaid / LaTeX
 - 渠道消息展示：飞书等信封剥离、回复引用条、`media:document` 附件卡片
 - MessagePresentation 交互卡片预览（桌面端有限交互）
-- Cron 等配置/载荷相关修复与校验脚本
-
-> 若你只需要官方发行版，请仍以 [上游仓库](https://github.com/clickclaw/clickclaw) 与官网为准。本 fork 以源码维护与自用/二次打包为主。
+- 全量中文智能体预设、Cron 等配置/载荷修复
 
 ---
 
-## ClickClaw 是什么
+## ApiniClaw 是什么
 
 [OpenClaw](https://github.com/OpenClaw) 是一款强大的 AI 助手框架，但对普通用户来说安装配置门槛较高——需要 Node.js 环境、命令行操作、手动编辑 JSON 配置。
 
-**ClickClaw** 就是为了消除这道门槛而生的桌面工具。它把繁琐的部署流程封装成可视化操作，内置 Node.js 22 + OpenClaw 运行时，让任何人都能在几分钟内拥有自己的 AI 全能助手。
+**ApiniClaw** 就是为了消除这道门槛而生的桌面工具。它把繁琐的部署流程封装成可视化操作，内置 Node.js 22 + OpenClaw 运行时，让任何人都能在几分钟内拥有自己的 AI 全能助手。
 
 **核心特性：**
 
@@ -184,7 +178,7 @@ WebSocket 直连 Gateway，多会话管理，流式 Markdown 渲染，`/` 快捷
 
 ### 下载安装
 
-从 [Releases](https://github.com/clickclaw/clickclaw/releases) 下载适合你平台的安装包：
+从 [Releases](https://github.com/ntz857/apiniclaw/releases) 下载适合你平台的安装包：
 
 | 平台 | 架构 |
 |------|------|
@@ -193,9 +187,9 @@ WebSocket 直连 Gateway，多会话管理，流式 Markdown 渲染，`/` 快捷
 
 ### 卸载与数据目录
 
-- Windows 卸载时会提供复选框：`删除 ClickClaw 本地数据 (~/.clickclaw)`，默认不勾选
-- 若不勾选，仅卸载应用程序，`~/.clickclaw` 目录会保留
-- `~/.openclaw`（OpenClaw 配置与凭证）始终保留，不会被 ClickClaw 卸载流程删除
+- Windows 卸载时会提供复选框：`删除 ApiniClaw 本地数据 (~/.apiniclaw)`，默认不勾选
+- 若不勾选，仅卸载应用程序，`~/.apiniclaw` 目录会保留
+- `~/.openclaw`（OpenClaw 配置与凭证）始终保留，不会被 ApiniClaw 卸载流程删除
 
 ### 首次启动
 
@@ -219,8 +213,8 @@ Setup 向导会引导你完成所有配置：
 ### 开发
 
 ```bash
-git clone https://github.com/ntz857/clickclaw.git
-cd clickclaw
+git clone https://github.com/ntz857/apiniclaw.git
+cd apiniclaw
 npm install
 npm run dev
 ```
@@ -254,40 +248,33 @@ npm run dev
 
 欢迎 Bug 修复、功能改进、文档与翻译。
 
-1. Fork 本仓库：https://github.com/ntz857/clickclaw
+1. Fork 本仓库：https://github.com/ntz857/apiniclaw
 2. 创建功能分支（`git checkout -b feature/xxx`）
 3. 提交变更
 4. 向本仓库创建 Pull Request
 
 > 规范：遵循 ESLint + Prettier；UI 文案走 i18n；尽量附带测试。
 
-与上游对照（可选）：
-
-```bash
-git remote add upstream https://github.com/clickclaw/clickclaw.git
-git fetch upstream
-```
-
 ---
 
 ## 致谢
 
-- [ClickClaw 原项目](https://github.com/clickclaw/clickclaw) — 桌面端基础
 - [OpenClaw](https://github.com/OpenClaw) — AI 智能体运行时
 - [Electron](https://www.electronjs.org/) — 跨平台桌面框架
 - [React](https://react.dev/) — UI 库
 - [Ant Design](https://ant.design/) / [Ant Design X](https://x.ant.design/) — 界面与聊天组件
+- 社区贡献者与早期桌面端实现
 
 ---
 
 ## 许可证
 
 本项目基于 [AGPL-3.0](LICENSE) 发布（见仓库根目录 `LICENSE`）。  
-衍生自 [clickclaw/clickclaw](https://github.com/clickclaw/clickclaw)；对外分发或提供网络服务时请遵守 AGPL 义务（含提供对应源码等）。
+对外分发或提供网络服务时请遵守 AGPL 义务（含提供对应源码等）。
 
 ---
 
 <p align="center">
-  <sub>ClickClaw community fork — OpenClaw 桌面管理</sub><br/>
-  <sub><a href="https://github.com/ntz857/clickclaw">ntz857/clickclaw</a></sub>
+  <sub>ApiniClaw — OpenClaw 桌面管理</sub><br/>
+  <sub><a href="https://github.com/ntz857/apiniclaw">ntz857/apiniclaw</a></sub>
 </p>

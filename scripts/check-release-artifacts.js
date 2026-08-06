@@ -1,4 +1,4 @@
-"use strict";
+﻿"use strict";
 
 const fs = require("fs");
 const path = require("path");
@@ -16,10 +16,10 @@ function parseArgs(argv) {
     else if (arg === "--dir") opts.dir = argv[++i] || "";
   }
   if (!opts.platform || !opts.dir) {
-    fail("用法: node scripts/check-release-artifacts.js --platform <win|mac> --dir <dist>");
+    fail("鐢ㄦ硶: node scripts/check-release-artifacts.js --platform <win|mac> --dir <dist>");
   }
   if (!["win", "mac"].includes(opts.platform)) {
-    fail(`不支持的平台: ${opts.platform}`);
+    fail(`涓嶆敮鎸佺殑骞冲彴: ${opts.platform}`);
   }
   return opts;
 }
@@ -37,23 +37,23 @@ const absDir = path.resolve(dir);
 const files = listFiles(absDir);
 
 if (files.length === 0) {
-  fail(`目录为空或不存在: ${absDir}`);
+  fail(`鐩綍涓虹┖鎴栦笉瀛樺湪: ${absDir}`);
 }
 
 if (platform === "win") {
-  const installers = findMatches(files, /^(ApiniClaw|ClickClaw)-Setup-.*\.exe$/);
+  const installers = findMatches(files, /^(ApiniClaw)-Setup-.*\.exe$/);
   const manifests = findMatches(files, /^latest\.yml$/);
-  if (installers.length === 0) fail(`未找到 Windows 安装包: ${absDir}`);
-  if (manifests.length === 0) fail(`未找到 Windows 更新清单 latest.yml: ${absDir}`);
+  if (installers.length === 0) fail(`鏈壘鍒?Windows 瀹夎鍖? ${absDir}`);
+  if (manifests.length === 0) fail(`鏈壘鍒?Windows 鏇存柊娓呭崟 latest.yml: ${absDir}`);
   console.log(`[release-artifacts] win installers: ${installers.join(", ")}`);
   console.log(`[release-artifacts] win manifest: ${manifests.join(", ")}`);
 } else {
-  const dmgs = findMatches(files, /^(ApiniClaw|ClickClaw)-.*\.dmg$/);
-  const zips = findMatches(files, /^(ApiniClaw|ClickClaw)-.*\.zip$/);
+  const dmgs = findMatches(files, /^(ApiniClaw)-.*\.dmg$/);
+  const zips = findMatches(files, /^(ApiniClaw)-.*\.zip$/);
   const manifests = findMatches(files, /^latest-mac\.yml$/);
-  if (dmgs.length === 0) fail(`未找到 macOS DMG: ${absDir}`);
-  if (zips.length === 0) fail(`未找到 macOS ZIP: ${absDir}`);
-  if (manifests.length === 0) fail(`未找到 macOS 更新清单 latest-mac.yml: ${absDir}`);
+  if (dmgs.length === 0) fail(`鏈壘鍒?macOS DMG: ${absDir}`);
+  if (zips.length === 0) fail(`鏈壘鍒?macOS ZIP: ${absDir}`);
+  if (manifests.length === 0) fail(`鏈壘鍒?macOS 鏇存柊娓呭崟 latest-mac.yml: ${absDir}`);
   console.log(`[release-artifacts] mac dmg: ${dmgs.join(", ")}`);
   console.log(`[release-artifacts] mac zip: ${zips.join(", ")}`);
   console.log(`[release-artifacts] mac manifest: ${manifests.join(", ")}`);

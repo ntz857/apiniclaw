@@ -12,7 +12,7 @@ const token =
   raw.match(/token\s*:\s*['"]([^'"]+)['"]/)?.[1] ||
   raw.match(/"token"\s*:\s*"([^"]+)"/)?.[1]
 const identity = JSON.parse(
-  readFileSync(join(homedir(), '.clickclaw', 'device-identity.json'), 'utf8')
+  readFileSync(join(homedir(), '.apiniclaw', 'device-identity.json'), 'utf8')
 )
 if (!token) throw new Error('no token')
 
@@ -109,7 +109,7 @@ ws.on('message', (d) => {
       id: cronId,
       method: 'cron.add',
       params: {
-        name: 'clickclaw-schema-test',
+        name: 'apiniclaw-schema-test',
         description: 'temp verify',
         agentId: 'main',
         schedule: { kind: 'every', everyMs: 3_600_000 },

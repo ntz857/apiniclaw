@@ -3,7 +3,7 @@
  *
  * OpenClaw 渠道（飞书 / 微信 / Telegram 等）写入 transcript 的用户正文常带
  * AI 上下文信封（message_id、System 提示、open_id 前缀等）。Control UI / TUI
- * 会在展示前剥离；ClickClaw 聊天列表也需要同样的净化，否则气泡里全是元数据。
+ * 会在展示前剥离；ApiniClaw 聊天列表也需要同样的净化，否则气泡里全是元数据。
  *
  * 另：assistant/tool 的 content 可能含 type:"image" 块（base64 或
  * /api/chat/media/outgoing/...），需转成可预览的附件。

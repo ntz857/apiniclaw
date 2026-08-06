@@ -1,7 +1,7 @@
 /**
  * package-resources.js
  *
- * ClickClaw 资源打包脚本
+ * ApiniClaw 资源打包脚本
  *
  * Step 1: 下载 Node.js 22 运行时
  * Step 2: 安装 openclaw + 裁剪（test/docs/.d.ts/.map）+ Windows 黑框补丁
@@ -12,10 +12,10 @@
  * 用法: node scripts/package-resources.js [--platform darwin|win32] [--arch arm64|x64]
  *
  * 插件版本覆盖（支持版本号 / 本地 tgz 路径 / latest）:
- *   CLICKCLAW_QQBOT_SOURCE=1.2.3
- *   CLICKCLAW_WECOM_SOURCE=./path/to/plugin.tgz
- *   CLICKCLAW_DINGTALK_SOURCE=latest
- *   CLICKCLAW_WEIXIN_SOURCE=1.0.2
+ *   APINICLAW_QQBOT_SOURCE=1.2.3
+ *   APINICLAW_WECOM_SOURCE=./path/to/plugin.tgz
+ *   APINICLAW_DINGTALK_SOURCE=latest
+ *   APINICLAW_WEIXIN_SOURCE=1.0.2
  *   OPENCLAW_PACKAGE_SOURCE=2026.7.1-2
  *   CLAWHUB_PACKAGE_SOURCE=0.8.0
  *
@@ -57,25 +57,25 @@ const BUNDLED_PLUGINS = [
     packageName: "@tencent-connect/openclaw-qqbot",
     id: "openclaw-qqbot",
     label: "QQ Bot",
-    envVar: "CLICKCLAW_QQBOT_SOURCE",
+    envVar: "APINICLAW_QQBOT_SOURCE",
   },
   {
     packageName: "@wecom/wecom-openclaw-plugin",
     id: "wecom-openclaw-plugin",
     label: "企业微信",
-    envVar: "CLICKCLAW_WECOM_SOURCE",
+    envVar: "APINICLAW_WECOM_SOURCE",
   },
   {
     packageName: "@dingtalk-real-ai/dingtalk-connector",
     id: "dingtalk-connector",
     label: "钉钉",
-    envVar: "CLICKCLAW_DINGTALK_SOURCE",
+    envVar: "APINICLAW_DINGTALK_SOURCE",
   },
   {
     packageName: "@tencent-weixin/openclaw-weixin",
     id: "openclaw-weixin",
     label: "微信",
-    envVar: "CLICKCLAW_WEIXIN_SOURCE",
+    envVar: "APINICLAW_WEIXIN_SOURCE",
   },
 ];
 
@@ -424,7 +424,7 @@ function installOpenclaw(opts, gatewayDir) {
   ensureDir(gatewayDir);
   fs.writeFileSync(
     path.join(gatewayDir, "package.json"),
-    JSON.stringify({ name: "clickclaw-gateway", version: "1.0.0", private: true }, null, 2)
+    JSON.stringify({ name: "apiniclaw-gateway", version: "1.0.0", private: true }, null, 2)
   );
 
   const npmEnv = {
@@ -725,7 +725,7 @@ async function bundlePlugin(plugin, gatewayDir, opts) {
   const { depSpec, stamp } = resolvePluginSource(plugin);
 
   // 增量检测：stamp 匹配 + manifest 存在 → 跳过
-  const stampFile = path.join(pluginDir, ".clickclaw-stamp.json");
+  const stampFile = path.join(pluginDir, ".apiniclaw-stamp.json");
   if (fs.existsSync(stampFile) && fs.existsSync(path.join(pluginDir, "openclaw.plugin.json"))) {
     try {
       const saved = JSON.parse(fs.readFileSync(stampFile, "utf-8"));

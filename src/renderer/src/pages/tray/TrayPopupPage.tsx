@@ -17,7 +17,7 @@ import {
   AppstoreOutlined,
 } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
-import { CLICKCLAW_WEBSITE_URL } from '@shared/urls'
+import { APINICLAW_WEBSITE_URL } from '@shared/urls'
 import logo from '../../assets/logo.png'
 
 type ElectronStyle = React.CSSProperties & { WebkitAppRegion?: string }
@@ -37,7 +37,7 @@ type UpdateInfo = {
 
 const BG = '#161616'
 const BORDER = 'rgba(255,255,255,0.07)'
-const WEBSITE_URL = CLICKCLAW_WEBSITE_URL
+const WEBSITE_URL = APINICLAW_WEBSITE_URL
 
 export default function TrayPopupPage(): React.ReactElement {
   const { t } = useTranslation()

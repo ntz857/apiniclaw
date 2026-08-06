@@ -21,7 +21,7 @@ import { cancelAllWeixinQrScans } from './services/weixin-qr'
 //
 // 使用 app:// 替代 file:// 加载 renderer，目的：
 // - 打包后 WebSocket 握手 Origin 头为 "app://localhost"（而非 file:// 的 "null"）
-// - 可将 "app://localhost" 写入 gateway.controlUi.allowedOrigins，只允许 ClickClaw 自身连接
+// - 可将 "app://localhost" 写入 gateway.controlUi.allowedOrigins，只允许 ApiniClaw 自身连接
 // - 比 "null" 更安全：任意本地 HTML 文件无法冒充此 origin
 protocol.registerSchemesAsPrivileged([
   {
@@ -199,8 +199,8 @@ if (!gotTheLock) {
       }
     }
 
-    // 新 AUMID 避免 Windows 任务栏缓存旧 ClickClaw 图标
-    electronApp.setAppUserModelId('cn.apiniclaw.app')
+    // AUMID 与 electron-builder appId 一致；变更后可刷新任务栏图标缓存
+    electronApp.setAppUserModelId('com.apiniclaw.app')
 
     // 注册 app:// 协议处理器，将请求映射到 renderer 静态文件
     // 打包后：Origin 头固定为 "app://localhost"，写入 allowedOrigins 即可

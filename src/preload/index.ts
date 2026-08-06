@@ -232,7 +232,7 @@ const api = {
   },
 
   log: {
-    readClickclaw: (): Promise<string[]> => ipcRenderer.invoke('log:read-clickclaw'),
+    readApiniclaw: (): Promise<string[]> => ipcRenderer.invoke('log:read-apiniclaw'),
     getOpenclawLogPath: (): Promise<string> => ipcRenderer.invoke('log:get-openclaw-log-path'),
     readOpenclaw: (opts?: { limit?: number; level?: string }): Promise<unknown[]> =>
       ipcRenderer.invoke('log:read-openclaw', opts),

@@ -1,9 +1,9 @@
 /**
  * Ed25519 设备身份管理
  *
- * 每台运行 ClickClaw 的设备持有一对 Ed25519 密钥。
+ * 每台运行 ApiniClaw 的设备持有一对 Ed25519 密钥。
  * - deviceId：公钥的 SHA-256 十六进制摘要（64字符）
- * - 密钥对生成后写入 ~/.clickclaw/device-identity.json，下次启动直接复用
+ * - 密钥对生成后写入 ~/.apiniclaw/device-identity.json，下次启动直接复用
  * - 读写失败时静默降级，不阻塞主流程（与 app-cache.ts 风格一致）
  *
  * 签名格式：Ed25519 对 UTF-8 payload 的原始签名，base64url 编码

@@ -2417,7 +2417,6 @@
     },
     "versions": {
       "title": "Versions & Updates",
-      "ApiniClawGroup": "ApiniClaw App",
       "openclawGroup": "OpenClaw AI Engine",
       "appVersion": "App Version",
       "appVersionDesc": "ApiniClaw application version",
@@ -2425,7 +2424,8 @@
       "engineVersion": "Engine Version",
       "engineVersionDesc": "Gateway core engine — updates independently from the app",
       "engineUpdate": "Engine Update",
-      "latestLabel": "Latest"
+      "latestLabel": "Latest",
+      "apiniclawGroup": "ApiniClaw App"
     },
     "openclaw": {
       "currentVersion": "Current Version",
@@ -2454,14 +2454,13 @@
       "version": "Version",
       "tagline": "One-click OpenClaw desktop manager",
       "openSource": "Open Source",
-      "openSourceDesc": "Star us and contribute on GitHub or AtomGit",
+      "openSourceDesc": "Star us and contribute on GitHub",
       "website": "Website",
       "submitIssue": "Submit Issue",
       "feedback": "Feedback & Issues",
       "feedbackDesc": "Report bugs or suggest features",
       "feedbackModalDesc": "Choose a platform to submit your issue. We'll follow up as soon as possible.",
       "githubIssueHint": "Recommended for international users, requires a GitHub account",
-      "atomgitIssueHint": "Recommended for China users, requires an AtomGit account",
       "domesticTag": "China",
       "checkUpdate": "Check for Updates",
       "updateChecking": "Checking...",

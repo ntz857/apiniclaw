@@ -281,7 +281,7 @@ export function useAgentActions({
         try {
           await callRpc('config.patch', {
             raw: buildSetDefaultPatch(agents, agent.id),
-            note: `clickclaw:set-default-agent:${agent.id}`,
+            note: `apiniclaw:set-default-agent:${agent.id}`,
           })
         } catch {
           await window.api.agent.setDefault(agent.id)

@@ -1,7 +1,7 @@
 /**
  * OpenClaw 升级服务
  *
- * 方案 B：把新版 openclaw 安装到用户可写目录 ~/.clickclaw/gateway/，
+ * 方案 B：把新版 openclaw 安装到用户可写目录 ~/.apiniclaw/gateway/，
  * 避开 macOS app bundle 只读限制。
  *
  * 升级后：
@@ -14,7 +14,7 @@ import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync } from
 import { join } from 'path'
 import { spawn } from 'child_process'
 import {
-  CLICKCLAW_GATEWAY_DIR,
+  APINICLAW_GATEWAY_DIR,
   CONFIG_PATH,
   resolveBundledNodeBin,
   resolveBundledNpmBin,
@@ -73,7 +73,7 @@ function readPackageVersion(pkgJsonPath: string): string | null {
  *
  * 背景：
  * - 安装包构建时，国内 IM 插件被注入到 app resources/gateway/node_modules/openclaw/extensions/
- * - 设置页升级 openclaw 时，会把新版安装到 ~/.clickclaw/gateway/node_modules/openclaw/
+ * - 设置页升级 openclaw 时，会把新版安装到 ~/.apiniclaw/gateway/node_modules/openclaw/
  * - 运行时优先使用用户目录，因此若不复制 extensions，升级后这些插件会“消失”
  */
 export function syncBundledExtensionsToUserGateway(onLog: (line: string) => void): string[] {
@@ -84,13 +84,13 @@ export function syncBundledExtensionsToUserGateway(onLog: (line: string) => void
     'openclaw',
     'extensions'
   )
-  const userOpenclawDir = join(CLICKCLAW_GATEWAY_DIR, 'node_modules', 'openclaw')
+  const userOpenclawDir = join(APINICLAW_GATEWAY_DIR, 'node_modules', 'openclaw')
   const userExtensionsDir = join(userOpenclawDir, 'extensions')
 
   if (!existsSync(bundledExtensionsDir)) {
     const msg = `未找到内置插件目录，跳过同步: ${bundledExtensionsDir}`
     log.warn(msg)
-    onLog(`[ClickClaw] 警告：${msg}`)
+    onLog(`[ApiniClaw] 警告：${msg}`)
     return []
   }
 
@@ -113,11 +113,11 @@ export function syncBundledExtensionsToUserGateway(onLog: (line: string) => void
   if (copiedPluginIds.length > 0) {
     const msg = `已同步内置插件到用户升级目录: ${copiedPluginIds.join(', ')}`
     log.info(msg)
-    onLog(`[ClickClaw] ${msg}`)
+    onLog(`[ApiniClaw] ${msg}`)
   } else {
     const msg = '内置插件目录存在，但未发现有效插件清单'
     log.warn(msg)
-    onLog(`[ClickClaw] 警告：${msg}`)
+    onLog(`[ApiniClaw] 警告：${msg}`)
   }
 
   return copiedPluginIds
@@ -128,7 +128,7 @@ function resolveBundledExtensionsDir(): string {
 }
 
 function resolveUserExtensionsDir(): string {
-  return join(CLICKCLAW_GATEWAY_DIR, 'node_modules', 'openclaw', 'extensions')
+  return join(APINICLAW_GATEWAY_DIR, 'node_modules', 'openclaw', 'extensions')
 }
 
 function isPluginInstalled(dir: string, pluginId: string): boolean {
@@ -205,7 +205,7 @@ export function getBundledWeixinStatus(): {
  */
 export function getCurrentOpenclawVersion(): string {
   // 1. 用户升级目录
-  const userPkg = join(CLICKCLAW_GATEWAY_DIR, 'node_modules', 'openclaw', 'package.json')
+  const userPkg = join(APINICLAW_GATEWAY_DIR, 'node_modules', 'openclaw', 'package.json')
   const userVersion = readPackageVersion(userPkg)
   if (userVersion) return userVersion
 
@@ -222,7 +222,7 @@ export function getCurrentOpenclawVersion(): string {
  * 判断当前版本是否来自用户升级目录（已升级过）
  */
 export function isUserUpgraded(): boolean {
-  const userPkg = join(CLICKCLAW_GATEWAY_DIR, 'node_modules', 'openclaw', 'package.json')
+  const userPkg = join(APINICLAW_GATEWAY_DIR, 'node_modules', 'openclaw', 'package.json')
   return existsSync(userPkg) && readPackageVersion(userPkg) !== null
 }
 
@@ -303,12 +303,12 @@ export async function installOpenclawUpdate(
   version: string,
   onLog: (line: string) => void
 ): Promise<{ success: boolean; error?: string }> {
-  log.info(`开始安装 openclaw@${version} 到 ${CLICKCLAW_GATEWAY_DIR}`)
-  onLog(`[ClickClaw] 开始安装 openclaw@${version}...`)
+  log.info(`开始安装 openclaw@${version} 到 ${APINICLAW_GATEWAY_DIR}`)
+  onLog(`[ApiniClaw] 开始安装 openclaw@${version}...`)
 
   // 1. 确保目标目录存在
   try {
-    mkdirSync(CLICKCLAW_GATEWAY_DIR, { recursive: true })
+    mkdirSync(APINICLAW_GATEWAY_DIR, { recursive: true })
   } catch (err) {
     const msg = `创建目录失败: ${err instanceof Error ? err.message : String(err)}`
     log.error(msg)
@@ -328,7 +328,7 @@ export async function installOpenclawUpdate(
     'install',
     packageSpec,
     '--prefix',
-    CLICKCLAW_GATEWAY_DIR,
+    APINICLAW_GATEWAY_DIR,
     '--omit=dev',
     '--no-audit',
     '--no-fund',
@@ -365,14 +365,14 @@ export async function installOpenclawUpdate(
     child.on('error', (err) => {
       const msg = `npm 进程启动失败: ${err.message}`
       log.error(msg)
-      onLog(`[ClickClaw] 错误：${msg}`)
+      onLog(`[ApiniClaw] 错误：${msg}`)
       resolve({ success: false, error: msg })
     })
 
     child.on('close', (code) => {
       if (code === 0) {
         log.info(`openclaw@${version} 安装成功`)
-        onLog(`[ClickClaw] openclaw@${version} 安装成功`)
+        onLog(`[ApiniClaw] openclaw@${version} 安装成功`)
 
         // 3. 将构建时注入的内置插件同步到用户升级目录
         try {
@@ -380,7 +380,7 @@ export async function installOpenclawUpdate(
         } catch (err) {
           const msg = `同步内置插件失败: ${err instanceof Error ? err.message : String(err)}`
           log.error(msg)
-          onLog(`[ClickClaw] 错误：${msg}`)
+          onLog(`[ApiniClaw] 错误：${msg}`)
           resolve({ success: false, error: msg })
           return
         }
@@ -389,11 +389,11 @@ export async function installOpenclawUpdate(
         try {
           installCli()
           log.info('CLI wrapper 已更新')
-          onLog('[ClickClaw] CLI wrapper 已更新')
+          onLog('[ApiniClaw] CLI wrapper 已更新')
         } catch (err) {
           log.warn('CLI wrapper 更新失败（不影响升级）:', err)
           onLog(
-            `[ClickClaw] 警告：CLI wrapper 更新失败（${err instanceof Error ? err.message : String(err)}）`
+            `[ApiniClaw] 警告：CLI wrapper 更新失败（${err instanceof Error ? err.message : String(err)}）`
           )
         }
 
@@ -401,7 +401,7 @@ export async function installOpenclawUpdate(
       } else {
         const msg = `npm install 退出码: ${code}`
         log.error(msg)
-        onLog(`[ClickClaw] 安装失败（退出码 ${code}）`)
+        onLog(`[ApiniClaw] 安装失败（退出码 ${code}）`)
         resolve({ success: false, error: msg })
       }
     })

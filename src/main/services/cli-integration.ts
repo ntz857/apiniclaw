@@ -4,16 +4,16 @@
  * 在系统 PATH 中安装/卸载 `openclaw` 命令行包装器。
  *
  * Windows：
- *   - 在 ~/.clickclaw/bin\ 创建 openclaw.cmd
+ *   - 在 ~/.apiniclaw/bin\ 创建 openclaw.cmd
  *   - 通过 PowerShell [Environment]::SetEnvironmentVariable 写入用户级 PATH
  *
  * macOS / POSIX：
- *   - 在 ~/.clickclaw/bin/ 创建 openclaw (bash 脚本)
+ *   - 在 ~/.apiniclaw/bin/ 创建 openclaw (bash 脚本)
  *   - 在 ~/.zprofile 和 ~/.bash_profile 写入 PATH 注入块
  *
  * 迁移说明：
- *   旧版使用 %LOCALAPPDATA%\ClickClaw\bin（Windows）或 ~/.openclaw/bin（macOS），
- *   installCli() 会自动清除旧路径并写入新路径 ~/.clickclaw/bin（两端统一）。
+ *   旧版使用 %LOCALAPPDATA%\ApiniClaw\bin（Windows）或 ~/.openclaw/bin（macOS），
+ *   installCli() 会自动清除旧路径并写入新路径 ~/.apiniclaw/bin（两端统一）。
  */
 
 import { existsSync, mkdirSync, writeFileSync, readFileSync, unlinkSync, chmodSync } from 'fs'
@@ -22,7 +22,7 @@ import { homedir } from 'os'
 import { execSync } from 'child_process'
 import {
   IS_WIN,
-  CLICKCLAW_HOME,
+  APINICLAW_HOME,
   resolveAppDataDir,
   resolveBundledClawhubEntry,
 } from '../constants'
@@ -34,22 +34,22 @@ const log = createLogger('cli')
 // ─── 常量 ───
 
 /** 写入 wrapper 文件的标记行，用于安全识别托管文件 */
-const CLI_MARKER = 'ClickClaw CLI'
+const CLI_MARKER = 'ApiniClaw CLI'
 
 /** POSIX RC 文件注入块起始标记 */
-const RC_BLOCK_START = '# >>> clickclaw-cli >>>'
+const RC_BLOCK_START = '# >>> apiniclaw-cli >>>'
 /** POSIX RC 文件注入块结束标记 */
-const RC_BLOCK_END = '# <<< clickclaw-cli <<<'
+const RC_BLOCK_END = '# <<< apiniclaw-cli <<<'
 
 // ─── 路径解析 ───
 
 /**
  * CLI bin 目录（两端统一）
- * - Windows: ~/.clickclaw/bin\
- * - POSIX:   ~/.clickclaw/bin/
+ * - Windows: ~/.apiniclaw/bin\
+ * - POSIX:   ~/.apiniclaw/bin/
  */
 function resolveBinDir(): string {
-  return join(CLICKCLAW_HOME, 'bin')
+  return join(APINICLAW_HOME, 'bin')
 }
 
 /**
@@ -83,11 +83,11 @@ function buildWinWrapper(nodeBin: string, gatewayEntry: string): string {
     `set "APP_NODE=${nodeBin}"`,
     `set "APP_ENTRY=${gatewayEntry}"`,
     'if not exist "%APP_NODE%" (',
-    '  echo Error: ClickClaw Node runtime not found: %APP_NODE% 1>&2',
+    '  echo Error: ApiniClaw Node runtime not found: %APP_NODE% 1>&2',
     '  exit /b 127',
     ')',
     'if not exist "%APP_ENTRY%" (',
-    '  echo Error: ClickClaw gateway entry not found: %APP_ENTRY% 1>&2',
+    '  echo Error: ApiniClaw gateway entry not found: %APP_ENTRY% 1>&2',
     '  exit /b 127',
     ')',
     'set "ELECTRON_RUN_AS_NODE=1"',
@@ -105,11 +105,11 @@ function buildPosixWrapper(nodeBin: string, gatewayEntry: string): string {
     `APP_NODE="${nodeBin}"`,
     `APP_ENTRY="${gatewayEntry}"`,
     'if [ ! -f "$APP_NODE" ]; then',
-    '  echo "Error: ClickClaw Node runtime not found: $APP_NODE" >&2',
+    '  echo "Error: ApiniClaw Node runtime not found: $APP_NODE" >&2',
     '  exit 127',
     'fi',
     'if [ ! -f "$APP_ENTRY" ]; then',
-    '  echo "Error: ClickClaw gateway entry not found: $APP_ENTRY" >&2',
+    '  echo "Error: ApiniClaw gateway entry not found: $APP_ENTRY" >&2',
     '  exit 127',
     'fi',
     'export ELECTRON_RUN_AS_NODE=1',
@@ -121,7 +121,7 @@ function buildPosixWrapper(nodeBin: string, gatewayEntry: string): string {
 
 // ─── Wrapper 文件检查 ───
 
-/** 检查路径是否是 ClickClaw 创建的 wrapper（通过 marker 行识别） */
+/** 检查路径是否是本应用创建的 wrapper（通过 marker 行识别） */
 function isOurWrapper(filePath: string): boolean {
   if (!existsSync(filePath)) return false
   try {
@@ -230,7 +230,7 @@ function posixInjectRcFile(rcPath: string, binDir: string): void {
   writeFileSync(rcPath, content, 'utf-8')
 }
 
-/** 从 RC 文件内容中删除 ClickClaw 注入块，返回修改后的内容（可测试，供单元测试直接导入） */
+/** 从 RC 文件内容中删除 ApiniClaw 注入块，返回修改后的内容（可测试，供单元测试直接导入） */
 export function posixStripRcBlock(content: string): string {
   const startIdx = content.indexOf(RC_BLOCK_START)
   const endIdx = content.indexOf(RC_BLOCK_END)
@@ -242,7 +242,7 @@ export function posixStripRcBlock(content: string): string {
   return before.trimEnd() + (after.startsWith('\n') ? after : '\n' + after)
 }
 
-/** 从 RC 文件中移除 ClickClaw 注入块 */
+/** 从 RC 文件中移除 ApiniClaw 注入块 */
 function posixRemoveRcFile(rcPath: string): void {
   if (!existsSync(rcPath)) return
   try {
@@ -256,7 +256,7 @@ function posixRemoveRcFile(rcPath: string): void {
   }
 }
 
-/** 检查是否有任意 RC 文件包含 ClickClaw 注入块 */
+/** 检查是否有任意 RC 文件包含 ApiniClaw 注入块 */
 function posixIsInAnyRc(): boolean {
   const rcFiles = [
     join(homedir(), '.zprofile'),
@@ -280,11 +280,11 @@ export interface CliStatus {
   installed: boolean
   /** openclaw wrapper 文件路径 */
   wrapperPath: string
-  /** openclaw wrapper 文件是否存在（且是 ClickClaw 创建的） */
+  /** openclaw wrapper 文件是否存在（且是 ApiniClaw 创建的） */
   wrapperExists: boolean
   /** clawhub wrapper 文件路径 */
   clawhubWrapperPath: string
-  /** clawhub wrapper 文件是否存在（且是 ClickClaw 创建的） */
+  /** clawhub wrapper 文件是否存在（且是 ApiniClaw 创建的） */
   clawhubWrapperExists: boolean
   /** bin 目录是否已在 PATH 中 */
   inPath: boolean
@@ -360,7 +360,7 @@ export function installCli(): void {
 /**
  * 卸载 CLI wrapper，从 PATH 中移除
  *
- * 安全操作：只删除 ClickClaw 自身创建的 wrapper 文件（通过 marker 识别）。
+ * 安全操作：只删除 ApiniClaw 自身创建的 wrapper 文件（通过 marker 识别）。
  */
 export function uninstallCli(): void {
   const wrapperPath = resolveWrapperPath()
@@ -369,7 +369,7 @@ export function uninstallCli(): void {
 
   log.info(`卸载 CLI wrapper: ${wrapperPath}`)
 
-  // 仅删除 ClickClaw 创建的 wrapper（防止误删用户自定义文件）
+  // 仅删除 ApiniClaw 创建的 wrapper（防止误删用户自定义文件）
   for (const wp of [wrapperPath, clawhubWrapperPath]) {
     if (isOurWrapper(wp)) {
       try {
@@ -379,7 +379,7 @@ export function uninstallCli(): void {
         log.warn(`删除 wrapper 文件失败: ${wp}`, err)
       }
     } else if (existsSync(wp)) {
-      log.warn(`wrapper 文件不是 ClickClaw 创建的，跳过删除: ${wp}`)
+      log.warn(`wrapper 文件不是 ApiniClaw 创建的，跳过删除: ${wp}`)
     }
   }
 

@@ -4,7 +4,7 @@
  * Gateway 首次 Ed25519 签名握手成功后颁发 deviceToken；
  * 后续重连直接复用 deviceToken，无需重签（节省 CPU 并减少日志噪音）。
  *
- * 文件位置：~/.clickclaw/device-auth.json
+ * 文件位置：~/.apiniclaw/device-auth.json
  * 读写失败均静默处理，不抛出异常。
  */
 

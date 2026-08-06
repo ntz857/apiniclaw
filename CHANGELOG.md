@@ -27,7 +27,7 @@
 - 定时任务 `cron.add` / `cron.update` 对齐 OpenClaw 2026.7 schema：`agentId` 改到任务顶层；`payload` 仅保留 `kind`+`message`；补齐必填 `sessionTarget`/`wakeMode`。
 - 渠道保存时自动安装/启用对应 channel 插件（如飞书 `@openclaw/feishu`），避免「绑定成功但聊天无响应」（Gateway `no-channel-owner`）。
 - 配对审批改用系统/npm 全局 openclaw（与 Gateway 同版本），避免内置 2026.3 读 2026.7 配置报 `Config invalid`；`--notify` 改为尽力而为，不因飞书不支持通知而把审批标成失败。
-- **统一 OpenClaw 运行时解析**（`openclaw-resolve`）：Gateway 启动、Agent CLI、配对、渠道插件安装、备份、PATH wrapper 一律优先系统/npm openclaw，其次 `~/.clickclaw/gateway`，最后才回退安装包内置版本，消除 2026.3 / 2026.7 双轨。
+- **统一 OpenClaw 运行时解析**（`openclaw-resolve`）：Gateway 启动、Agent CLI、配对、渠道插件安装、备份、PATH wrapper 一律优先系统/npm openclaw，其次 `~/.apiniclaw/gateway`，最后才回退安装包内置版本，消除 2026.3 / 2026.7 双轨。
 - **聊天消息串会话**：`handleChatEvent` 增加 `sessionKey`/`runId` 隔离；其它会话（如飞书）的流式事件不再写入当前打开的聊天；禁止 agent 事件用当前 session 回填 sessionKey；同步 messageCache。
 - **聊天内本地文件链接可点击打开**：Markdown 链接原先仅有 hover、点击走 `openExternal` 无效；现拦截本地路径并用 `shell.openPath` 打开；`app://local-file` 可读范围扩展到整个 `~/.openclaw`（含 workspace 产物）。
 - **聊天内 `MEDIA:` / 裸路径展示**：识别 OpenClaw 的 `MEDIA:C:\...` 指令与裸 Windows 路径；图片内嵌预览 + 可点文件名，避免只显示一行无法打开的灰色路径。

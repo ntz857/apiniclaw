@@ -1,5 +1,5 @@
 {
-  "name": "clickclaw",
+  "name": "apiniclaw",
   "version": "0.3.4",
   "description": "ApiniClaw — 点击即装的 OpenClaw 桌面管理工具",
   "main": "./out/main/index.js",
@@ -8,10 +8,10 @@
   "homepage": "https://www.apiniclaw.com",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ntz857/clickclaw.git"
+    "url": "git+https://github.com/ntz857/apiniclaw.git"
   },
   "bugs": {
-    "url": "https://github.com/ntz857/clickclaw/issues"
+    "url": "https://github.com/ntz857/apiniclaw/issues"
   },
   "scripts": {
     "dev": "electron-vite dev",

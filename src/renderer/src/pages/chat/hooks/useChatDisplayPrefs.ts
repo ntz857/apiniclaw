@@ -6,7 +6,7 @@ interface ChatDisplayPrefsState {
   showUsage: boolean
 }
 
-const STORAGE_KEY = 'clickclaw.chat.display.v1'
+const STORAGE_KEY = 'apiniclaw.chat.display.v1'
 
 function loadInitialPrefs(): ChatDisplayPrefsState {
   try {

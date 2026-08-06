@@ -30,32 +30,32 @@ export const BACKUP_DIR = join(OPENCLAW_HOME, 'config-backups')
 /** ~/.openclaw/gateway.log */
 export const GATEWAY_LOG_PATH = join(OPENCLAW_HOME, 'gateway.log')
 
-// ========== ClickClaw 自身数据路径（~/.clickclaw/） ==========
+// ========== ApiniClaw 自身数据路径（~/.apiniclaw/） ==========
 
 /**
- * ClickClaw 数据目录，用于存储 ClickClaw 自身的缓存和状态，与 OpenClaw 路径完全隔离
- * - macOS / Linux / Windows：~/.clickclaw/
+ * ApiniClaw 数据目录，用于存储 ApiniClaw 自身的缓存和状态，与 OpenClaw 路径完全隔离
+ * - macOS / Linux / Windows：~/.apiniclaw/
  */
-export const CLICKCLAW_HOME = join(homedir(), '.clickclaw')
+export const APINICLAW_HOME = join(homedir(), '.apiniclaw')
 
-/** ~/.clickclaw/app-state.json — UI 状态持久化（侧栏折叠、窗口尺寸等） */
-export const APP_STATE_PATH = join(CLICKCLAW_HOME, 'app-state.json')
+/** ~/.apiniclaw/app-state.json — UI 状态持久化（侧栏折叠、窗口尺寸等） */
+export const APP_STATE_PATH = join(APINICLAW_HOME, 'app-state.json')
 
-/** ~/.clickclaw/remote-presets-cache.json — 远程预设数据缓存 */
-export const REMOTE_PRESETS_CACHE_PATH = join(CLICKCLAW_HOME, 'remote-presets-cache.json')
-export const DEVICE_IDENTITY_PATH = join(CLICKCLAW_HOME, 'device-identity.json')
+/** ~/.apiniclaw/remote-presets-cache.json — 远程预设数据缓存 */
+export const REMOTE_PRESETS_CACHE_PATH = join(APINICLAW_HOME, 'remote-presets-cache.json')
+export const DEVICE_IDENTITY_PATH = join(APINICLAW_HOME, 'device-identity.json')
 
-/** ~/.clickclaw/device-auth.json — Gateway 颁发的 deviceToken 持久化 */
-export const DEVICE_AUTH_PATH = join(CLICKCLAW_HOME, 'device-auth.json')
+/** ~/.apiniclaw/device-auth.json — Gateway 颁发的 deviceToken 持久化 */
+export const DEVICE_AUTH_PATH = join(APINICLAW_HOME, 'device-auth.json')
 
-/** ~/.clickclaw/skill-vet-cache.json — Skill 安全审查结果缓存 */
-export const SKILL_VET_CACHE_PATH = join(CLICKCLAW_HOME, 'skill-vet-cache.json')
+/** ~/.apiniclaw/skill-vet-cache.json — Skill 安全审查结果缓存 */
+export const SKILL_VET_CACHE_PATH = join(APINICLAW_HOME, 'skill-vet-cache.json')
 
 /**
- * ~/.clickclaw/gateway/ — 用户可写的 openclaw 升级目录
+ * ~/.apiniclaw/gateway/ — 用户可写的 openclaw 升级目录
  * 升级后的 openclaw 安装到此目录，优先于 app 内置资源
  */
-export const CLICKCLAW_GATEWAY_DIR = join(CLICKCLAW_HOME, 'gateway')
+export const APINICLAW_GATEWAY_DIR = join(APINICLAW_HOME, 'gateway')
 
 // ========== ApiniClaw 应用数据路径（跟随平台标准） ==========
 
@@ -77,14 +77,14 @@ export function resolveAppDataDir(): string {
   return app.getPath('userData')
 }
 
-/** ~/.clickclaw/logs/ — ClickClaw 日志目录 */
+/** ~/.apiniclaw/logs/ — ApiniClaw 日志目录 */
 export function resolveLogDir(): string {
-  return join(CLICKCLAW_HOME, 'logs')
+  return join(APINICLAW_HOME, 'logs')
 }
 
-/** ~/.clickclaw/logs/clickclaw.log — ClickClaw 主日志文件 */
+/** ~/.apiniclaw/logs/apiniclaw.log — ApiniClaw 主日志文件 */
 export function resolveLogPath(): string {
-  return join(resolveLogDir(), 'clickclaw.log')
+  return join(resolveLogDir(), 'apiniclaw.log')
 }
 
 // ========== 内置资源路径 ==========
@@ -159,13 +159,13 @@ export function resolveBundledNpmBin(): string {
 /**
  * 内置 Gateway 入口文件
  * 优先级：
- *   1. 用户升级目录 ~/.clickclaw/gateway/node_modules/openclaw/openclaw.mjs
+ *   1. 用户升级目录 ~/.apiniclaw/gateway/node_modules/openclaw/openclaw.mjs
  *   2. app 内置资源 openclaw.mjs（新包名）
  *   3. app 内置资源 gateway-entry.mjs（旧包名回退）
  */
 export function resolveBundledGatewayEntry(): string {
   // 优先读取用户升级目录（可写，支持 macOS app bundle 只读限制）
-  const userEntry = join(CLICKCLAW_GATEWAY_DIR, 'node_modules', 'openclaw', 'openclaw.mjs')
+  const userEntry = join(APINICLAW_GATEWAY_DIR, 'node_modules', 'openclaw', 'openclaw.mjs')
   if (existsSync(userEntry)) return userEntry
 
   // 回退：app 内置资源（只读）
@@ -180,7 +180,7 @@ export function resolveBundledGatewayEntry(): string {
  * 优先读取用户升级目录，回退 app 内置资源
  */
 export function resolveBundledGatewayCwd(): string {
-  const userCwd = join(CLICKCLAW_GATEWAY_DIR, 'node_modules', 'openclaw')
+  const userCwd = join(APINICLAW_GATEWAY_DIR, 'node_modules', 'openclaw')
   if (existsSync(userCwd)) return userCwd
   const resources = resolveResourcesPath()
   return join(resources, 'gateway', 'node_modules', 'openclaw')

@@ -17,7 +17,7 @@ import { join } from 'path'
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs'
 import { createLogger } from '../logger'
 import { readConfig } from '../config'
-import { OPENCLAW_HOME, CLICKCLAW_HOME } from '../constants'
+import { OPENCLAW_HOME, APINICLAW_HOME } from '../constants'
 import type { GatewayProcess } from '../gateway/process'
 import { runOpenclawCli } from './openclaw-resolve'
 
@@ -35,7 +35,7 @@ const FALLBACK_POLL_MS = 60_000
 const DEBOUNCE_MS = 150
 
 /** 拒绝码 sidecar 文件路径 */
-const REJECTED_CODES_PATH = join(CLICKCLAW_HOME, 'rejected-pairing.json')
+const REJECTED_CODES_PATH = join(APINICLAW_HOME, 'rejected-pairing.json')
 
 // ========== 类型定义 ==========
 
@@ -101,7 +101,7 @@ function readRejectedCodes(): Record<string, string[]> {
 
 function writeRejectedCodes(data: Record<string, string[]>): void {
   try {
-    if (!existsSync(CLICKCLAW_HOME)) mkdirSync(CLICKCLAW_HOME, { recursive: true })
+    if (!existsSync(APINICLAW_HOME)) mkdirSync(APINICLAW_HOME, { recursive: true })
     writeFileSync(REJECTED_CODES_PATH, JSON.stringify(data, null, 2), 'utf-8')
   } catch (err) {
     log.warn('写入拒绝码 sidecar 失败:', err)

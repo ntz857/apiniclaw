@@ -1,6 +1,6 @@
 /**
  * Channel plugin ensure — OpenClaw 2026.5+ 起部分渠道（如飞书）为独立 npm 插件。
- * ClickClaw 只写 channels.* 配置时，若不安装插件，Gateway 会出现：
+ * ApiniClaw 只写 channels.* 配置时，若不安装插件，Gateway 会出现：
  *   "channels.feishu is configured but no channel plugin is installed or loadable"
  * 导致「绑定成功但聊天无响应」。
  */
@@ -20,7 +20,7 @@ const CHANNEL_PLUGIN_MAP: Record<
   { pluginId: string; npmSpec?: string; stock?: boolean }
 > = {
   feishu: { pluginId: 'feishu', npmSpec: '@openclaw/feishu' },
-  // 国内 IM（ClickClaw 安装包可能已注入 extensions）
+  // 国内 IM（ApiniClaw 安装包可能已注入 extensions）
   'openclaw-weixin': { pluginId: 'openclaw-weixin', npmSpec: '@tencent-weixin/openclaw-weixin' },
   weixin: { pluginId: 'openclaw-weixin', npmSpec: '@tencent-weixin/openclaw-weixin' },
   // stock 渠道常见 id（未安装时 openclaw 会提示 installable）

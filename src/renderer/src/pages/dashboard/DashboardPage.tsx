@@ -1,5 +1,5 @@
 /**
- * Dashboard — ClickClaw 控制台
+ * Dashboard — ApiniClaw 控制台
  *
  * 设计语言：控制中心（Control Center）
  * - Gateway 状态卡：视觉核心，大号状态指示 + 操作按钮

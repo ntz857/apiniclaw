@@ -8,7 +8,7 @@ const require = createRequire(import.meta.url)
 const WebSocket = require('ws')
 
 const identity = JSON.parse(
-  readFileSync(join(homedir(), '.clickclaw', 'device-identity.json'), 'utf8')
+  readFileSync(join(homedir(), '.apiniclaw', 'device-identity.json'), 'utf8')
 )
 const raw = readFileSync(join(homedir(), '.openclaw', 'openclaw.json'), 'utf8')
 const token =
@@ -83,7 +83,7 @@ function build(nonce) {
       auth: { token },
       caps: ['tool-events'],
       locale: 'zh-CN',
-      userAgent: 'clickclaw/0.3.2',
+      userAgent: 'apiniclaw/0.3.2',
     },
   }
 }

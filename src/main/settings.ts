@@ -1,18 +1,18 @@
 /**
- * 应用设置持久化 — ~/.clickclaw/settings.json
+ * 应用设置持久化 — ~/.apiniclaw/settings.json
  *
- * 存储 ClickClaw 自身的设置（代理、主题等），
+ * 存储 ApiniClaw 自身的设置（代理、主题等），
  * 与 OpenClaw 的 openclaw.json 完全隔离。
  */
 
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs'
 import { join } from 'path'
-import { CLICKCLAW_HOME } from './constants'
+import { APINICLAW_HOME } from './constants'
 import { createLogger } from './logger'
 
 const log = createLogger('settings')
 
-const SETTINGS_PATH = join(CLICKCLAW_HOME, 'settings.json')
+const SETTINGS_PATH = join(APINICLAW_HOME, 'settings.json')
 
 // ─── 类型定义 ───
 
@@ -58,7 +58,7 @@ export function saveSettings(patch: Partial<AppSettings>): AppSettings {
   const current = getSettings()
   const next: AppSettings = { ...current, ...patch }
   try {
-    mkdirSync(CLICKCLAW_HOME, { recursive: true })
+    mkdirSync(APINICLAW_HOME, { recursive: true })
     writeFileSync(SETTINGS_PATH, JSON.stringify(next, null, 2), 'utf-8')
     log.info('设置已保存')
   } catch (err) {

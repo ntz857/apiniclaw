@@ -9,7 +9,7 @@ export function BackupLogsTab(): React.ReactElement {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    window.api.log.readClickclaw().then((all) => {
+    window.api.log.readApiniclaw().then((all) => {
       setLines(all.filter((l) => l.toLowerCase().includes('[backup]')))
       setLoading(false)
     })

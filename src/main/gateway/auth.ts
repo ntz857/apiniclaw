@@ -1,7 +1,7 @@
 /**
  * Gateway 认证 Token 管理
  *
- * Token 用于 ClickClaw ↔ Gateway 的安全通信。
+ * Token 用于 ApiniClaw ↔ Gateway 的安全通信。
  * 生成策略：
  * 1. 优先从 openclaw.json 的 gateway.auth.token 读取
  * 2. 不存在则生成随机 Token 并回写配置
@@ -19,7 +19,7 @@ import { loadDeviceToken } from './device-auth-store'
 const log = createLogger('gateway-auth')
 
 const TOKEN_LENGTH = 16 // 16 字节 = 32 字符 hex
-const TOKEN_PREFIX = 'clickclaw-'
+const TOKEN_PREFIX = 'apiniclaw-'
 
 function resolveClientVersion(): string {
   const version = app.getVersion()?.trim()
@@ -188,7 +188,7 @@ export function buildConnectFrame(nonce: string): object {
       auth: authToken ? { token: authToken } : undefined,
       caps: ['tool-events'],
       locale: 'zh-CN',
-      userAgent: `clickclaw/${clientVersion}`,
+      userAgent: `apiniclaw/${clientVersion}`,
     },
   }
 }

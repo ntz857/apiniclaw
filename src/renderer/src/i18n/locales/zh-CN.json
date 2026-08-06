@@ -2419,7 +2419,6 @@
     },
     "versions": {
       "title": "版本与更新",
-      "ApiniClawGroup": "ApiniClaw 管理工具",
       "openclawGroup": "OpenClaw AI 引擎",
       "appVersion": "应用版本",
       "appVersionDesc": "ApiniClaw 应用本体版本",
@@ -2427,7 +2426,8 @@
       "engineVersion": "引擎版本",
       "engineVersionDesc": "Gateway 核心引擎，可独立于应用更新",
       "engineUpdate": "引擎更新",
-      "latestLabel": "最新"
+      "latestLabel": "最新",
+      "apiniclawGroup": "ApiniClaw 管理工具"
     },
     "openclaw": {
       "currentVersion": "当前版本",
@@ -2456,14 +2456,13 @@
       "version": "版本",
       "tagline": "点击即装的 OpenClaw 桌面管理工具",
       "openSource": "开源仓库",
-      "openSourceDesc": "代码开源，欢迎 Star 与贡献",
+      "openSourceDesc": "代码开源，欢迎在 GitHub Star 与贡献",
       "website": "官网",
       "submitIssue": "提交 Issue",
       "feedback": "反馈与问题",
       "feedbackDesc": "报告 Bug 或提出建议",
       "feedbackModalDesc": "请选择你习惯的平台提交 Issue，我们会尽快处理。",
       "githubIssueHint": "国际用户推荐，需要 GitHub 账号",
-      "atomgitIssueHint": "国内用户推荐，需要 AtomGit 账号",
       "domesticTag": "国内",
       "checkUpdate": "检查更新",
       "updateChecking": "检查中...",
