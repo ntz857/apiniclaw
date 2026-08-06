@@ -103,17 +103,62 @@ export default function CronRunsDrawer({
       render: (v?: number) => (v != null ? `${(v / 1000).toFixed(1)}s` : '—'),
     },
     {
+      title: t('cron.runs.delivery'),
+      dataIndex: 'deliveryStatus',
+      key: 'deliveryStatus',
+      width: 120,
+      render: (v?: string, row?: CronRun) => {
+        const status = v || (row?.delivered ? 'delivered' : undefined)
+        if (!status || status === 'not-requested') {
+          return (
+            <Tag color="default" style={{ fontSize: 11 }}>
+              {t('cron.runs.deliveryNotRequested')}
+            </Tag>
+          )
+        }
+        if (status === 'delivered' || row?.delivered) {
+          return (
+            <Tag color="success" style={{ fontSize: 11 }}>
+              {t('cron.runs.deliveryDelivered')}
+            </Tag>
+          )
+        }
+        if (status === 'not-delivered') {
+          return (
+            <Tag color="warning" style={{ fontSize: 11 }} title={row?.deliveryError || row?.error}>
+              {t('cron.runs.deliveryNotDelivered')}
+            </Tag>
+          )
+        }
+        return (
+          <Tag color="default" style={{ fontSize: 11 }}>
+            {status}
+          </Tag>
+        )
+      },
+    },
+    {
       title: t('cron.runs.summary'),
       dataIndex: 'summary',
       key: 'summary',
-      render: (v?: string) =>
-        v ? (
+      render: (v?: string, row?: CronRun) => {
+        const err = row?.error || row?.deliveryError
+        if (err) {
+          return (
+            <Text type="danger" ellipsis style={{ maxWidth: 280, fontSize: 12 }} title={err}>
+              {err}
+              {v ? ` · ${v}` : ''}
+            </Text>
+          )
+        }
+        return v ? (
           <Text type="secondary" ellipsis style={{ maxWidth: 260, fontSize: 12 }}>
             {v}
           </Text>
         ) : (
           '—'
-        ),
+        )
+      },
     },
   ]
 

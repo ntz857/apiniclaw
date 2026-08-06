@@ -15,6 +15,7 @@ export const InstalledTab = memo(function InstalledTab({
   onUninstall,
   onToggleEnabled,
   onSaveApiKey,
+  onSaveEnv,
   onShowDetail,
   onExport,
   onOpenDir,
@@ -69,8 +70,10 @@ export const InstalledTab = memo(function InstalledTab({
                 onUninstall={onUninstall}
                 onToggleEnabled={onToggleEnabled}
                 onSaveApiKey={onSaveApiKey}
+                onSaveEnv={onSaveEnv}
                 onShowDetail={onShowDetail}
                 onExport={onExport}
+                onRefresh={onRefresh}
               />
             ))}
           </div>
@@ -125,8 +128,10 @@ export const InstalledTab = memo(function InstalledTab({
             onUninstall={onUninstall}
             onToggleEnabled={onToggleEnabled}
             onSaveApiKey={onSaveApiKey}
+            onSaveEnv={onSaveEnv}
             onShowDetail={onShowDetail}
             onExport={onExport}
+            onRefresh={onRefresh}
           />
         ))
       )}

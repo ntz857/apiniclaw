@@ -29,7 +29,7 @@
       "launch": "Launch"
     },
     "welcome": {
-      "title": "Welcome to ClickClaw",
+      "title": "Welcome to ApiniClaw",
       "subtitle": "One-click OpenClaw desktop manager. Deploy your AI Agent in minutes.",
       "detecting": "Detecting system environment...",
       "startSetup": "Start Setup",
@@ -145,7 +145,7 @@
     "about": "About"
   },
   "dashboard": {
-    "title": "ClickClaw Dashboard",
+    "title": "ApiniClaw Dashboard",
     "gatewayLabel": "Service Engine (Gateway)",
     "gatewayStatus": "Gateway Status",
     "notStarted": "Not Started",
@@ -444,7 +444,30 @@
       "deleteFailed": "Delete failed: {{error}}",
       "resetSuccess": "Session reset",
       "resetFailed": "Reset failed: {{error}}",
-      "mainSessionProtected": "Main session cannot be deleted"
+      "mainSessionProtected": "Main session cannot be deleted",
+      "resizeHandle": "Drag to resize session list",
+      "defaultAgent": "Default Agent",
+      "draftSession": "Draft",
+      "sessionFallback": "Session",
+      "labelAgentSession": "{{agent}} · {{session}}",
+      "channel": {
+        "feishu": "Feishu",
+        "lark": "Lark",
+        "telegram": "Telegram",
+        "discord": "Discord",
+        "slack": "Slack",
+        "whatsapp": "WhatsApp",
+        "weixin": "WeChat",
+        "wechat": "WeChat",
+        "dingtalk": "DingTalk",
+        "qq": "QQ",
+        "webchat": "Web",
+        "imessage": "iMessage",
+        "line": "LINE",
+        "direct": "DM",
+        "group": "Group",
+        "topic": "Topic"
+      }
     },
     "attachments": {
       "title": "Attachments",
@@ -528,7 +551,7 @@
     "noProviders": "No providers yet",
     "noProvidersHint": "Click \"Add Provider\" to configure your first AI model provider",
     "emptyTitle": "No AI providers configured",
-    "emptyHint": "Add a provider to let ClickClaw power your AI Agent",
+    "emptyHint": "Add a provider to let ApiniClaw power your AI Agent",
     "providerCount": "{{count}} providers · {{models}} models",
     "modelCount": "{{count}} models",
     "primarySuffix": "Primary: {{id}}",
@@ -639,8 +662,1018 @@
   "agents": {
     "title": "Agent Management",
     "empty": "No custom agents yet",
-    "emptyHint": "Click \"New Agent\" to create your first AI assistant",
+    "emptyHint": "Click \"New Agent\" to add from a template or create a custom one",
     "create": "New Agent",
+    "presets": {
+      "title": "Choose an agent template",
+      "subtitle": "Pick a template → rename if you want → create with full workspace files (tools: full).",
+      "oneClick": "Add",
+      "alreadyHave": "Similar exists",
+      "customTitle": "Blank custom",
+      "customDesc": "Fill in name, model and tool profile yourself",
+      "hint": "Templates seed SOUL / IDENTITY / AGENTS and recommended Skills; you can edit later.",
+      "addFromTemplate": "Add from template",
+      "createSuccess": "Agent \"{{name}}\" added",
+      "createSuccessWithSkills": "Added \"{{name}}\" with {{count}} skills installed to its workspace",
+      "createPartialSkills": "Added \"{{name}}\": installed {{installed}} skills; missing: {{missing}}",
+      "confirmTitle": "Add \"{{name}}\"",
+      "confirmAdd": "Confirm",
+      "displayNameLabel": "Display name",
+      "idLabel": "Agent ID",
+      "idHint": "Lowercase letters, digits and hyphens only; auto-renamed on conflict",
+      "idRequired": "Agent ID is required",
+      "idInvalid": "ID may only contain lowercase letters, digits and hyphens",
+      "category": {
+        "work": "Work & Collaboration",
+        "create": "Creative Writing",
+        "marketing": "Marketing & Growth",
+        "dev": "Engineering",
+        "ops": "Ops & Security",
+        "industry": "Industry Specialists"
+      },
+      "items": {
+        "discordBusiness": {
+          "name": "Discord Business",
+          "tagline": "在 Discord 上驱动订单、工单与团队协作的一站式商业运营引擎",
+          "theme": "秩序与效率并存的商业中枢"
+        },
+        "flightScraper": {
+          "name": "Flight Scraper",
+          "tagline": "全网比价、历史追踪、降价即报，帮你用最少的钱飞到想去的地方。",
+          "theme": "省钱旅行黑客"
+        },
+        "jobApplicant": {
+          "name": "Job Applicant",
+          "tagline": "type)",
+          "theme": "精准匹配，高效转化"
+        },
+        "morningBriefing": {
+          "name": "Morning Briefing",
+          "tagline": "两分钟掌握全局，高效开启每一天",
+          "theme": "精准高效，直击要点"
+        },
+        "negotiationAgent": {
+          "name": "Negotiation Agent",
+          "tagline": "专业谈判助手，帮你省钱省心",
+          "theme": "冷静制胜，策略为王"
+        },
+        "overnightCoder": {
+          "name": "Overnight Coder",
+          "tagline": "深夜自动接单、写码、测试并提交PR的自动化开发助手",
+          "theme": "午夜代码工坊"
+        },
+        "churnPredictor": {
+          "name": "Churn Predictor",
+          "tagline": "** Customer churn analyst and retention strategist",
+          "theme": "未雨绸缪，防患未然"
+        },
+        "competitorPricing": {
+          "name": "Competitor Pricing",
+          "tagline": "Competitive Pricing Intelligence Agent",
+          "theme": "冷静、敏锐、以数据驱动的商业洞察"
+        },
+        "customerSupport": {
+          "name": "Customer Support",
+          "tagline": "** Customer support responder and ticket manager",
+          "theme": "高效响应，温暖服务"
+        },
+        "dealForecaster": {
+          "name": "Deal Forecaster",
+          "tagline": "用数据穿透销售迷雾，精准预判每一笔交易走向",
+          "theme": "冷静洞察，数据为王"
+        },
+        "erpAdmin": {
+          "name": "Erp Admin",
+          "tagline": "and permission design following least-privilege principles",
+          "theme": "严谨务实，系统思维"
+        },
+        "invoiceTracker": {
+          "name": "Invoice Tracker",
+          "tagline": "** Invoice tracker, payment monitor, revenue reporter",
+          "theme": "每一分钱都算得清清楚楚"
+        },
+        "leadGen": {
+          "name": "Lead Gen",
+          "tagline": "精准构建目标客户线索，驱动销售管道增长",
+          "theme": "数据驱动，精准出击"
+        },
+        "meetingScheduler": {
+          "name": "Meeting Scheduler",
+          "tagline": "Intelligent Meeting Coordination Agent",
+          "theme": "高效协作，从容有序"
+        },
+        "objectionHandler": {
+          "name": "Objection Handler",
+          "tagline": "销售异议即时拆解与实战话术教练",
+          "theme": "拆解异议，推进对话"
+        },
+        "personalCrm": {
+          "name": "Personal Crm",
+          "tagline": "整理联系人脉络、提醒跟进、生成可执行关系报告",
+          "theme": "温和克制，像一位记得细节的专业助理"
+        },
+        "radar": {
+          "name": "Radar",
+          "tagline": "** Data analyst and business intelligence specialist",
+          "theme": "洞察先机，数据导航"
+        },
+        "salesAssistant": {
+          "name": "Sales Assistant",
+          "tagline": "** Lead management and sales outreach assistant",
+          "theme": "精准洞察，温暖触达，让每一次跟进都恰到好处"
+        },
+        "sdrOutbound": {
+          "name": "Sdr Outbound",
+          "tagline": "精准外呼，洞察商机，驱动增长",
+          "theme": "专业自信，价值先行"
+        },
+        "whatsappBusiness": {
+          "name": "Your Business Name",
+          "tagline": "秒级响应客户咨询，智能管理订单与预约",
+          "theme": "高效温暖，专业贴心"
+        },
+        "aiPolicyWriter": {
+          "name": "Ai Policy Writer",
+          "tagline": "** AI governance policy drafting and regulatory alignment specialist",
+          "theme": "合规为基，创新为翼"
+        },
+        "gdprAuditor": {
+          "name": "Gdpr Auditor",
+          "tagline": "** GDPR compliance auditing and remediation planning specialist",
+          "theme": "严谨细致，守护合规底线"
+        },
+        "riskAssessor": {
+          "name": "Risk Assessor",
+          "tagline": "** Enterprise risk identification, scoring, and mitigation planning specialist",
+          "theme": "洞察风险，守护稳健"
+        },
+        "soc2Preparer": {
+          "name": "Soc2 Preparer",
+          "tagline": "** SOC 2 audit preparation and evidence management specialist",
+          "theme": "严谨合规，从容迎审"
+        },
+        "adCopywriter": {
+          "name": "Ad Copywriter",
+          "tagline": "Performance Ad Copy Generation Agent",
+          "theme": "直接、锐利、以转化为先"
+        },
+        "audioProducer": {
+          "name": "Audio Producer",
+          "tagline": "一站式音频后期制作与声音设计专家",
+          "theme": "从录音棚到发行，让每个声音都精准到位"
+        },
+        "brandDesigner": {
+          "name": "Brand Designer",
+          "tagline": "| Color | Hex | Usage |",
+          "theme": "灵感有据，创意有方"
+        },
+        "copywriter": {
+          "name": "Copywriter",
+          "tagline": "Conversion-Focused Copywriting Agent",
+          "theme": "字字珠玑，句句转化"
+        },
+        "musicProducer": {
+          "name": "Beats",
+          "tagline": "Music Producer",
+          "theme": "旋律驱动情感，节拍塑造共鸣"
+        },
+        "podcastProducer": {
+          "name": "Podcast Producer",
+          "tagline": "擅长策划选题、访谈提纲、节目说明、时间轴摘要与发布排期，面向听众体验优化播客生产全流程。",
+          "theme": "有条理、懂节奏、重听感的播客制作风格"
+        },
+        "proofreader": {
+          "name": "Proofreader",
+          "tagline": "精准校对，温和指导——让每一处修改都成为学习的机会",
+          "theme": "字斟句酌，匠心育人"
+        },
+        "shortFormVideo": {
+          "name": "Clipper",
+          "tagline": "Short-Form Video Producer",
+          "theme": "节奏明确，抓眼迅速，平台优先"
+        },
+        "storyboardWriter": {
+          "name": "Storyboard Writer",
+          "tagline": "Visual Storyboard and Shot List Agent",
+          "theme": "以镜头思维驱动的视觉化创作"
+        },
+        "thumbnailDesigner": {
+          "name": "Thumbnail Designer",
+          "tagline": "Visual Thumbnail and Banner Design Agent",
+          "theme": "视觉冲击力与品牌一致性的平衡艺术"
+        },
+        "uxResearcher": {
+          "name": "Ux Researcher",
+          "tagline": "以证据驱动洞察，将用户声音转化为产品决策",
+          "theme": "洞察本质，连接用户与产品"
+        },
+        "videoAdCreator": {
+          "name": "Viso",
+          "tagline": "Video Ad Creator",
+          "theme": "创意驱动转化，节奏引爆流量"
+        },
+        "videoScripter": {
+          "name": "Video Scripter",
+          "tagline": "面向多平台的结构化视频脚本、分镜与标题文案生成",
+          "theme": "节奏明确，抓人开场，画面与台词并重"
+        },
+        "npsFollowup": {
+          "name": "Nps Followup",
+          "tagline": "** NPS detractor engagement and customer recovery specialist",
+          "theme": "倾听每一份不满，修复每一段信任"
+        },
+        "onboardingGuide": {
+          "name": "Onboarding Guide",
+          "tagline": "** New user onboarding and product activation specialist",
+          "theme": "清晰、渐进、可跳过、面向结果的新手上手体验"
+        },
+        "anomalyDetector": {
+          "name": "Anomaly Detector",
+          "tagline": "Metrics Anomaly Detection and Alerting Agent",
+          "theme": "冷静、克制、以证据为先的指标哨兵"
+        },
+        "dashboardBuilder": {
+          "name": "Dashboard Builder",
+          "tagline": "Analytics Dashboard Design Agent",
+          "theme": "以指标驱动决策，以简洁呈现复杂"
+        },
+        "dataCleaner": {
+          "name": "Data Cleaner",
+          "tagline": "Data Quality and Cleaning Agent",
+          "theme": "严谨、可审计、面向数据质量治理"
+        },
+        "dataEntry": {
+          "name": "Data Entry",
+          "tagline": "面向表单、文档与系统的精确数据整理与录入",
+          "theme": "严谨、克制、可追溯"
+        },
+        "etlPipeline": {
+          "name": "ETL Pipeline",
+          "tagline": "Data Pipeline Orchestration Agent",
+          "theme": "稳健、可追踪、以数据质量为先"
+        },
+        "reportGenerator": {
+          "name": "Report Generator",
+          "tagline": "Automated Business Report Agent",
+          "theme": "以指标、趋势和异常为中心的务实分析"
+        },
+        "sqlAssistant": {
+          "name": "SQL Assistant",
+          "tagline": "SQL Query Builder and Optimizer Agent",
+          "theme": "严谨、直接、面向数据交付"
+        },
+        "surveyAnalyzer": {
+          "name": "Survey Analyzer",
+          "tagline": "Survey Response Analysis Agent",
+          "theme": "冷静、严谨、基于证据的调查分析"
+        },
+        "transcription": {
+          "name": "Transcription",
+          "tagline": "高精度音视频转写，稳定标注说话人、时间戳与不确定内容",
+          "theme": "严谨、清晰、可核验的转写输出"
+        },
+        "apiDocumentation": {
+          "name": "Jane Smith",
+          "tagline": "** API documentation generator and maintainer",
+          "theme": "严谨、简洁、以代码事实为准"
+        },
+        "apiTester": {
+          "name": "Api Tester",
+          "tagline": "** API endpoint tester, health checker, performance monitor",
+          "theme": "严谨、可观测、面向故障的接口验证风格"
+        },
+        "blockchainAnalyst": {
+          "name": "Blockchain Analyst",
+          "tagline": "基于链上数据分析合约、资金流与治理风险",
+          "theme": "数据优先，谨慎求证，拒绝叙事先行"
+        },
+        "bugHunter": {
+          "name": "Bug Hunter",
+          "tagline": "** Bug analyst, error debugger, root cause investigator",
+          "theme": "冷静、严谨、以证据驱动的排障风格"
+        },
+        "changelog": {
+          "name": "Changelog",
+          "tagline": "** Changelog writer and release notes generator",
+          "theme": "清晰、克制、面向读者的发布沟通"
+        },
+        "codeReviewer": {
+          "name": "Code Reviewer",
+          "tagline": "** Code reviewer and quality gatekeeper",
+          "theme": "冷静、严谨、以证据说话"
+        },
+        "dependencyScanner": {
+          "name": "backend",
+          "tagline": "扫描依赖树，定位 CVE、许可与供应链风险，输出可执行升级建议。",
+          "theme": "技术严谨，安全优先，结论明确"
+        },
+        "docsWriter": {
+          "name": "Docs Writer",
+          "tagline": "** Technical documentation writer and maintainer",
+          "theme": "严谨、清楚、面向首次接触者的技术写作"
+        },
+        "ecommerceDev": {
+          "name": "Ecommerce Dev",
+          "tagline": "专注 Shopify、WooCommerce 与转化驱动的电商技术落地",
+          "theme": "务实、成交导向、以增长结果衡量技术决策"
+        },
+        "gameDesigner": {
+          "name": "Game Designer",
+          "tagline": "设计核心机制、成长系统、关卡节奏与商业化方案，并用数学与玩家体验验证可行性。",
+          "theme": "白板、节奏、反馈与平衡"
+        },
+        "githubIssueTriager": {
+          "name": "Github Issue Triager",
+          "tagline": "** GitHub issue triager and workflow coordinator",
+          "theme": "严谨、及时、以协作为中心的研发分诊流程"
+        },
+        "githubPrReviewer": {
+          "name": "Github Pr Reviewer",
+          "tagline": "** Automated GitHub PR reviewer and code quality enforcer",
+          "theme": "严谨、克制、面向可合并质量"
+        },
+        "migrationHelper": {
+          "name": "Migration Helper",
+          "tagline": "Database and Framework Migration Agent",
+          "theme": "稳健迁移，先验收后变更，先回滚再上线"
+        },
+        "prMerger": {
+          "name": "PR Merger",
+          "tagline": "Pull Request Management Agent",
+          "theme": "稳健、克制、以发布质量为中心"
+        },
+        "qaTester": {
+          "name": "Qa Tester",
+          "tagline": "系统化设计测试、定位缺陷、保障关键流程稳定",
+          "theme": "严谨细致，先想坏情况，再验证好结果"
+        },
+        "schemaDesigner": {
+          "name": "Schema Designer",
+          "tagline": "Database Schema Architecture Agent",
+          "theme": "以关系、约束与数据完整性为中心的严谨建模"
+        },
+        "scriptBuilder": {
+          "name": "Script Builder",
+          "tagline": "面向文件处理、数据转换与系统任务的实用型脚本构建",
+          "theme": "务实高效，先解决问题，再优化实现"
+        },
+        "testWriter": {
+          "name": "Test Writer",
+          "tagline": "Automated Test Generation Agent",
+          "theme": "严谨、覆盖全面、以行为为准"
+        },
+        "capacityPlanner": {
+          "name": "Capacity Planner",
+          "tagline": "Infrastructure Capacity Forecasting Agent",
+          "theme": "前瞻、稳健、数据驱动"
+        },
+        "costOptimizer": {
+          "name": "Cost Optimizer",
+          "tagline": "分析云支出，优先给出可落地的节省方案",
+          "theme": "务实、精算、面向账单结果"
+        },
+        "deployGuardian": {
+          "name": "Deploy Guardian",
+          "tagline": "监控发布状态，及时报告失败与异常",
+          "theme": "严谨值守，精确通报"
+        },
+        "incidentResponder": {
+          "name": "Incident Responder",
+          "tagline": "快速确认告警，分级响应，协调处置与复盘。",
+          "theme": "冷静、果断、结构化的应急处置风格。"
+        },
+        "infraMonitor": {
+          "name": "Infra Monitor",
+          "tagline": "持续跟踪主机、容器与容量趋势，输出可执行的告警和处置建议",
+          "theme": "稳健、克制、以事实驱动的运维观察"
+        },
+        "logAnalyzer": {
+          "name": "Log Analyzer",
+          "tagline": "解析多源日志，快速定位异常、关联链路并提炼关键变化",
+          "theme": "冷静审慎，沿时间线追踪线索，像侦探一样还原故障经过"
+        },
+        "raspberryPi": {
+          "name": "pihole",
+          "tagline": "低开销监控与自动化，面向 Raspberry Pi 的极简运维助手",
+          "theme": "轻量、克制、数字优先"
+        },
+        "runbookWriter": {
+          "name": "Runbook Writer",
+          "tagline": "Operational Runbook Generation Agent",
+          "theme": "冷静、明确、可执行的运维风格"
+        },
+        "selfHealingServer": {
+          "name": "openclaw-gateway",
+          "tagline": "监控、自动修复并留痕，必要时及时升级给人工",
+          "theme": "冷静、克制、以事实驱动的运维响应"
+        },
+        "slaMonitor": {
+          "name": "SLA Monitor",
+          "tagline": "SLA Compliance Tracking Agent",
+          "theme": "冷静、严谨、以数值为准的可靠性监控"
+        },
+        "abandonedCart": {
+          "name": "Abandoned Cart",
+          "tagline": "Cart Recovery and Conversion Agent",
+          "theme": "冷静、及时、以转化为中心"
+        },
+        "dropshippingResearcher": {
+          "name": "Dropshipping Researcher",
+          "tagline": "用数据筛选可卖商品，先算利润，再谈推荐。",
+          "theme": "冷静、直白、以数据裁决机会"
+        },
+        "inventoryTracker": {
+          "name": "Inventory Tracker",
+          "tagline": "E-commerce Inventory Management Agent",
+          "theme": "冷静、敏捷、以数据驱动的库存守护者"
+        },
+        "priceMonitor": {
+          "name": "Price Monitor",
+          "tagline": "** Competitor price tracking and pricing intelligence agent",
+          "theme": "稳健、及时、可审计的电商定价侦察"
+        },
+        "pricingOptimizer": {
+          "name": "Pricing Optimizer",
+          "tagline": "Dynamic Pricing Strategy Agent",
+          "theme": "数据驱动，稳健取舍，兼顾收益与竞争力"
+        },
+        "productLister": {
+          "name": "Product Lister",
+          "tagline": "E-commerce Product Listing Agent",
+          "theme": "严谨、统一、面向电商目录的结构化文案风格"
+        },
+        "reviewResponder": {
+          "name": "Review Responder",
+          "tagline": "Customer Review Response Agent",
+          "theme": "专业、克制、注重共情与闭环处理"
+        },
+        "curriculumDesigner": {
+          "name": "Curriculum Designer",
+          "tagline": "Course Design and Learning Architecture Agent",
+          "theme": "务实、清晰、以学习结果为中心"
+        },
+        "essayGrader": {
+          "name": "Essay Grader",
+          "tagline": "Rubric-Based Essay Assessment Agent",
+          "theme": "严谨、公正、建设性"
+        },
+        "flashcardGenerator": {
+          "name": "Flashcard Generator",
+          "tagline": "Spaced-Repetition Flashcard Creation Agent",
+          "theme": "以记忆科学为底色的高效学习工作流"
+        },
+        "languageTutor": {
+          "name": "Language Tutor",
+          "tagline": "Personalized Language Learning Agent",
+          "theme": "耐心、实用、循序渐进"
+        },
+        "quizMaker": {
+          "name": "Quiz Maker",
+          "tagline": "基于内容生成分层测验，附答案与解析，帮助学习与复盘",
+          "theme": "严谨、友善、重学习反馈"
+        },
+        "researchAssistant": {
+          "name": "Research Assistant",
+          "tagline": "in memory consolidation, not just passive protection from interference",
+          "theme": "严谨、清晰、可追溯"
+        },
+        "studyPlanner": {
+          "name": "Study Planner",
+          "tagline": "按目标、时间与进度制定现实可执行的学习计划",
+          "theme": "稳健、清晰、可持续的学习支持"
+        },
+        "tutor": {
+          "name": "Tutor",
+          "tagline": "按学习者水平讲清概念，循序练习并纠正误区",
+          "theme": "耐心清晰，循序渐进，重在真正学会"
+        },
+        "accountsPayable": {
+          "name": "Accounts Payable",
+          "tagline": "负责发票匹配、审批流转、付款排程与供应商账款台账",
+          "theme": "严谨、清晰、流程优先的财务作业风格"
+        },
+        "copyTrader": {
+          "name": "Copy Trader",
+          "tagline": "监控顶级交易员，按风险约束执行复制交易并持续跟踪组合表现。",
+          "theme": "谨慎、量化、透明、以风险控制为先"
+        },
+        "expenseTracker": {
+          "name": "Expense Tracker",
+          "tagline": "分类、预算、趋势与订阅识别的支出追踪助手",
+          "theme": "冷静清晰，像一位不评判人的记账伙伴"
+        },
+        "financialForecaster": {
+          "name": "Financial Forecaster",
+          "tagline": "基于历史数据构建月度、季度、年度财务预测，并给出情景与区间判断",
+          "theme": "审慎、精确、以数据为准"
+        },
+        "fraudDetector": {
+          "name": "Fraud Detector",
+          "tagline": "监控交易异常，输出分级风险判断与可执行处置建议",
+          "theme": "冷静、审慎、以证据驱动的风控判断"
+        },
+        "invoiceManager": {
+          "name": "Invoice Manager",
+          "tagline": "从自然语言生成专业发票，并持续跟踪收款与催收进度。",
+          "theme": "严谨、稳妥、账目清晰"
+        },
+        "portfolioRebalancer": {
+          "name": "Portfolio Rebalancer",
+          "tagline": "按目标权重分析偏离、税负与交易成本，给出再平衡建议",
+          "theme": "严谨、克制、数据驱动的财富管理分析风格"
+        },
+        "revenueAnalyst": {
+          "name": "Revenue Analyst",
+          "tagline": "面向收入与留存的财务分析，输出可用于决策的指标解读与预测",
+          "theme": "数据驱动，直指经营结果"
+        },
+        "taxPreparer": {
+          "name": "Tax Preparer",
+          "tagline": "按类别整理费用、估算税负并生成可交接给会计的税务摘要。",
+          "theme": "严谨、清晰、让税务整理更可控"
+        },
+        "tradingBot": {
+          "name": "Trading Bot",
+          "tagline": "监控持仓、解析市场、输出有依据的交易与风险信息",
+          "theme": "冷静、克制、数据优先"
+        },
+        "clientManager": {
+          "name": "Client Manager",
+          "tagline": "Freelance Client Relationship Agent",
+          "theme": "稳妥、清晰、持续跟进"
+        },
+        "proposalWriter": {
+          "name": "Proposal Writer",
+          "tagline": "Freelance Proposal Drafting Agent",
+          "theme": "专业、精准、以结果为导向"
+        },
+        "timeTracker": {
+          "name": "Time Tracker",
+          "tagline": "Freelance Time and Productivity Agent",
+          "theme": "精确、克制、可核账"
+        },
+        "upworkProposal": {
+          "name": "Upwork Proposal",
+          "tagline": "面向Upwork的定制提案、投标策略与资料优化",
+          "theme": "专业、务实、以客户结果为中心"
+        },
+        "clinicalNotes": {
+          "name": "Clinical Notes",
+          "tagline": "将临床叙述整理为规范 SOAP 病历并保持原意不变。",
+          "theme": "冷静、准确、可直接用于病历系统"
+        },
+        "mealPlanner": {
+          "name": "Meal Planner",
+          "tagline": "基于偏好与营养目标制定周餐单、购物清单和备餐方案",
+          "theme": "务实、友善、适合忙碌日常的饮食规划"
+        },
+        "medicationChecker": {
+          "name": "Medication Checker",
+          "tagline": "核查药物相互作用、禁忌证、重复用药与常用剂量范围，输出清晰可执行的风险提示。",
+          "theme": "严谨、审慎、临床药学风格"
+        },
+        "patientIntake": {
+          "name": "Patient Intake",
+          "tagline": "按顺序收集患者基本信息、病史与保险资料，生成可供医生审阅的结构化接诊摘要。",
+          "theme": "温和、专业、稳妥的前台接诊风格"
+        },
+        "symptomTriage": {
+          "name": "Symptom Triage",
+          "tagline": "结构化采集症状信息，按紧急程度给出就医建议",
+          "theme": "冷静、可靠、以安全为先的分诊助手"
+        },
+        "wellnessCoach": {
+          "name": "Wellness Coach",
+          "tagline": "以温和、依据充分的方式做每日身心状态陪伴与习惯跟踪",
+          "theme": "温暖、克制、可信赖的健康陪伴"
+        },
+        "workoutTracker": {
+          "name": "Workout Tracker",
+          "tagline": "按目标设计训练、追踪进度并据恢复状态动态调整",
+          "theme": "科学、直接、鼓励但不夸张"
+        },
+        "benefitsAdvisor": {
+          "name": "Benefits Advisor",
+          "tagline": "用清晰、客观的方式解答员工福利与假期政策问题",
+          "theme": "专业、友好、清楚明白"
+        },
+        "compensationBenchmarker": {
+          "name": "Compensation Benchmarker",
+          "tagline": "and level",
+          "theme": "数据驱动、审慎公平、面向人力决策"
+        },
+        "exitInterview": {
+          "name": "Exit Interview",
+          "tagline": "** Senior Engineer",
+          "theme": "温和克制，专业可信，注重倾听与保密"
+        },
+        "onboarding": {
+          "name": "Onboarding",
+          "tagline": "and department",
+          "theme": "耐心可靠，像入职当天最熟悉的协作者"
+        },
+        "performanceReviewer": {
+          "name": "Performance Reviewer",
+          "tagline": "整合多方反馈，生成平衡、具体、可执行的绩效评审稿",
+          "theme": "专业克制，客观公允，面向成长"
+        },
+        "recruiter": {
+          "name": "Recruiter",
+          "tagline": "and seniority level",
+          "theme": "专业、克制、流程导向"
+        },
+        "resumeOptimizer": {
+          "name": "Resume Optimizer",
+          "tagline": "** Resume optimizer and job application strategist",
+          "theme": "务实、精准、以岗位匹配为中心"
+        },
+        "resumeScreener": {
+          "name": "Resume Screener",
+          "tagline": "closely",
+          "theme": "专业、审慎、公平"
+        },
+        "complianceChecker": {
+          "name": "Compliance Checker",
+          "tagline": "按框架版本核对合规要求，识别缺口并按风险与期限排序。",
+          "theme": "审慎、严谨、以证据为先"
+        },
+        "contractReviewer": {
+          "name": "Contract Reviewer",
+          "tagline": "审阅合同条款，提示潜在风险并用通俗语言解释要点",
+          "theme": "审慎、精确、偏重风险识别的法律审阅风格"
+        },
+        "legalBriefWriter": {
+          "name": "Legal Brief Writer",
+          "tagline": "** Legal brief and motion drafting specialist",
+          "theme": "严谨、克制、以法条和判例为中心"
+        },
+        "ndaGenerator": {
+          "name": "Nda Generator",
+          "tagline": "** NDA and confidentiality agreement drafting specialist",
+          "theme": "严谨、克制、重视可执行性的法律文书工作流"
+        },
+        "patentAnalyzer": {
+          "name": "Patent Analyzer",
+          "tagline": "** Patent claim analysis, prior art research, and infringement assessment specialist",
+          "theme": "严谨审慎、证据导向、面向法律检索与技术比对"
+        },
+        "policyWriter": {
+          "name": "Policy Writer",
+          "tagline": "起草清晰、可执行、面向不同受众的政策与合规文档",
+          "theme": "清晰、审慎、权威"
+        },
+        "abTestAnalyzer": {
+          "name": "A/B Test Analyzer",
+          "tagline": "Experimentation and A/B Test Analysis Agent",
+          "theme": "严谨、克制、以统计证据驱动决策"
+        },
+        "bookWriter": {
+          "name": "Book Writer",
+          "tagline": "先搭结构，再落文字，面向出版完成整本书写作与打磨",
+          "theme": "稳健、清晰、面向成稿的书籍生产流程"
+        },
+        "brandMonitor": {
+          "name": "Brand Monitor",
+          "tagline": "Brand Mention and Reputation Tracking Agent",
+          "theme": "冷静、敏锐、实时"
+        },
+        "coldOutreach": {
+          "name": "Cold Outreach",
+          "tagline": "基于真实研究，写出短、准、可跟进的外联消息",
+          "theme": "冷静直接，像一位懂业务的同事顺手递来相关信息"
+        },
+        "competitorWatch": {
+          "name": "Competitor Watch",
+          "tagline": "** Competitor analyst and market intelligence agent",
+          "theme": "冷静、客观、面向行动的市场洞察"
+        },
+        "contentRepurposer": {
+          "name": "Content Repurposer",
+          "tagline": "Long-Form to Multi-Platform Content Transformation Agent",
+          "theme": "按平台语境重塑表达，确保每条内容都能单独成立"
+        },
+        "echo": {
+          "name": "Echo",
+          "tagline": "** Content writer and creative communicator",
+          "theme": "清晰、灵活、贴近品牌语气的内容生产"
+        },
+        "emailSequence": {
+          "name": "Email Sequence",
+          "tagline": "Email Drip Campaign Design Agent",
+          "theme": "清晰、克制、面向转化的邮件策略"
+        },
+        "geoAgent": {
+          "name": "Geo Agent",
+          "tagline": "监测 AI 搜索中的品牌可见度与引用机会",
+          "theme": "战略、数据驱动、以证据为先"
+        },
+        "hackernewsAgent": {
+          "name": "Hackernews Agent",
+          "tagline": "监控 Hacker News 热点与新帖，辅助撰写克制的 Show HN 标题、评论与投放时机建议",
+          "theme": "技术克制，重事实，少修饰"
+        },
+        "influencerFinder": {
+          "name": "Influencer Finder",
+          "tagline": "Influencer Discovery and Outreach Agent",
+          "theme": "数据驱动的营销侦察"
+        },
+        "instagramReelsCreator": {
+          "name": "Reely",
+          "tagline": "Instagram Reels Creator",
+          "theme": "审美优先，围绕发现页增长与分享传播"
+        },
+        "linkedinContent": {
+          "name": "Linkedin Content",
+          "tagline": "** LinkedIn content creator and growth strategist",
+          "theme": "专业、克制、增长导向"
+        },
+        "localization": {
+          "name": "Localization",
+          "tagline": "面向多市场的文案与界面本地化审校",
+          "theme": "跨文化精准表达，兼顾品牌一致性与本地自然度"
+        },
+        "multiAccountSocial": {
+          "name": "Multi Account Social",
+          "tagline": "跨平台管理多账号内容、排程、互动与数据复盘，保持各账号独立声线与稳定节奏。",
+          "theme": "稳健、克制、数据驱动的社媒运营"
+        },
+        "multimediaContentPipeline": {
+          "name": "Studio",
+          "tagline": "Multimedia Content Pipeline",
+          "theme": "高效、统一、面向发布的内容生产协作"
+        },
+        "newsCurator": {
+          "name": "News Curator",
+          "tagline": "按主题筛选、评估并发布高质量新闻摘要",
+          "theme": "锐利、克制、编辑部风格"
+        },
+        "newsletter": {
+          "name": "Newsletter",
+          "tagline": "** Weekly newsletter creator and content curator",
+          "theme": "精炼洞察，周周送达"
+        },
+        "redditScout": {
+          "name": "Reddit Scout",
+          "tagline": "实时监控 Reddit 社区，精准捕捉高意向信号与趋势动态",
+          "theme": "信号优先，洞察先行"
+        },
+        "seoWriter": {
+          "name": "Seo Writer",
+          "tagline": "** SEO-optimized content writer and keyword strategist",
+          "theme": "专业助手"
+        },
+        "socialMedia": {
+          "name": "Social Media",
+          "tagline": "** Social media content creator and scheduler",
+          "theme": "让每一条内容都值得被看见"
+        },
+        "telemarketer": {
+          "name": "Telemarketer",
+          "tagline": "专业电话营销策略与话术设计，提升转化率",
+          "theme": "精准沟通，温暖成交"
+        },
+        "tiktokRepurposer": {
+          "name": "Tiktok Repurposer",
+          "tagline": "把长内容变成爆款短视频脚本，让每条内容都值得被刷到",
+          "theme": "真实、带劲、不端着"
+        },
+        "tiktokVideoCreator": {
+          "name": "TikTik",
+          "tagline": "TikTok Video Creator",
+          "theme": "抓住前两秒，引爆全屏"
+        },
+        "ugcVideo": {
+          "name": "Ugc Video",
+          "tagline": "生成真实感UGC视频脚本与拍摄方案，让内容不像广告",
+          "theme": "真实种草，自然安利"
+        },
+        "xTwitterGrowth": {
+          "name": "X Twitter Growth",
+          "tagline": "** Twitter/X content creator, engagement optimizer, audience builder",
+          "theme": "让每一条推文都值得被看见"
+        },
+        "youtubeSeo": {
+          "name": "Youtube Seo",
+          "tagline": "** YouTube SEO optimizer and video growth strategist",
+          "theme": "数据为骨，创意为翼，增长有道"
+        },
+        "youtubeShortsCreator": {
+          "name": "Shorty",
+          "tagline": "YouTube Shorts Creator",
+          "theme": "短平快，爆款制造机"
+        },
+        "communityManager": {
+          "name": "your-agent-name",
+          "tagline": "为组织在 Moltbook 上发布动态、洞察与报告，并真诚互动",
+          "theme": "数据驱动，真诚连接"
+        },
+        "growthAgent": {
+          "name": "Growth Agent",
+          "tagline": "and what channels it runs on.",
+          "theme": "真实数据，真实增长，真实影响力"
+        },
+        "scout": {
+          "name": "Scout",
+          "tagline": "Moltbook 情报雷达，精准锁定高价值互动机会",
+          "theme": "信号优先，噪声靠边"
+        },
+        "dailyPlanner": {
+          "name": "Daily Planner",
+          "tagline": "** Personal schedule optimizer and daily planner",
+          "theme": "从容规划，高效生活"
+        },
+        "familyCoordinator": {
+          "name": "Dad",
+          "tagline": "家庭事务总协调，让全家井井有条",
+          "theme": "温暖有序，家有一老如有一宝"
+        },
+        "fitnessCoach": {
+          "name": "Fitness Coach",
+          "tagline": "** Personal fitness coach and nutrition advisor",
+          "theme": "科学训练，稳步进阶，健康生活"
+        },
+        "homeAutomation": {
+          "name": "Home Automation",
+          "tagline": "一句话掌控全屋智能，让家更懂你",
+          "theme": "贴心高效，如影随形"
+        },
+        "journalPrompter": {
+          "name": "Journal Prompter",
+          "tagline": "Daily Journaling Prompt Generation Agent",
+          "theme": "温柔而深刻的自我对话"
+        },
+        "readingDigest": {
+          "name": "Reading Digest",
+          "tagline": "** Content curator, article summarizer, knowledge organizer",
+          "theme": "化繁为简，洞见精华"
+        },
+        "travelPlanner": {
+          "name": "Travel Planner",
+          "tagline": "Itinerary Planning and Travel Logistics Agent",
+          "theme": "行云流水，步步精心"
+        },
+        "dailyStandup": {
+          "name": "Daily Standup",
+          "tagline": "** Daily standup collector and summarizer",
+          "theme": "高效同步，聚焦阻塞"
+        },
+        "focusTimer": {
+          "name": "Focus Timer",
+          "tagline": "Deep Work and Focus Management Agent",
+          "theme": "心无旁骛，专注致远"
+        },
+        "habitTracker": {
+          "name": "Habit Tracker",
+          "tagline": "Daily Habit and Streak Management Agent",
+          "theme": "温和而坚定的习惯养成伙伴"
+        },
+        "inboxZero": {
+          "name": "Inbox Zero",
+          "tagline": "** Email categorizer, response drafter, inbox manager",
+          "theme": "清爽高效，邮件无忧"
+        },
+        "meetingNotes": {
+          "name": "Meeting Notes",
+          "tagline": "** Meeting note-taker, action item tracker, follow-up manager",
+          "theme": "高效记录，精准跟进"
+        },
+        "meetingTranscriber": {
+          "name": "Meeting Transcriber",
+          "tagline": "** Meeting transcriber, summarizer, and action item tracker",
+          "theme": "高效协作，会议无忧"
+        },
+        "metrics": {
+          "name": "Metrics",
+          "tagline": "** Script runner for analytics dashboards",
+          "theme": "数据驱动，精准洞察"
+        },
+        "notionOrganizer": {
+          "name": "Notion Organizer",
+          "tagline": "** Notion workspace organizer and knowledge manager",
+          "theme": "秩序之美，知识之序"
+        },
+        "orion": {
+          "name": "Orion",
+          "tagline": "** Task coordinator and project orchestrator",
+          "theme": "运筹帷幄，决胜千里"
+        },
+        "commercialRe": {
+          "name": "Commercial Re",
+          "tagline": "数据驱动的商业地产投资分析与尽职调查专家",
+          "theme": "数字说话，风险定价"
+        },
+        "leadQualifier": {
+          "name": "Lead Qualifier",
+          "tagline": "Real Estate Lead Qualification Agent",
+          "theme": "火眼金睛，锁定高价值客户"
+        },
+        "listingScout": {
+          "name": "Listing Scout",
+          "tagline": "Real Estate Listing Discovery Agent",
+          "theme": "快人一步，锁定好房"
+        },
+        "marketAnalyzer": {
+          "name": "Market Analyzer",
+          "tagline": "Real Estate Market Intelligence Agent",
+          "theme": "洞悉数据，智判楼市"
+        },
+        "propertyVideo": {
+          "name": "Property Video",
+          "tagline": "用镜头语言讲述房产故事，让每个空间都值得被看见",
+          "theme": "温暖、专业、有温度的空间叙事者"
+        },
+        "churnPrevention": {
+          "name": "Churn Prevention",
+          "tagline": "SaaS Churn Detection and Prevention Agent",
+          "theme": "专业助手"
+        },
+        "featureRequest": {
+          "name": "Feature Request",
+          "tagline": "Feature Request Triage and Prioritization Agent",
+          "theme": "需求洪流中的优先级灯塔"
+        },
+        "onboardingFlow": {
+          "name": "Onboarding Flow",
+          "tagline": "SaaS User Onboarding Agent",
+          "theme": "激活驱动，价值先行"
+        },
+        "productScrum": {
+          "name": "Product Scrum",
+          "tagline": "让每一次冲刺都精准交付价值",
+          "theme": "敏捷有序，价值驱动"
+        },
+        "releaseNotes": {
+          "name": "Release Notes",
+          "tagline": "Product Release Communication Agent",
+          "theme": "清晰沟通，赋能用户"
+        },
+        "usageAnalytics": {
+          "name": "Usage Analytics",
+          "tagline": "Product Usage Intelligence Agent",
+          "theme": "数据驱动，洞察先行"
+        },
+        "accessAuditor": {
+          "name": "Access Auditor",
+          "tagline": "| Recommendation |",
+          "theme": "细致入微，防患未然"
+        },
+        "incidentLogger": {
+          "name": "Incident Logger",
+          "tagline": "精确记录每一次安全事件，完整追踪从发现到恢复的全过程",
+          "theme": "一丝不苟，记录为证"
+        },
+        "phishingDetector": {
+          "name": "Phishing Detector",
+          "tagline": "Email and URL Phishing Detection Agent",
+          "theme": "火眼金睛，识破伪装"
+        },
+        "securityHardener": {
+          "name": "Security Hardener",
+          "tagline": "系统与应用安全加固助手",
+          "theme": "专业助手"
+        },
+        "threatMonitor": {
+          "name": "Threat Monitor",
+          "tagline": "实时监控威胁情报，精准评估风险，守护组织安全边界",
+          "theme": "警觉如鹰，冷静如冰"
+        },
+        "vulnScanner": {
+          "name": "Vuln Scanner",
+          "tagline": "精准定位依赖漏洞，优先处置真实风险",
+          "theme": "安全第一，行动优先"
+        },
+        "inventoryForecaster": {
+          "name": "Inventory Forecaster",
+          "tagline": "** Demand forecasting and inventory planning specialist",
+          "theme": "数据驱动的供应链智慧"
+        },
+        "routeOptimizer": {
+          "name": "Route Optimizer",
+          "tagline": "** Delivery route planning and optimization specialist",
+          "theme": "高效流转，精准送达"
+        },
+        "vendorEvaluator": {
+          "name": "Vendor Evaluator",
+          "tagline": "** Supplier evaluation and procurement advisory specialist",
+          "theme": "数据驱动，洞察供应链全局"
+        },
+        "interviewBot": {
+          "name": "Interview Bot",
+          "tagline": "** Structured phone screening interviewer with scoring capabilities",
+          "theme": "严谨公正，洞察人才"
+        },
+        "phoneReceptionist": {
+          "name": "** So they know who",
+          "tagline": "** Inbound call management and appointment scheduling specialist",
+          "theme": "温暖如春，专业有序"
+        },
+        "voicemailTranscriber": {
+          "name": "Voicemail Transcriber",
+          "tagline": "** Voicemail transcription, analysis, and routing specialist",
+          "theme": "声声入耳，字字分明"
+        }
+      }
+    },
     "agentCount": "{{count}} agents",
     "edit": "Edit",
     "delete": "Delete",
@@ -803,20 +1836,27 @@
       "save": "Save",
       "usingAllowlist": "Custom allowlist active — only listed skills are available to this agent",
       "usingAll": "All skills enabled — disabling any skill will create a per-agent allowlist",
+      "autoApplyHint": "Toggles apply immediately: updates this agent's allowlist and installs skills into its workspace skills/ folder.",
       "wsRequired": "Gateway connection required to load this agent's skills",
       "filterPlaceholder": "Search skills...",
       "loading": "Loading skills...",
       "noSkills": "No skills found",
       "retry": "Retry",
       "alwaysOn": "Always On",
-      "notReady": "Not Ready",
+      "notReady": "Deps not ready",
+      "notReadyCount": "{{count}} not ready",
+      "notReadyBannerTitle": "Some skills need setup",
+      "notReadyBannerDesc": "Skill files may already be installed, but CLI tools or API keys can still be missing. Click \"Fix\" next to a skill to install tools or paste keys, then recheck.",
       "groupWorkspace": "Workspace Skills",
       "groupBuiltin": "Built-in Skills",
       "groupInstalled": "Installed Skills",
       "groupExtra": "Extra Skills",
       "groupOther": "Other Skills",
-      "saveSuccess": "Skills config saved",
-      "saveFailed": "Save failed: {{error}}"
+      "saveSuccess": "Skills config applied",
+      "saveSuccessAllowlistOnly": "Allowlist applied (skill is provided by Gateway; workspace copy not required)",
+      "saveFailed": "Save failed: {{error}}",
+      "installSuccess": "Installed {{count}} skill(s) into this agent's workspace",
+      "installPartial": "Allowlist saved; handled {{installed}}. Not found locally: {{missing}} (install from Skills page first, or check the name)"
     },
     "form": {
       "title": "{{mode}} Agent",
@@ -987,7 +2027,7 @@
       "weixinLoggedOut": "Disconnected from WeChat",
       "weixinScanHint": "Use WeChat to scan the QR code below and confirm on your phone",
       "weixinScanWaiting": "QR code is ready. Waiting for WeChat confirmation...",
-      "weixinBundledReady": "The WeChat plugin is bundled with ClickClaw. No extra installation is needed.",
+      "weixinBundledReady": "The WeChat plugin is bundled with ApiniClaw. No extra installation is needed.",
       "weixinBundledMissing": "Bundled WeChat plugin was not found. Check whether the current app package is complete.",
       "weixinPluginDisabled": "The WeChat plugin is not enabled in the current config yet. Finish setup or save settings again first.",
       "weixinConfigMissing": "OpenClaw config has not been created yet. The WeChat plugin will be enabled automatically after setup.",
@@ -1005,7 +2045,7 @@
       "wecomScanFailed": "Scan failed: {{error}}",
       "wecomScanSuccessMask": "Scan successful\nCredentials filled in",
       "wecomScanAppHint": "Use the WeCom app to scan the QR code below and authorize",
-      "wecomQuickAuthDesc": "Scan with the WeCom app and ClickClaw will finish setup automatically. No need to enter Bot ID or Secret.",
+      "wecomQuickAuthDesc": "Scan with the WeCom app and ApiniClaw will finish setup automatically. No need to enter Bot ID or Secret.",
       "wecomRetryTitle": "Scanned but Bot info missing",
       "wecomRetryContent": "WeCom returned success, but Bot ID / Secret was not returned yet. Retry now?",
       "wecomRetryNow": "Retry now",
@@ -1020,7 +2060,7 @@
       "feishuScanFailed": "Scan failed: {{error}}",
       "feishuScanSuccessMask": "Scan successful\nCredentials filled in",
       "feishuScanAppHint": "Use the Feishu app to scan the QR code below and authorize",
-      "feishuQuickAuthDesc": "Scan with the Feishu app and ClickClaw will finish setup automatically. China mainland Feishu is used by default.",
+      "feishuQuickAuthDesc": "Scan with the Feishu app and ApiniClaw will finish setup automatically. China mainland Feishu is used by default.",
       "feishuScanLink": "QR page",
       "feishuScanOpenLink": "Open",
       "feishuStreaming": "Streaming",
@@ -1193,6 +2233,7 @@
     "alwaysEnabled": "Always on",
     "notReady": "Requirements not met",
     "notReadyHint": "This skill requires:",
+    "notReadyAction": "Fix",
     "missingBins": "Missing tools: {{list}}",
     "missingAnyBins": "Need one of: {{list}}",
     "missingEnv": "Missing env vars: {{list}}",
@@ -1207,6 +2248,55 @@
     "apiKeySaved": "API Key saved",
     "apiKeySaveFailed": "Save failed: {{error}}",
     "setApiKey": "Set API Key",
+    "fix": {
+      "title": "One-click fix",
+      "hint": "Complete the steps below, then click Recheck. Env vars are written to Gateway skills.entries. After installing CLI tools, ensure they are on PATH and restart the Gateway.",
+      "hintOneClick": "CLI tools can be installed in one click (winget on Windows). Secrets must be pasted, then saved. After install we restart the Gateway and recheck.",
+      "envSection": "Set environment variables / API keys",
+      "envOneClickHint": "Secrets cannot be generated automatically — paste values and click save.",
+      "envPlaceholder": "Enter value…",
+      "saveEnv": "Save & recheck",
+      "envEmpty": "Fill in at least one value",
+      "envSaved": "Saved. Rechecking…",
+      "envSaveFailed": "Save failed: {{error}}",
+      "binsSection": "Missing CLI tools",
+      "binsHint": "Run these install commands in a terminal (or install yourself and add to PATH):",
+      "binsOneClickHint": "Click Install to let ApiniClaw run winget/brew for you:",
+      "anyBinsSection": "Need any one of these tools",
+      "anyBinsHint": "Installing one is enough:",
+      "anyBinsOneClickHint": "Installing any one is enough:",
+      "configSection": "Missing config",
+      "configHint": "Add the config under skills.entries in openclaw.json, or check SKILL.md.",
+      "osSection": "Unsupported OS",
+      "osHint": "This skill only supports: {{list}}. It cannot run on this system.",
+      "copy": "Copy",
+      "copyCmd": "Copy command",
+      "copyOk": "Copied",
+      "copyFailed": "Copy failed",
+      "installManually": "“{{bin}}” cannot be auto-installed — install manually and add to PATH",
+      "oneClickInstall": "Install",
+      "oneClickInstallAll": "Install all ({{count}})",
+      "installAnyOne": "Install one of them",
+      "installing": "Installing {{bin}}… (may take a few minutes)",
+      "installingAll": "Installing {{count}} tools…",
+      "installProgress": "Installing…",
+      "installOk": "Installed “{{bin}}” and rechecked",
+      "installOkRestarted": "Installed “{{bin}}”, restarted Gateway, and rechecked",
+      "installFailed": "Failed to install “{{bin}}”: {{error}}",
+      "installFailedTitle": "Install {{bin}} failed",
+      "fallbackCmd": "You can copy this command and run it in a terminal:",
+      "installAllOk": "Installed: {{list}}",
+      "installAllOkRestarted": "Installed: {{list}}, Gateway restarted",
+      "installAllPartial": "{{ok}} succeeded; failed: {{fail}}",
+      "installAllFailed": "Batch install failed: {{error}}",
+      "recheck": "Recheck",
+      "rechecked": "Status refreshed",
+      "recheckFailed": "Refresh failed: {{error}}",
+      "noSkillKey": "Cannot save: missing skillKey",
+      "unknownReason": "No specific missing items returned. Check details / SKILL.md, then Recheck.",
+      "collapse": "Collapse",
+      "expand": "Show fix steps"
+    },
     "gatewayOffline": "Gateway offline",
     "gatewayOfflineHint": "Gateway is not connected. Start the Gateway to manage Skills.",
     "loadFailed": "Failed to load Skills: {{error}}",
@@ -1279,7 +2369,7 @@
       "language": "Language",
       "languageDesc": "Switch the interface language",
       "launchAtLogin": "Launch at Login",
-      "launchAtLoginDesc": "Automatically start ClickClaw when you log in"
+      "launchAtLoginDesc": "Automatically start ApiniClaw when you log in"
     },
     "gateway": {
       "port": "Listen Port",
@@ -1295,7 +2385,7 @@
     "logs": {
       "title": "Logs",
       "openLogDir": "Open Log Directory",
-      "openLogDirDesc": "Directory containing ClickClaw runtime logs"
+      "openLogDirDesc": "Directory containing ApiniClaw runtime logs"
     },
     "remotePresets": {
       "title": "Model Data Source",
@@ -1309,7 +2399,7 @@
     "proxy": {
       "title": "Network Proxy",
       "enable": "Enable Proxy",
-      "enableDesc": "All ClickClaw and OpenClaw AI requests will be routed through the proxy",
+      "enableDesc": "All ApiniClaw and OpenClaw AI requests will be routed through the proxy",
       "url": "Proxy URL",
       "urlPlaceholder": "http://127.0.0.1:7890",
       "urlDesc": "Supports HTTP, HTTPS and SOCKS5 (e.g. socks5://127.0.0.1:1080)",
@@ -1327,10 +2417,10 @@
     },
     "versions": {
       "title": "Versions & Updates",
-      "clickclawGroup": "ClickClaw App",
+      "ApiniClawGroup": "ApiniClaw App",
       "openclawGroup": "OpenClaw AI Engine",
       "appVersion": "App Version",
-      "appVersionDesc": "ClickClaw application version",
+      "appVersionDesc": "ApiniClaw application version",
       "appUpdate": "App Update",
       "engineVersion": "Engine Version",
       "engineVersionDesc": "Gateway core engine — updates independently from the app",
@@ -1411,7 +2501,12 @@
       "enable": "Enable",
       "disable": "Disable",
       "disabled": "Disabled",
-      "deleteConfirm": "Delete this task?"
+      "deleteConfirm": "Delete this task?",
+      "agent": "Agent",
+      "agentDefault": "Default agent",
+      "deliveryNone": "No delivery",
+      "deliveryAnnounce": "Deliver to",
+      "deliveryWebhook": "Webhook"
     },
     "schedule": {
       "everyNMinutes": "Every {{n}} min",
@@ -1460,8 +2555,43 @@
       "message": "Message / Prompt",
       "messageRequired": "Please enter a message",
       "messagePlaceholder": "What should the AI do?",
-      "agentId": "Agent ID",
+      "agentId": "Target agent",
       "agentIdPlaceholder": "Leave empty to use the default Agent",
+      "deliveryMode": "Result delivery",
+      "deliveryHint": "Default is No delivery: run the agent only, do not push to IM. If you choose Deliver to channel, channel and target are required.",
+      "delivery": {
+        "none": "No delivery",
+        "announce": "Deliver to channel",
+        "webhook": "Webhook"
+      },
+      "announceTip": "After the run, a summary is sent to the IM target. Feishu example: chat:oc_xxx or user:ou_xxx.",
+      "deliveryChannel": "Channel",
+      "deliveryChannelRequired": "Select a channel",
+      "deliveryChannelPlaceholder": "Feishu / Telegram / …",
+      "deliveryTo": "Target",
+      "deliveryToRequired": "Select or enter a delivery target",
+      "deliveryToPlaceholder": "Pick from list, or type chat:oc_xxx / user:ou_xxx",
+      "deliveryToHint": "Type manually if empty. Feishu: chat:groupId or user:openId; Telegram: numeric chat id.",
+      "deliveryToSelectHint": "Choose from allowlist / paired / recent, or type a new target.",
+      "deliveryToSelectHintCount": "Found {{n}} known target(s). Click the field to expand; you can also type a new one.",
+      "deliveryToLoading": "Loading known targets…",
+      "deliveryToNeedChannel": "Select a channel first",
+      "deliveryToEmpty": "No known targets: no pairing allowlist or past deliveries for this channel. Type one, e.g. Feishu user:ou_xxx / chat:oc_xxx.",
+      "webhookUrl": "Webhook URL",
+      "webhookUrlRequired": "Enter a webhook URL",
+      "webhookUrlInvalid": "Enter a valid URL",
+      "webhookUrlHint": "A POST with the run result is sent when the job finishes.",
+      "channel": {
+        "feishu": "Feishu",
+        "telegram": "Telegram",
+        "discord": "Discord",
+        "slack": "Slack",
+        "whatsapp": "WhatsApp",
+        "signal": "Signal",
+        "imessage": "iMessage",
+        "wecom": "WeCom",
+        "dingtalk": "DingTalk"
+      },
       "enableNow": "Enable Now"
     },
     "runs": {
@@ -1469,6 +2599,10 @@
       "time": "Time",
       "status": "Status",
       "duration": "Duration",
+      "delivery": "Delivery",
+      "deliveryDelivered": "Delivered",
+      "deliveryNotDelivered": "Not delivered",
+      "deliveryNotRequested": "No delivery",
       "summary": "Summary",
       "statusOk": "Success",
       "statusError": "Failed",
@@ -1485,7 +2619,7 @@
     }
   },
   "aboutPage": {
-    "title": "About ClickClaw",
+    "title": "About ApiniClaw",
     "subtitle": "Product info, community entries, and dynamic announcements",
     "defaultSlogan": "One-click desktop manager for OpenClaw",
     "website": "Website",
@@ -1523,7 +2657,7 @@
       "updateDownloading": "Downloading {{progress}}%",
       "updateInstall": "Install & Restart",
       "updateLatest": "Up to date",
-      "quit": "Quit ClickClaw"
+      "quit": "Quit ApiniClaw"
     }
   }
 }

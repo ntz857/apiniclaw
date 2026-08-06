@@ -60,7 +60,8 @@ export function ProviderSetupDrawer({
       setCustomApi('openai-completions')
       const firstPlatform = presetBrand?.platforms[0]
       setSelectedPlatformKey(firstPlatform?.key ?? '')
-      setSelectedModelIds(firstPlatform ? getRecommendedModelIds(firstPlatform.models) : [])
+      // 新建供应商：默认全选该平台全部模型，用户可自行取消
+      setSelectedModelIds(firstPlatform ? firstPlatform.models.map((m) => m.id) : [])
     }
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -209,7 +210,8 @@ export function ProviderSetupDrawer({
                   onClick={() => {
                     setSelectedPlatformKey(platform.key)
                     if (!isEdit) {
-                      setSelectedModelIds(getRecommendedModelIds(platform.models))
+                      // 切换平台时同样默认全选
+                      setSelectedModelIds(platform.models.map((m) => m.id))
                     }
                     setVerifyState('idle')
                   }}

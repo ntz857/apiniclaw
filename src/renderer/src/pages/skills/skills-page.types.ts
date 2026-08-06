@@ -20,6 +20,7 @@ export interface InstalledTabProps {
   onUninstall: (baseDir: string, name: string) => Promise<void>
   onToggleEnabled: (skillKey: string, enabled: boolean) => void
   onSaveApiKey: (skillKey: string, apiKey: string) => Promise<void>
+  onSaveEnv: (skillKey: string, env: Record<string, string>) => Promise<void>
   onShowDetail: (skill: InstalledSkillInfo) => void
   onExport: (skill: InstalledSkillInfo) => Promise<void>
   onOpenDir: () => void

@@ -95,10 +95,11 @@ export default function AboutPage(): React.ReactElement {
     }
   }, [])
 
-  const productName = aboutPayload?.about?.productName || 'ClickClaw'
+  const productName = aboutPayload?.about?.productName || 'ApiniClaw'
   const slogan = aboutPayload?.about?.slogan || t('aboutPage.defaultSlogan')
-  const website = aboutPayload?.about?.website || CLICKCLAW_WEBSITE_URL
-  const docs = aboutPayload?.about?.docs || CLICKCLAW_DOCS_URL
+  // 官网/文档固定为 ApiniClaw 域名，避免远程 about 配置覆盖为旧 clickclaw 域名
+  const website = CLICKCLAW_WEBSITE_URL
+  const docs = CLICKCLAW_DOCS_URL
 
   const announcement = useMemo(() => {
     const title = aboutPayload?.announcement?.title

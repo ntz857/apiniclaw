@@ -100,82 +100,82 @@ export class ClawHubMarketplace implements SkillMarketplace {
   }
 }
 
-// ========== SkillHub 实现（腾讯云加速镜像） ==========
+// ========== SkillHub 实现（腾讯云 skillhub.cn 官方 API） ==========
 
-interface SkillHubIndexItem {
+interface SkillHubApiSkill {
   slug: string
-  name: string
+  name?: string
+  displayName?: string
   description?: string
+  description_zh?: string
+  summary?: string
   version?: string
-  updated_at?: string
-  stats?: { downloads?: number; stars?: number }
+  downloads?: number
+  stars?: number
+  score?: number
+  updated_at?: number | string
+  updatedAt?: number | string
+  namespace?: { handle?: string; publicSlug?: string; canonicalName?: string }
 }
 
-interface SkillHubIndex {
-  skills: SkillHubIndexItem[]
-}
-
-/** SkillHub 索引内存缓存（约 9MB，有效期 10 分钟） */
-let skillHubIndexCache: SkillHubIndex | null = null
-let skillHubIndexFetchedAt = 0
-const SKILLHUB_INDEX_TTL = 10 * 60 * 1000
-
-/** 将索引条目排序后按 sort key 排列 */
-function sortSkillHubItems(items: SkillHubIndexItem[], sort: string): SkillHubIndexItem[] {
-  const arr = [...items]
+/** UI sort → SkillHub API sortBy / order */
+function mapSkillHubSort(sort: string): { sortBy: string; order: string } {
   switch (sort) {
-    case 'downloads':
-      return arr.sort((a, b) => (b.stats?.downloads ?? 0) - (a.stats?.downloads ?? 0))
     case 'stars':
-      return arr.sort((a, b) => (b.stats?.stars ?? 0) - (a.stats?.stars ?? 0))
+      return { sortBy: 'stars', order: 'desc' }
     case 'updated':
-      return arr.sort((a, b) => {
-        const ta = a.updated_at ? new Date(a.updated_at).getTime() : 0
-        const tb = b.updated_at ? new Date(b.updated_at).getTime() : 0
-        return tb - ta
-      })
+      return { sortBy: 'updated_at', order: 'desc' }
+    case 'downloads':
     case 'trending':
     default:
-      // trending: 综合 downloads + stars 降序
-      return arr.sort((a, b) => {
-        const sa = (a.stats?.downloads ?? 0) + (a.stats?.stars ?? 0) * 5
-        const sb = (b.stats?.downloads ?? 0) + (b.stats?.stars ?? 0) * 5
-        return sb - sa
-      })
+      return { sortBy: 'downloads', order: 'desc' }
+  }
+}
+
+function skillHubUpdatedAt(item: SkillHubApiSkill): number {
+  const raw = item.updated_at ?? item.updatedAt
+  if (typeof raw === 'number') return raw
+  if (typeof raw === 'string' && raw) {
+    const n = Number(raw)
+    if (!Number.isNaN(n) && n > 1e11) return n
+    const t = new Date(raw).getTime()
+    return Number.isNaN(t) ? 0 : t
+  }
+  return 0
+}
+
+function mapSkillHubBrowseItem(item: SkillHubApiSkill): SkillBrowseItem {
+  return {
+    slug: item.slug,
+    displayName: item.displayName ?? item.name ?? item.slug,
+    summary: item.description_zh ?? item.description ?? item.summary ?? '',
+    stats: {
+      downloads: item.downloads,
+      stars: item.stars,
+    },
+    updatedAt: skillHubUpdatedAt(item),
+    latestVersion: item.version ? { version: item.version } : undefined,
   }
 }
 
 export class SkillHubMarketplace implements SkillMarketplace {
   readonly id = 'skillhub'
   readonly name = 'SkillHub (腾讯)'
-  readonly baseUrl = 'https://skillhub-1388575217.cos.ap-guangzhou.myqcloud.com'
-
-  // 腾讯 CLB 搜索 & 下载（低延迟）
-  private readonly clbBase = 'http://lb-3zbg86f6-0gwe3n7q8t4sv2za.clb.gz-tencentclb.com'
-  // COS 静态存储（全量索引 & 下载兜底）
-  private readonly cosBase = 'https://skillhub-1388575217.cos.ap-guangzhou.myqcloud.com'
+  readonly baseUrl = 'https://api.skillhub.cn'
 
   async search(query: string, opts?: { limit?: number }): Promise<SkillSearchResult[]> {
     const limit = opts?.limit ?? 20
-    const url = `${this.clbBase}/api/v1/search?q=${encodeURIComponent(query)}&limit=${limit}`
+    const url = `${this.baseUrl}/api/v1/search?q=${encodeURIComponent(query)}&limit=${limit}`
     const res = await proxyFetch(url, { signal: AbortSignal.timeout(15000) })
     if (!res.ok) throw new Error(`SkillHub search failed: HTTP ${res.status}`)
-    const data = (await res.json()) as {
-      results?: Array<{
-        slug: string
-        displayName?: string
-        name?: string
-        summary?: string
-        description?: string
-        version?: string
-      }>
-    }
+    const data = (await res.json()) as { results?: SkillHubApiSkill[] }
     return (data.results ?? []).map((item) => ({
       slug: item.slug,
       displayName: item.displayName ?? item.name ?? item.slug,
-      summary: item.summary ?? item.description ?? '',
+      summary: item.description_zh ?? item.summary ?? item.description ?? '',
       version: item.version ?? '',
-      updatedAt: 0,
+      updatedAt: skillHubUpdatedAt(item),
+      score: item.score,
     }))
   }
 
@@ -184,59 +184,44 @@ export class SkillHubMarketplace implements SkillMarketplace {
     sort?: string
     cursor?: string
   }): Promise<SkillBrowseResult> {
-    const limit = opts?.limit ?? 20
-    const sort = opts?.sort ?? 'trending'
-    const offset = opts?.cursor ? parseInt(opts.cursor, 10) : 0
+    const pageSize = opts?.limit ?? 20
+    const page = opts?.cursor ? Math.max(1, parseInt(opts.cursor, 10) || 1) : 1
+    const { sortBy, order } = mapSkillHubSort(opts?.sort ?? 'trending')
 
-    const index = await this.loadIndex()
-    const sorted = sortSkillHubItems(index.skills, sort)
-    const page = sorted.slice(offset, offset + limit)
-    const nextOffset = offset + limit
-    const nextCursor = nextOffset < sorted.length ? String(nextOffset) : null
+    const params = new URLSearchParams({
+      page: String(page),
+      pageSize: String(pageSize),
+      sortBy,
+      order,
+    })
+    const url = `${this.baseUrl}/api/skills?${params.toString()}`
+    const res = await proxyFetch(url, { signal: AbortSignal.timeout(20000) })
+    if (!res.ok) throw new Error(`SkillHub browse failed: HTTP ${res.status}`)
+    const data = (await res.json()) as {
+      code?: number
+      message?: string
+      data?: { skills?: SkillHubApiSkill[]; total?: number }
+    }
+    if (data.code != null && data.code !== 0) {
+      throw new Error(`SkillHub browse failed: ${data.message ?? `code ${data.code}`}`)
+    }
 
-    const items: SkillBrowseItem[] = page.map((item) => ({
-      slug: item.slug,
-      displayName: item.name,
-      summary: item.description ?? '',
-      stats: item.stats ?? {},
-      updatedAt: item.updated_at ? new Date(item.updated_at).getTime() : 0,
-      latestVersion: item.version ? { version: item.version } : undefined,
-    }))
+    const skills = data.data?.skills ?? []
+    const total = data.data?.total ?? 0
+    const items = skills.map(mapSkillHubBrowseItem)
+    const loaded = (page - 1) * pageSize + skills.length
+    const nextCursor = loaded < total && skills.length > 0 ? String(page + 1) : null
 
     return { items, nextCursor }
   }
 
-  async download(slug: string): Promise<Buffer> {
-    // 先试 CLB，失败后回退 COS
-    const primaryUrl = `${this.clbBase}/api/v1/download?slug=${encodeURIComponent(slug)}`
-    const fallbackUrl = `${this.cosBase}/skills/${encodeURIComponent(slug)}.zip`
-    try {
-      const res = await proxyFetch(primaryUrl, { signal: AbortSignal.timeout(30000) })
-      if (res.ok) {
-        return Buffer.from(await res.arrayBuffer())
-      }
-    } catch {
-      // CLB 不可达，走 COS fallback
-    }
-    const res = await proxyFetch(fallbackUrl, { signal: AbortSignal.timeout(60000) })
+  async download(slug: string, version?: string): Promise<Buffer> {
+    const params = new URLSearchParams({ slug })
+    if (version && version !== 'latest') params.set('version', version)
+    const url = `${this.baseUrl}/api/v1/download?${params.toString()}`
+    const res = await proxyFetch(url, { signal: AbortSignal.timeout(60000) })
     if (!res.ok) throw new Error(`SkillHub download failed: HTTP ${res.status} for ${slug}`)
     return Buffer.from(await res.arrayBuffer())
-  }
-
-  /** 加载全量索引，内存缓存 10 分钟 */
-  private async loadIndex(): Promise<SkillHubIndex> {
-    const now = Date.now()
-    if (skillHubIndexCache && now - skillHubIndexFetchedAt < SKILLHUB_INDEX_TTL) {
-      return skillHubIndexCache
-    }
-    const url = `${this.cosBase}/skills.json`
-    const res = await proxyFetch(url, { signal: AbortSignal.timeout(30000) })
-    if (!res.ok) throw new Error(`SkillHub index fetch failed: HTTP ${res.status}`)
-    const data = (await res.json()) as SkillHubIndex
-    if (!Array.isArray(data.skills)) throw new Error('SkillHub index: invalid format')
-    skillHubIndexCache = data
-    skillHubIndexFetchedAt = now
-    return data
   }
 }
 
@@ -356,41 +341,4 @@ export function getMarketplaces(): SkillMarketplace[] {
 
 export function getMarketplace(id: string): SkillMarketplace | undefined {
   return marketplaces.find((m) => m.id === id)
-}
-
-export interface SkillSearchResult {
-  slug: string
-  displayName: string
-  summary: string
-  version: string
-  updatedAt: number
-  score?: number
-}
-
-export interface SkillBrowseItem {
-  slug: string
-  displayName: string
-  summary: string
-  stats: { downloads?: number; stars?: number }
-  updatedAt: number
-  latestVersion?: { version: string }
-}
-
-export interface SkillBrowseResult {
-  items: SkillBrowseItem[]
-  nextCursor: string | null
-}
-
-export interface SkillMarketplaceInfo {
-  id: string
-  name: string
-  baseUrl: string
-}
-
-// ========== 抽象接口 ==========
-
-export interface SkillMarketplace extends SkillMarketplaceInfo {
-  search(query: string, opts?: { limit?: number }): Promise<SkillSearchResult[]>
-  browse(opts?: { limit?: number; sort?: string; cursor?: string }): Promise<SkillBrowseResult>
-  download(slug: string, version?: string): Promise<Buffer>
 }

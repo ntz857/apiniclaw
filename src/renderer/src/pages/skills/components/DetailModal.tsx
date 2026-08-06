@@ -2,17 +2,26 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { Alert, Divider, Modal, Space, Spin, Tabs, Tag, Typography } from 'antd'
 import { useTranslation } from 'react-i18next'
 import { buildMissingHint, resolveSourceTag } from '../skills-page.utils'
+import { NotReadyFixPanel } from './NotReadyFixPanel'
 
 const { Title, Text } = Typography
 
 interface DetailModalProps {
   skill: InstalledSkillInfo | null
   onClose: () => void
+  wsReady?: boolean
+  onSaveApiKey?: (skillKey: string, apiKey: string) => Promise<void>
+  onSaveEnv?: (skillKey: string, env: Record<string, string>) => Promise<void>
+  onRecheck?: () => void | Promise<void>
 }
 
 export const DetailModal = memo(function DetailModal({
   skill,
   onClose,
+  wsReady = false,
+  onSaveApiKey,
+  onSaveEnv,
+  onRecheck,
 }: DetailModalProps): React.ReactElement {
   const { t } = useTranslation()
   const [mdContent, setMdContent] = useState<string | null>(null)
@@ -22,13 +31,6 @@ export const DetailModal = memo(function DetailModal({
 
   useEffect(() => {
     if (!skill) return
-    const t0 = performance.now()
-    const fromClick = performance.getEntriesByName('detail-click').at(-1)
-    if (fromClick) {
-      console.log(
-        `[perf] skill prop received in DetailModal: +${(t0 - fromClick.startTime).toFixed(1)}ms from click`
-      )
-    }
     setActiveTab('info')
     setMdContent(null)
     setMdError(null)
@@ -58,15 +60,9 @@ export const DetailModal = memo(function DetailModal({
 
   const infoContent = useMemo(() => {
     if (!skill) return null
-    const t0 = performance.now()
-    const fromClick = performance.getEntriesByName('detail-click').at(-1)
-    if (fromClick) {
-      console.log(
-        `[perf] infoContent useMemo start: +${(t0 - fromClick.startTime).toFixed(1)}ms from click`
-      )
-    }
     const { label: srcLabel, color: srcColor } = resolveSourceTag(skill)
     const missingHint = buildMissingHint(skill.missing, t)
+    const canFix = Boolean(onSaveApiKey && onSaveEnv && onRecheck)
     return (
       <div>
         <Space align="start" style={{ marginBottom: 12 }}>
@@ -119,7 +115,7 @@ export const DetailModal = memo(function DetailModal({
               </Tag>
             )}
           </div>
-          {skill.eligible === false && missingHint && (
+          {skill.eligible === false && missingHint && !canFix && (
             <div>
               <Text type="secondary">{t('skills.notReadyHint')}</Text>
               <pre
@@ -134,6 +130,16 @@ export const DetailModal = memo(function DetailModal({
                 {missingHint}
               </pre>
             </div>
+          )}
+          {skill.eligible === false && canFix && (
+            <NotReadyFixPanel
+              skill={skill}
+              wsReady={wsReady}
+              variant="detail"
+              onSaveApiKey={onSaveApiKey!}
+              onSaveEnv={onSaveEnv!}
+              onRecheck={onRecheck!}
+            />
           )}
           {skill.error && (
             <div>
@@ -151,7 +157,7 @@ export const DetailModal = memo(function DetailModal({
         </Space>
       </div>
     )
-  }, [skill, t])
+  }, [skill, t, wsReady, onSaveApiKey, onSaveEnv, onRecheck])
 
   const mdTabContent = useMemo(() => {
     if (mdLoading)
@@ -181,13 +187,6 @@ export const DetailModal = memo(function DetailModal({
   }, [mdLoading, mdError, mdContent])
 
   const tabItems = useMemo(() => {
-    const t0 = performance.now()
-    const fromClick = performance.getEntriesByName('detail-click').at(-1)
-    if (fromClick) {
-      console.log(
-        `[perf] tabItems useMemo start: +${(t0 - fromClick.startTime).toFixed(1)}ms from click`
-      )
-    }
     return [
       { key: 'info', label: t('skills.detail.tabInfo'), children: infoContent },
       { key: 'md', label: 'SKILL.md', children: mdTabContent },
@@ -200,19 +199,8 @@ export const DetailModal = memo(function DetailModal({
       onCancel={onClose}
       footer={null}
       title={skill?.name ?? ''}
-      width={600}
+      width={640}
       destroyOnClose={false}
-      afterOpenChange={(open) => {
-        if (open) {
-          const t0 = performance.now()
-          const fromClick = performance.getEntriesByName('detail-click').at(-1)
-          if (fromClick) {
-            console.log(
-              `[perf] Modal afterOpenChange(true) - animation done: +${(t0 - fromClick.startTime).toFixed(1)}ms from click`
-            )
-          }
-        }
-      }}
     >
       {skill && (
         <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} size="small" />

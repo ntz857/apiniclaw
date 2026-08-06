@@ -8,7 +8,7 @@
 import { useState, useEffect } from 'react'
 import { MinusOutlined, CloseOutlined, SwitcherOutlined, BorderOutlined } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
-import logo from '../assets/logo.svg'
+import logo from '../assets/logo.png'
 
 // 与 Ant Design 深色侧边栏背景一致，实现无缝融合
 const BAR_BG = '#001529'
@@ -165,10 +165,11 @@ export default function TitleBar(): React.ReactElement {
       >
         <img
           src={logo}
-          alt="ClickClaw"
+          alt="ApiniClaw"
           style={{
             width: 22,
             height: 22,
+            borderRadius: 4,
             filter: 'drop-shadow(0 0 6px rgba(255,77,42,0.5))',
           }}
         />
@@ -177,13 +178,13 @@ export default function TitleBar(): React.ReactElement {
             fontSize: 13,
             fontWeight: 700,
             letterSpacing: 0.3,
-            background: 'linear-gradient(135deg, #FF7A5C 0%, #FF4D2A 100%)',
+            background: 'linear-gradient(135deg, #FF7A5C 0%, #4DA3FF 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
           }}
         >
-          ClickClaw
+          ApiniClaw
         </span>
 
         <GatewayBadge state={gwState} />

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Alert,
   App,
@@ -12,10 +12,12 @@ import {
   Tooltip,
   Typography,
 } from 'antd'
-import { ReloadOutlined, SaveOutlined, ThunderboltOutlined } from '@ant-design/icons'
+import { ReloadOutlined, ThunderboltOutlined, ToolOutlined } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import type { AgentSkillsTabProps, SkillEntry } from '../agents-page.types'
 import { SKILL_GROUPS } from '../agents-page.utils'
+import { NotReadyFixPanel } from '../../skills/components/NotReadyFixPanel'
+import { buildMissingHint } from '../../skills/skills-page.utils'
 
 function groupSkillEntries(
   skills: SkillEntry[]
@@ -39,6 +41,35 @@ function groupSkillEntries(
   return ordered
 }
 
+/** 将 skills.status 条目映射为 NotReadyFixPanel 需要的 InstalledSkillInfo */
+function toInstalledSkillInfo(skill: SkillEntry): InstalledSkillInfo {
+  const rawSource = skill.source || ''
+  const isSystem = rawSource.startsWith('openclaw-') || Boolean(skill.bundled)
+  let source: InstalledSkillInfo['source'] = 'extra'
+  if (isSystem || skill.bundled) source = 'bundled'
+  else if (rawSource.includes('workspace') || rawSource.includes('agents-skills')) source = 'workspace'
+  else if (rawSource.includes('managed')) source = 'managed'
+
+  return {
+    dirName: skill.name,
+    filePath: skill.filePath || '',
+    baseDir: skill.baseDir || '',
+    name: skill.name,
+    description: skill.description,
+    emoji: skill.emoji,
+    source,
+    rawSource: skill.source,
+    isSystem,
+    eligible: skill.eligible,
+    missing: skill.missing,
+    skillKey: skill.skillKey || skill.name,
+    enabled: !skill.disabled,
+    error: skill.error,
+    primaryEnv: skill.primaryEnv,
+    always: skill.always,
+  }
+}
+
 export function AgentSkillsTab({
   agent,
   wsReady,
@@ -52,18 +83,30 @@ export function AgentSkillsTab({
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState('')
   const [saving, setSaving] = useState(false)
+  /** 展开「去解决」的 skill 名 */
+  const [fixOpenName, setFixOpenName] = useState<string | null>(null)
 
   const currentAllowlist = Array.isArray(agent.skills) ? (agent.skills as string[]) : undefined
+  /** 与 agent 配置同步的生效白名单；undefined = 全部启用 */
   const [draftAllowlist, setDraftAllowlist] = useState<string[] | undefined>(currentAllowlist)
-
-  const isDirty = JSON.stringify(draftAllowlist) !== JSON.stringify(currentAllowlist)
+  /** 正在切换的单个 skill（防连点） */
+  const [togglingName, setTogglingName] = useState<string | null>(null)
+  const applyLock = useRef(false)
 
   useEffect(() => {
     setDraftAllowlist(Array.isArray(agent.skills) ? (agent.skills as string[]) : undefined)
     setReport(null)
     setError(null)
     setFilter('')
+    setFixOpenName(null)
+    setTogglingName(null)
   }, [agent.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 外部刷新后同步白名单（避免保存后 UI 仍显示草稿）
+  useEffect(() => {
+    if (applyLock.current) return
+    setDraftAllowlist(Array.isArray(agent.skills) ? (agent.skills as string[]) : undefined)
+  }, [agent.skills])
 
   const loadSkills = useCallback(async (): Promise<void> => {
     if (!wsReady) return
@@ -73,7 +116,15 @@ export function AgentSkillsTab({
       const payload = (await callRpc('skills.status', { agentId: agent.id })) as {
         skills: SkillEntry[]
       }
-      setReport(payload.skills ?? [])
+      const skills = payload.skills ?? []
+      setReport(skills)
+      // 若当前展开的 skill 已就绪，自动收起
+      setFixOpenName((prev) => {
+        if (!prev) return prev
+        const s = skills.find((x) => x.name === prev)
+        if (s && s.eligible !== false) return null
+        return prev
+      })
     } catch (err) {
       setError(String(err))
     } finally {
@@ -85,10 +136,103 @@ export function AgentSkillsTab({
     if (wsReady) loadSkills()
   }, [wsReady, agent.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // 首次加载后：若有未就绪技能，默认展开第一个，降低发现成本
+  useEffect(() => {
+    if (!report || fixOpenName) return
+    const first = report.find((s) => s.eligible === false)
+    if (first) setFixOpenName(first.name)
+  }, [report]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const usingAllowlist = draftAllowlist !== undefined
   const allowSet = new Set(draftAllowlist ?? [])
 
+  /**
+   * 真正生效：写 openclaw.json 白名单；对新启用的 skill 尽量复制到 workspace/skills。
+   * - 内置/Gateway 已识别的 skill 往往无需复制，allowlist 即可生效
+   * - 仅「本地完全找不到且 Gateway 列表里也没有」才算真正失败
+   */
+  const applySkillsConfig = useCallback(
+    async (
+      next: string[] | undefined,
+      opts?: { silent?: boolean; installOnly?: string[] }
+    ): Promise<boolean> => {
+      if (applyLock.current) return false
+      applyLock.current = true
+      setSaving(true)
+      const prev = draftAllowlist
+      setDraftAllowlist(next)
+      try {
+        const skillsToPersist = next
+        const knownByGateway = new Set((report ?? []).map((s) => s.name))
+
+        let copiedCount = 0
+        /** 本地无文件、且 Gateway 也不认识 → 真缺失 */
+        let hardMissing: string[] = []
+        /** 本地无文件、但 Gateway 列表里有（多为内置，只靠白名单即可） */
+        let softMissing: string[] = []
+
+        const toInstall =
+          opts?.installOnly && opts.installOnly.length > 0
+            ? opts.installOnly
+            : next && next.length > 0
+              ? next
+              : []
+
+        if (toInstall.length > 0) {
+          const result = await window.api.agent.installSkills(agent.id, toInstall)
+          copiedCount = result.copied.length
+          for (const name of result.missing) {
+            if (knownByGateway.has(name)) softMissing.push(name)
+            else hardMissing.push(name)
+          }
+        }
+
+        const updated: typeof agent = { ...agent }
+        if (skillsToPersist === undefined) {
+          // null → config 层删除 skills 字段（merge 无法靠 undefined 删键）
+          updated.skills = null
+        } else {
+          updated.skills = skillsToPersist
+        }
+        await onSaveAgent(updated)
+        // 本地草稿仍用 undefined 表示「全部启用」
+        if (skillsToPersist === undefined) {
+          setDraftAllowlist(undefined)
+        }
+
+        if (!opts?.silent) {
+          if (hardMissing.length > 0) {
+            message.warning(
+              t('agents.skills.installPartial', {
+                installed: Math.max(0, toInstall.length - hardMissing.length - softMissing.length),
+                missing: hardMissing.join(', '),
+              })
+            )
+          } else if (copiedCount > 0) {
+            message.success(t('agents.skills.installSuccess', { count: copiedCount }))
+          } else if (softMissing.length > 0) {
+            // 内置/已在 Gateway 可见：白名单已生效，无需工作区副本
+            message.success(t('agents.skills.saveSuccessAllowlistOnly'))
+          } else {
+            message.success(t('agents.skills.saveSuccess'))
+          }
+        }
+
+        return true
+      } catch (err) {
+        setDraftAllowlist(prev)
+        message.error(t('agents.skills.saveFailed', { error: String(err) }))
+        return false
+      } finally {
+        setSaving(false)
+        applyLock.current = false
+      }
+    },
+    [agent, draftAllowlist, message, onSaveAgent, report, t]
+  )
+
   const handleToggle = (skillName: string, enabled: boolean): void => {
+    if (saving || togglingName) return
     const allSkills = (report ?? []).map((s) => s.name)
     const base = draftAllowlist ?? allSkills
     const next = new Set(base)
@@ -97,26 +241,37 @@ export function AgentSkillsTab({
     } else {
       next.delete(skillName)
     }
-    setDraftAllowlist([...next])
+    const list = [...next]
+    setTogglingName(skillName)
+    // 只尝试安装「本次新打开」的技能，避免整表白名单误报 missing
+    void applySkillsConfig(list, {
+      installOnly: enabled ? [skillName] : [],
+    }).finally(() => setTogglingName(null))
   }
 
-  const handleSave = async (): Promise<void> => {
-    setSaving(true)
-    try {
-      const updated = { ...agent }
-      if (draftAllowlist === undefined) {
-        delete updated.skills
-      } else {
-        updated.skills = draftAllowlist
-      }
-      await onSaveAgent(updated)
-      message.success(t('agents.skills.saveSuccess'))
-    } catch (err) {
-      message.error(t('agents.skills.saveFailed', { error: String(err) }))
-    } finally {
-      setSaving(false)
-    }
+  const handleUseAll = (): void => {
+    if (saving) return
+    void applySkillsConfig(undefined)
   }
+
+  const handleDisableAll = (): void => {
+    if (saving) return
+    void applySkillsConfig([])
+  }
+
+  const handleSaveApiKey = useCallback(
+    async (skillKey: string, apiKey: string): Promise<void> => {
+      await callRpc('skills.update', { skillKey, apiKey })
+    },
+    [callRpc]
+  )
+
+  const handleSaveEnv = useCallback(
+    async (skillKey: string, env: Record<string, string>): Promise<void> => {
+      await callRpc('skills.update', { skillKey, env })
+    },
+    [callRpc]
+  )
 
   const filterLower = filter.trim().toLowerCase()
   const rawSkills = report ?? []
@@ -130,6 +285,7 @@ export function AgentSkillsTab({
   const enabledCount = usingAllowlist
     ? rawSkills.filter((s) => allowSet.has(s.name)).length
     : rawSkills.length
+  const notReadyCount = rawSkills.filter((s) => s.eligible === false).length
 
   return (
     <div>
@@ -148,37 +304,31 @@ export function AgentSkillsTab({
           {rawSkills.length > 0 && (
             <Typography.Text type="secondary" style={{ fontSize: 12, marginLeft: 8 }}>
               {enabledCount}/{rawSkills.length}
+              {notReadyCount > 0
+                ? ` · ${t('agents.skills.notReadyCount', { count: notReadyCount })}`
+                : ''}
             </Typography.Text>
           )}
         </div>
         <Space size={6}>
+          <Button size="small" disabled={!wsReady || saving} loading={saving} onClick={handleUseAll}>
+            {t('agents.skills.useAll')}
+          </Button>
           <Button
             size="small"
             disabled={!wsReady || saving}
-            onClick={() => setDraftAllowlist(undefined)}
+            loading={saving}
+            onClick={handleDisableAll}
           >
-            {t('agents.skills.useAll')}
-          </Button>
-          <Button size="small" disabled={!wsReady || saving} onClick={() => setDraftAllowlist([])}>
             {t('agents.skills.disableAll')}
           </Button>
           <Button
             size="small"
             icon={<ReloadOutlined />}
             loading={loading}
-            disabled={!wsReady}
+            disabled={!wsReady || saving}
             onClick={loadSkills}
           />
-          <Button
-            size="small"
-            type="primary"
-            icon={<SaveOutlined />}
-            loading={saving}
-            disabled={!isDirty}
-            onClick={handleSave}
-          >
-            {t('agents.skills.save')}
-          </Button>
         </Space>
       </div>
 
@@ -186,6 +336,7 @@ export function AgentSkillsTab({
         <Alert
           type="info"
           message={t('agents.skills.usingAllowlist')}
+          description={t('agents.skills.autoApplyHint')}
           style={{ marginBottom: 12 }}
           showIcon
         />
@@ -193,8 +344,19 @@ export function AgentSkillsTab({
         <Alert
           type="success"
           message={t('agents.skills.usingAll')}
+          description={t('agents.skills.autoApplyHint')}
           style={{ marginBottom: 12 }}
           showIcon
+        />
+      )}
+
+      {notReadyCount > 0 && (
+        <Alert
+          type="warning"
+          showIcon
+          style={{ marginBottom: 12 }}
+          message={t('agents.skills.notReadyBannerTitle')}
+          description={t('agents.skills.notReadyBannerDesc')}
         />
       )}
 
@@ -281,107 +443,151 @@ export function AgentSkillsTab({
                 {group.skills.length}
               </Tag>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {group.skills.map((skill) => {
                 const isEnabled = usingAllowlist ? allowSet.has(skill.name) : true
                 const canToggle = !skill.always && wsReady
-                const hasMissing =
-                  (skill.missing?.bins?.length ?? 0) > 0 ||
-                  (skill.missing?.env?.length ?? 0) > 0 ||
-                  (skill.missing?.config?.length ?? 0) > 0
+                const notReady = skill.eligible === false
+                const fixOpen = fixOpenName === skill.name
+                const missingHint = buildMissingHint(skill.missing, t)
+                const installInfo = toInstalledSkillInfo(skill)
 
                 return (
                   <div
                     key={skill.name}
                     style={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      gap: 10,
-                      padding: '6px 8px',
-                      borderRadius: 6,
-                      background: isEnabled ? 'transparent' : '#fafafa',
-                      opacity: isEnabled ? 1 : 0.6,
+                      borderRadius: 8,
+                      border: notReady ? '1px solid #ffe7ba' : '1px solid transparent',
+                      background: notReady ? '#fffbe6' : isEnabled ? 'transparent' : '#fafafa',
+                      opacity: isEnabled || notReady ? 1 : 0.6,
+                      overflow: 'hidden',
                     }}
                   >
                     <div
                       style={{
-                        width: 28,
-                        flexShrink: 0,
-                        textAlign: 'center',
-                        fontSize: 18,
-                        lineHeight: '22px',
-                        marginTop: 1,
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: 10,
+                        padding: '8px 10px',
                       }}
                     >
-                      {skill.emoji || (
-                        <ThunderboltOutlined style={{ color: '#bbb', fontSize: 14 }} />
-                      )}
-                    </div>
-
-                    <div style={{ flex: 1, minWidth: 0 }}>
                       <div
-                        style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}
+                        style={{
+                          width: 28,
+                          flexShrink: 0,
+                          textAlign: 'center',
+                          fontSize: 18,
+                          lineHeight: '22px',
+                          marginTop: 1,
+                        }}
                       >
-                        <Typography.Text style={{ fontSize: 13, fontWeight: 500 }}>
-                          {skill.name}
-                        </Typography.Text>
-                        {skill.always && (
-                          <Tag
-                            color="cyan"
-                            style={{ fontSize: 10, padding: '0 4px', lineHeight: '16px' }}
-                          >
-                            {t('agents.skills.alwaysOn')}
-                          </Tag>
-                        )}
-                        {!skill.eligible && (
-                          <Tooltip
-                            title={
-                              hasMissing
-                                ? [
-                                    ...(skill.missing?.bins?.length
-                                      ? [`缺少命令: ${skill.missing.bins.join(', ')}`]
-                                      : []),
-                                    ...(skill.missing?.env?.length
-                                      ? [`缺少环境变量: ${skill.missing.env.join(', ')}`]
-                                      : []),
-                                    ...(skill.missing?.config?.length
-                                      ? [`缺少配置: ${skill.missing.config.join(', ')}`]
-                                      : []),
-                                  ].join(' | ')
-                                : t('agents.skills.notReady')
-                            }
-                          >
-                            <Tag
-                              color="warning"
-                              style={{
-                                fontSize: 10,
-                                padding: '0 4px',
-                                lineHeight: '16px',
-                                cursor: 'help',
-                              }}
-                            >
-                              {t('agents.skills.notReady')}
-                            </Tag>
-                          </Tooltip>
+                        {skill.emoji || (
+                          <ThunderboltOutlined style={{ color: '#bbb', fontSize: 14 }} />
                         )}
                       </div>
-                      {skill.description && (
-                        <Typography.Text
-                          type="secondary"
-                          style={{ fontSize: 11, display: 'block', marginTop: 1 }}
+
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            flexWrap: 'wrap',
+                          }}
                         >
-                          {skill.description}
-                        </Typography.Text>
-                      )}
+                          <Typography.Text style={{ fontSize: 13, fontWeight: 500 }}>
+                            {skill.name}
+                          </Typography.Text>
+                          {skill.always && (
+                            <Tag
+                              color="cyan"
+                              style={{ fontSize: 10, padding: '0 4px', lineHeight: '16px' }}
+                            >
+                              {t('agents.skills.alwaysOn')}
+                            </Tag>
+                          )}
+                          {notReady && (
+                            <Tooltip title={missingHint || t('agents.skills.notReady')}>
+                              <Tag
+                                color="warning"
+                                style={{
+                                  fontSize: 10,
+                                  padding: '0 4px',
+                                  lineHeight: '16px',
+                                  cursor: 'help',
+                                }}
+                              >
+                                {t('agents.skills.notReady')}
+                              </Tag>
+                            </Tooltip>
+                          )}
+                        </div>
+                        {skill.description && (
+                          <Typography.Text
+                            type="secondary"
+                            style={{ fontSize: 11, display: 'block', marginTop: 1 }}
+                          >
+                            {skill.description}
+                          </Typography.Text>
+                        )}
+                        {notReady && missingHint && !fixOpen && (
+                          <Typography.Text
+                            type="secondary"
+                            style={{
+                              fontSize: 11,
+                              display: 'block',
+                              marginTop: 4,
+                              color: '#d48806',
+                              whiteSpace: 'pre-line',
+                            }}
+                          >
+                            {missingHint}
+                          </Typography.Text>
+                        )}
+                      </div>
+
+                      <Space size={6} style={{ flexShrink: 0, marginTop: 2 }}>
+                        {notReady && (
+                          <Button
+                            size="small"
+                            type={fixOpen ? 'default' : 'primary'}
+                            icon={<ToolOutlined />}
+                            onClick={() =>
+                              setFixOpenName(fixOpen ? null : skill.name)
+                            }
+                            style={
+                              fixOpen
+                                ? undefined
+                                : { background: '#FF4D2A', borderColor: '#FF4D2A' }
+                            }
+                          >
+                            {fixOpen
+                              ? t('skills.fix.collapse')
+                              : t('skills.notReadyAction')}
+                          </Button>
+                        )}
+                        <Switch
+                          size="small"
+                          checked={isEnabled}
+                          disabled={!canToggle || saving}
+                          loading={togglingName === skill.name}
+                          onChange={(checked) => handleToggle(skill.name, checked)}
+                        />
+                      </Space>
                     </div>
 
-                    <Switch
-                      size="small"
-                      checked={isEnabled}
-                      disabled={!canToggle}
-                      onChange={(checked) => handleToggle(skill.name, checked)}
-                      style={{ flexShrink: 0, marginTop: 3 }}
-                    />
+                    {notReady && fixOpen && (
+                      <div style={{ padding: '0 10px 10px' }}>
+                        <NotReadyFixPanel
+                          skill={installInfo}
+                          wsReady={wsReady}
+                          variant="row"
+                          onSaveApiKey={handleSaveApiKey}
+                          onSaveEnv={handleSaveEnv}
+                          onRecheck={loadSkills}
+                        />
+                      </div>
+                    )}
                   </div>
                 )
               })}

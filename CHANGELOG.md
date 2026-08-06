@@ -4,6 +4,21 @@
 
 ## [Unreleased]
 
+## [0.3.4] - 2026-08-06
+
+### Added
+- **196 个中文智能体预设**（awesome-openclaw-agents 全量本地化）：统一 SOUL 结构（身份 / 人设 / 能力 / 工作原则 / 工作语言 / 示例），并同步 zh-CN / en i18n。
+- 智能体创建支持预设挑选抽屉；创建后可一键应用 skills allowlist，并自动安装缺失的 workspace skills。
+- 聊天输入框草稿按会话隔离（切换会话不再串草稿）。
+- 技能页增强：未就绪修复面板、安装态与详情交互改进。
+- 翻译/重建脚本：`scripts/translate-awesome-souls.mjs`、`scripts/build-presets-from-zh.mjs`（DeepSeek 官方 API / Reasonix 配置）。
+
+### Changed
+- **产品更名为 ApiniClaw**：安装包、图标、关于页与文案统一品牌。
+- 官方域名切换至 `apiniclaw.com`（API / 文档 / 更新 CDN / 官网）。
+- electron-builder 产物名改为 `ApiniClaw-*`；CI 与 release 校验脚本同步适配。
+- 打包排除 `dist` / `dist-apini*`，避免历史 win-unpacked 递归打进 asar。
+
 ### Fixed
 - 实时聊天 WebSocket 握手兼容 OpenClaw **2026.7.x**：`connect` 协议协商由仅 `3` 扩展为 `minProtocol=3` / `maxProtocol=4`，修复对接新版 Gateway 时的 `protocol mismatch`（code 1002）与「未连接」状态。
 - 设备签名仍使用 Gateway 的 `buildDeviceAuthPayloadV3` 格式；线协议版本与签名 payload 前缀解耦。

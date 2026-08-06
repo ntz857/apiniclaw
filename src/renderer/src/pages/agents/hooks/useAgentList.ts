@@ -22,12 +22,18 @@ export function useAgentList(
           const runtimeIds = new Set(result.agents.map((row) => row.id))
           const runtimeFirst: AgentConfig[] = result.agents.map((row) => {
             const conf = configMap.get(row.id)
+            // 运行时列表不含 skills 等配置字段；必须从 openclaw.json 合并，
+            // 否则技能页白名单看起来永远没保存成功
             return {
               ...(conf || {}),
               id: row.id,
               name: row.name || row.identity?.name || conf?.name,
               identity: row.identity || conf?.identity,
               default: row.id === result.defaultId || conf?.default,
+              skills: conf?.skills,
+              tools: conf?.tools ?? (row as { tools?: AgentConfig['tools'] }).tools,
+              workspace: conf?.workspace ?? (row as { workspace?: string }).workspace,
+              model: conf?.model ?? (row as { model?: AgentConfig['model'] }).model,
             }
           })
           const configOnly: AgentConfig[] = configAgents.filter(

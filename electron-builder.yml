@@ -1,6 +1,6 @@
-appId: cn.clickclaw.app
-productName: ClickClaw
-copyright: Copyright © 2026 ClickClaw
+appId: cn.apiniclaw.app
+productName: ApiniClaw
+copyright: Copyright © 2026 ApiniClaw
 
 directories:
   buildResources: assets
@@ -27,6 +27,11 @@ files:
   - "!scripts/*"
   - "!resources/*"
   - "!.cache/*"
+  # 避免把历史 win-unpacked 产物打进 asar（会超 4.2GB / 递归膨胀）
+  - "!dist{,/**}"
+  - "!dist-*/**"
+  - "!dist-apini{,/**}"
+  - "!dist-apini-*/**"
 
 mac:
   target:
@@ -34,7 +39,7 @@ mac:
     - zip
   icon: assets/icon.icns
   category: public.app-category.productivity
-  artifactName: "ClickClaw-${version}-${arch}.${ext}"
+  artifactName: "ApiniClaw-${version}-${arch}.${ext}"
   hardenedRuntime: true
   gatekeeperAssess: false
   entitlements: assets/entitlements.mac.plist
@@ -43,11 +48,12 @@ mac:
 dmg:
   # 关闭 DMG 差分更新元数据，避免生成 .dmg.blockmap
   writeUpdateInfo: false
-  artifactName: "ClickClaw-${version}-${arch}.${ext}"
+  artifactName: "ApiniClaw-${version}-${arch}.${ext}"
 
 win:
   target: nsis
   icon: assets/icon.ico
+  executableName: ApiniClaw
 
 nsis:
   oneClick: false
@@ -58,10 +64,12 @@ nsis:
   runAfterFinish: true
   # 关闭 NSIS 差分包，避免生成 .exe.blockmap
   differentialPackage: false
-  artifactName: "ClickClaw-Setup-${version}-${arch}.${ext}"
+  artifactName: "ApiniClaw-Setup-${version}-${arch}.${ext}"
+  shortcutName: ApiniClaw
+  uninstallDisplayName: ApiniClaw
 
 # 自动更新：Generic CDN provider
 # latest.yml / latest-mac.yml 由 electron-builder 打包时自动生成并需上传到同一 CDN 目录
 publish:
   provider: generic
-  url: https://update.clickclaw.cn
+  url: https://update.apiniclaw.com

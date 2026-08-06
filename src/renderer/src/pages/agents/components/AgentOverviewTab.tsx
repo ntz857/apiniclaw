@@ -288,7 +288,9 @@ export function AgentOverviewTab({
           icon={<MessageOutlined />}
           size="small"
           onClick={() =>
-            navigate(`/chat?agent_id=${encodeURIComponent(agent.id)}&from=agent_detail`)
+            navigate(
+              `/chat?agent_id=${encodeURIComponent(agent.id)}&from=agent_detail&entry=${Date.now()}`
+            )
           }
           style={{ background: '#FF4D2A', borderColor: '#FF4D2A' }}
         >

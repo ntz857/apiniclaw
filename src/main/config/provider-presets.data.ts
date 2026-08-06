@@ -22,6 +22,83 @@ import type { ProviderPreset } from './provider-presets'
 export const PROVIDER_PRESETS: Record<string, ProviderPreset> = {
   // ==================== 国内 ====================
 
+  /**
+   * 万事屋（原远程预设 AIGC2D 的本地替换）
+   * key 保持 aigc2d，兼容已写入 openclaw 配置 / 环境变量的用户
+   */
+  aigc2d: {
+    name: '万事屋',
+    tagline: 'ApiniClaw 模型中转站，统一接入主流大模型。',
+    group: 'china',
+    color: '#FF4D2A',
+    initials: '万',
+    recommendedRank: 1,
+    platforms: [
+      {
+        key: 'aigc2d',
+        name: '万事屋 MaaS',
+        baseUrl: 'https://maas.apiniclaw.com/v1',
+        api: 'openai-completions',
+        apiKeyUrl: 'https://maas.apiniclaw.com/',
+        envKey: 'AIGC2D_API_KEY',
+        models: [
+          // —— GPT-5.6 系列 ——
+          {
+            id: 'gpt-5.6-sol',
+            name: 'GPT-5.6 Sol',
+            input: ['text', 'image'],
+            contextWindow: 1050000,
+            maxTokens: 128000,
+          },
+          {
+            id: 'gpt-5.6-terra',
+            name: 'GPT-5.6 Terra',
+            input: ['text', 'image'],
+            contextWindow: 1050000,
+            maxTokens: 128000,
+          },
+          {
+            id: 'gpt-5.6-luna',
+            name: 'GPT-5.6 Luna',
+            input: ['text', 'image'],
+            contextWindow: 1050000,
+            maxTokens: 128000,
+          },
+          // —— Claude 5 系列 ——
+          {
+            id: 'claude-opus-5',
+            name: 'Claude Opus 5',
+            input: ['text', 'image'],
+            contextWindow: 1000000,
+            maxTokens: 128000,
+          },
+          {
+            id: 'claude-sonnet-5',
+            name: 'Claude Sonnet 5',
+            input: ['text', 'image'],
+            contextWindow: 1000000,
+            maxTokens: 128000,
+          },
+          // —— DeepSeek V4 系列 ——
+          {
+            id: 'deepseek-v4-pro',
+            name: 'DeepSeek V4 Pro',
+            input: ['text'],
+            contextWindow: 1000000,
+            maxTokens: 128000,
+          },
+          {
+            id: 'deepseek-v4-flash',
+            name: 'DeepSeek V4 Flash',
+            input: ['text'],
+            contextWindow: 1000000,
+            maxTokens: 128000,
+          },
+        ],
+      },
+    ],
+  },
+
   volcengine: {
     name: '火山引擎',
     tagline: '字节跳动旗下的云服务与 AI 开放平台。',

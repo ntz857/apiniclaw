@@ -433,12 +433,21 @@ export function saveAgent(agent: Omit<AgentConfig, 'id'> & { id?: string }): Age
 
   if (existingIdx >= 0) {
     // 更新已有
-    list[existingIdx] = { ...list[existingIdx], ...agent } as AgentConfig
+    const merged = { ...list[existingIdx], ...agent } as AgentConfig
+    // skills: null 表示清除白名单（恢复「全部启用」）；普通 merge 无法删字段
+    if ((agent as { skills?: unknown }).skills === null) {
+      delete (merged as { skills?: unknown }).skills
+    }
+    list[existingIdx] = merged
     saved = list[existingIdx]
   } else {
     // 新增：优先使用传入的 id，无 id 时才生成一个
     const newId = agent.id || `agent-${Date.now()}`
-    saved = { ...agent, id: newId } as AgentConfig
+    const created = { ...agent, id: newId } as AgentConfig
+    if ((created as { skills?: unknown }).skills === null) {
+      delete (created as { skills?: unknown }).skills
+    }
+    saved = created
     list.push(saved)
   }
 

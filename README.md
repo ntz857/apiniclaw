@@ -27,8 +27,8 @@
   <a href="https://github.com/ntz857/clickclaw">github.com/ntz857/clickclaw</a><br/>
   上游原项目：
   <a href="https://github.com/clickclaw/clickclaw">clickclaw/clickclaw</a>
-  · 官网参考：
-  <a href="https://www.clickclaw.cn">clickclaw.cn</a>
+  · 官网：
+  <a href="https://www.apiniclaw.com">www.apiniclaw.com</a>
 </p>
 
 ---

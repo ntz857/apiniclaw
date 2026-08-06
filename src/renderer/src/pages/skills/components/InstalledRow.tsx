@@ -1,8 +1,15 @@
 import { memo, useState } from 'react'
 import { App, Button, Card, Input, Popconfirm, Space, Switch, Tag, Tooltip, Typography } from 'antd'
-import { DeleteOutlined, FileTextOutlined, FileZipOutlined, KeyOutlined } from '@ant-design/icons'
+import {
+  DeleteOutlined,
+  FileTextOutlined,
+  FileZipOutlined,
+  KeyOutlined,
+  ToolOutlined,
+} from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import { buildMissingHint, resolveSourceTag } from '../skills-page.utils'
+import { NotReadyFixPanel } from './NotReadyFixPanel'
 
 const { Text } = Typography
 
@@ -12,8 +19,10 @@ interface InstalledRowProps {
   onUninstall: (baseDir: string, name: string) => Promise<void>
   onToggleEnabled: (skillKey: string, enabled: boolean) => void
   onSaveApiKey: (skillKey: string, apiKey: string) => Promise<void>
+  onSaveEnv: (skillKey: string, env: Record<string, string>) => Promise<void>
   onShowDetail: (skill: InstalledSkillInfo) => void
   onExport: (skill: InstalledSkillInfo) => Promise<void>
+  onRefresh: () => void | Promise<void>
 }
 
 export const InstalledRow = memo(function InstalledRow({
@@ -22,8 +31,10 @@ export const InstalledRow = memo(function InstalledRow({
   onUninstall,
   onToggleEnabled,
   onSaveApiKey,
+  onSaveEnv,
   onShowDetail,
   onExport,
+  onRefresh,
 }: InstalledRowProps): React.ReactElement {
   const { t } = useTranslation()
   const { message } = App.useApp()
@@ -33,11 +44,14 @@ export const InstalledRow = memo(function InstalledRow({
   const [apiKeyValue, setApiKeyValue] = useState('')
   const [apiKeySaving, setApiKeySaving] = useState(false)
   const [exporting, setExporting] = useState(false)
+  // 未就绪技能默认展开解决面板，避免只有标签没有入口
+  const [fixOpen, setFixOpen] = useState(skill.eligible === false)
 
   const isEnabled = skill.enabled !== false
   const switchDisabled = !wsReady || skill.always === true || !skill.skillKey
   const missingHint = buildMissingHint(skill.missing, t)
   const { label: sourceLabel, color: sourceColor } = resolveSourceTag(skill)
+  const notReady = skill.eligible === false
 
   const handleToggle = async (checked: boolean): Promise<void> => {
     if (!skill.skillKey) return
@@ -108,18 +122,24 @@ export const InstalledRow = memo(function InstalledRow({
                 {t('skills.alwaysEnabled')}
               </Tag>
             )}
-            {skill.eligible === false && (
+            {notReady && (
               <Tooltip
                 title={
                   <div style={{ whiteSpace: 'pre-line', fontSize: 12 }}>
                     {t('skills.notReadyHint')}
                     {'\n'}
                     {missingHint || '—'}
+                    {'\n\n'}
+                    {t('skills.fix.expand')}
                   </div>
                 }
               >
-                <Tag color="orange" style={{ fontSize: 11, cursor: 'help' }}>
-                  {t('skills.notReady')} ⓘ
+                <Tag
+                  color="orange"
+                  style={{ fontSize: 11, cursor: 'pointer' }}
+                  onClick={() => setFixOpen((v) => !v)}
+                >
+                  {t('skills.notReady')} · {fixOpen ? t('skills.fix.collapse') : t('skills.notReadyAction')}
                 </Tag>
               </Tooltip>
             )}
@@ -137,13 +157,25 @@ export const InstalledRow = memo(function InstalledRow({
         </div>
 
         <Space size={4} style={{ flexShrink: 0 }}>
+          {notReady && (
+            <Tooltip title={fixOpen ? t('skills.fix.collapse') : t('skills.notReadyAction')}>
+              <Button
+                size="small"
+                type={fixOpen ? 'primary' : 'default'}
+                icon={<ToolOutlined />}
+                onClick={() => setFixOpen((v) => !v)}
+              >
+                {t('skills.notReadyAction')}
+              </Button>
+            </Tooltip>
+          )}
+
           <Tooltip title={t('skills.showDetail')}>
             <Button
               size="small"
               icon={<FileTextOutlined />}
               onClick={() => {
                 performance.mark('detail-click')
-                console.log('[perf] detail button clicked')
                 onShowDetail(skill)
               }}
             />
@@ -189,7 +221,7 @@ export const InstalledRow = memo(function InstalledRow({
             title={
               skill.always
                 ? t('skills.alwaysEnabled')
-                : skill.eligible === false
+                : notReady
                   ? t('skills.notReady')
                   : undefined
             }
@@ -247,6 +279,17 @@ export const InstalledRow = memo(function InstalledRow({
             {t('skills.apiKeyCancel')}
           </Button>
         </div>
+      )}
+
+      {notReady && fixOpen && (
+        <NotReadyFixPanel
+          skill={skill}
+          wsReady={wsReady}
+          variant="row"
+          onSaveApiKey={onSaveApiKey}
+          onSaveEnv={onSaveEnv}
+          onRecheck={onRefresh}
+        />
       )}
     </Card>
   )

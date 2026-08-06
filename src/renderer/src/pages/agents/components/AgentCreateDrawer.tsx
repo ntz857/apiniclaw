@@ -22,6 +22,8 @@ export function AgentCreateDrawer({
   useEffect(() => {
     if (open) {
       form.resetFields()
+      // 空白创建也默认 full 工具档
+      form.setFieldsValue({ toolsProfile: 'full', emoji: '🤖' })
       window.api.model
         .getPresetModels()
         .then((groups) => {

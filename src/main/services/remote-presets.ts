@@ -46,6 +46,12 @@ const SCHEMA_VERSION = 1
 /** 官方远程预设地址（开发者维护，用户不可修改） */
 const REMOTE_PRESETS_URL = `${CLICKCLAW_API_BASE_URL}/ai/provider.json`
 
+/**
+ * 本地强制品牌：远程预设不得覆盖这些 key（例如把 AIGC2D 换成万事屋）
+ * 合并后始终以 PROVIDER_PRESETS 中的定义为准。
+ */
+const LOCAL_BRAND_FORCE_KEYS = new Set(['aigc2d'])
+
 // ========== 类型定义 ==========
 
 /**
@@ -223,6 +229,10 @@ export function getMergedProviderPresets(): Record<string, ProviderPreset> {
   if (!cache?.providers) return result
 
   for (const [key, patch] of Object.entries(cache.providers)) {
+    // 本地强制品牌：远程不得覆盖（例如 aigc2d → 万事屋）
+    if (LOCAL_BRAND_FORCE_KEYS.has(key)) {
+      continue
+    }
     if (result[key]) {
       // 已有 Provider：用远程字段覆盖（保留本地中远程未提供的字段）
       result[key] = { ...result[key], ...patch }
@@ -234,6 +244,16 @@ export function getMergedProviderPresets(): Record<string, ProviderPreset> {
       } else {
         log.warn(`remote presets: provider "${key}" skipped (incomplete fields)`)
       }
+    }
+  }
+
+  // 再次以本地强制预设写回，防止远程缓存旧字段残留
+  for (const key of LOCAL_BRAND_FORCE_KEYS) {
+    const local = PROVIDER_PRESETS[key]
+    if (!local) continue
+    result[key] = {
+      ...local,
+      platforms: local.platforms.map((p) => ({ ...p, models: [...p.models] })),
     }
   }
 

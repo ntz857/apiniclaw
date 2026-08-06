@@ -1,11 +1,11 @@
 {
   "name": "clickclaw",
-  "version": "0.3.3",
-  "description": "ClickClaw — 点击即装的 OpenClaw 桌面管理工具（社区维护 fork）",
+  "version": "0.3.4",
+  "description": "ApiniClaw — 点击即装的 OpenClaw 桌面管理工具",
   "main": "./out/main/index.js",
-  "author": "ClickClaw Team / community maintainers",
+  "author": "ApiniClaw",
   "license": "AGPL-3.0",
-  "homepage": "https://github.com/ntz857/clickclaw",
+  "homepage": "https://www.apiniclaw.com",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ntz857/clickclaw.git"

@@ -228,6 +228,7 @@ export default function SkillsPage(): React.ReactElement {
     handleUninstall,
     handleToggleEnabled,
     handleSaveApiKey,
+    handleSaveEnv,
     handleExport,
     handleOpenDir,
     handleGoDiscover,
@@ -235,6 +236,17 @@ export default function SkillsPage(): React.ReactElement {
     installedSlugs,
     marketplaceOptions,
   } = useSkillsPage()
+
+  // 保存环境变量 / 重新检查后，同步详情弹窗中的 skill 状态
+  useEffect(() => {
+    if (!detailSkill) return
+    const next = installedSkills.find(
+      (s) => s.baseDir === detailSkill.baseDir || s.skillKey === detailSkill.skillKey
+    )
+    if (next && next !== detailSkill) {
+      setDetailSkill(next)
+    }
+  }, [installedSkills, detailSkill, setDetailSkill])
 
   const tabItems = [
     {
@@ -270,6 +282,7 @@ export default function SkillsPage(): React.ReactElement {
           onUninstall={handleUninstall}
           onToggleEnabled={handleToggleEnabled}
           onSaveApiKey={handleSaveApiKey}
+          onSaveEnv={handleSaveEnv}
           onShowDetail={setDetailSkill}
           onExport={handleExport}
           onOpenDir={handleOpenDir}
@@ -307,7 +320,14 @@ export default function SkillsPage(): React.ReactElement {
         destroyInactiveTabPane={false}
       />
 
-      <DetailModal skill={detailSkill} onClose={handleCloseDetail} />
+      <DetailModal
+        skill={detailSkill}
+        onClose={handleCloseDetail}
+        wsReady={wsReady}
+        onSaveApiKey={handleSaveApiKey}
+        onSaveEnv={handleSaveEnv}
+        onRecheck={loadInstalled}
+      />
 
       {/* Skill 安全审查 Modal（进度阶段 + 结果阶段） */}
       <VetModal

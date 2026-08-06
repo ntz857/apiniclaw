@@ -121,8 +121,18 @@ export function useInstalledSkills() {
   const handleSaveApiKey = useCallback(
     async (skillKey: string, apiKey: string) => {
       await callRpc('skills.update', { skillKey, apiKey })
+      // 写入后刷新门控状态（eligible / missing）
+      await loadInstalled()
     },
-    [callRpc]
+    [callRpc, loadInstalled]
+  )
+
+  const handleSaveEnv = useCallback(
+    async (skillKey: string, env: Record<string, string>) => {
+      await callRpc('skills.update', { skillKey, env })
+      await loadInstalled()
+    },
+    [callRpc, loadInstalled]
   )
 
   const handleExport = useCallback(
@@ -158,6 +168,7 @@ export function useInstalledSkills() {
     handleUninstall,
     handleToggleEnabled,
     handleSaveApiKey,
+    handleSaveEnv,
     handleExport,
     handleOpenDir,
     installedSlugs,

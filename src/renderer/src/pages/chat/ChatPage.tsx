@@ -45,6 +45,7 @@ import { useChatDisplayPrefs } from './hooks/useChatDisplayPrefs'
 import { useChatPrompts } from './hooks/useChatPrompts'
 import { useChatSessions } from './hooks/useChatSessions'
 import { useSlashCommandMenu } from './hooks/useSlashCommandMenu'
+import { formatSessionDisplayLabel } from './session-display'
 
 const { Title, Paragraph } = Typography
 const { Content } = Layout
@@ -105,7 +106,7 @@ function ChatPage(): React.ReactElement {
     setAttachOpen,
     attachRef,
     handleSend,
-  } = useChatComposer({ sendMessage })
+  } = useChatComposer({ sendMessage, sessionKey })
 
   const {
     modelOptions,
@@ -134,8 +135,41 @@ function ChatPage(): React.ReactElement {
   const [preferredNewSessionAgentId, setPreferredNewSessionAgentId] = useState<string | undefined>(
     undefined
   )
+
+  const agentNameMap = useMemo(() => {
+    const map: Record<string, string> = {}
+    for (const item of agentOptions) {
+      map[item.value] = item.label
+    }
+    return map
+  }, [agentOptions])
+
+  const displaySessions = useMemo(
+    () =>
+      sessions.map((session) => ({
+        ...session,
+        label: formatSessionDisplayLabel(session.key, {
+          agentNames: agentNameMap,
+          defaultAgentId,
+          fallbackLabel: session.label,
+          t: (key, opts) => t(key, opts),
+        }),
+      })),
+    [agentNameMap, defaultAgentId, sessions, t]
+  )
+
+  const sessionKeyDisplay = useMemo(
+    () =>
+      formatSessionDisplayLabel(sessionKey, {
+        agentNames: agentNameMap,
+        defaultAgentId,
+        t: (key, opts) => t(key, opts),
+      }),
+    [agentNameMap, defaultAgentId, sessionKey, t]
+  )
+
   const { handleOpenNewSession, handleDeleteSession, handleResetSession } = useChatSessions({
-    sessions,
+    sessions: displaySessions,
     newSession,
     deleteSession,
     resetSession,
@@ -210,16 +244,6 @@ function ChatPage(): React.ReactElement {
       })),
     [agentOptions]
   )
-  const sessionKeyDisplay = useMemo(() => {
-    if (!sessionKey) return t('chat.model.noSession')
-    if (sessionKey.startsWith('draft:')) {
-      const parts = sessionKey.split(':')
-      const draftName = parts.slice(3).join(':') || 'draft'
-      return `draft:${draftName}`
-    }
-    if (sessionKey.length <= 44) return sessionKey
-    return `${sessionKey.slice(0, 24)}...${sessionKey.slice(-14)}`
-  }, [sessionKey, t])
 
   useEffect(() => {
     if (status !== 'ready') return
@@ -245,7 +269,8 @@ function ChatPage(): React.ReactElement {
   useEffect(() => {
     if (status !== 'ready' || loadingAgents || !agentsLoadedOnce) return
 
-    const seedKey = seedAgentId || '__none__'
+    // 用完整 search 做一次性入口 key，避免同一 agent 再次从管理页进入时被 ref 吞掉
+    const seedKey = location.search || '__none__'
     if (seededAgentHintRef.current === seedKey) return
     seededAgentHintRef.current = seedKey
 
@@ -255,21 +280,36 @@ function ChatPage(): React.ReactElement {
     }
 
     const seeded = agentOptions.find((item) => item.value === seedAgentId)
-    if (seeded) {
-      setPreferredNewSessionAgentId(seeded.value)
-      msg.info(t('chat.entry.prefilledAgentHint', { name: seeded.label }))
+    if (!seeded && agentOptions.length > 0) {
+      if (defaultAgentId) {
+        setPreferredNewSessionAgentId(defaultAgentId)
+        msg.warning(t('chat.entry.invalidAgentFallback'))
+      } else {
+        setPreferredNewSessionAgentId(undefined)
+        msg.warning(t('chat.entry.noDefaultAgent'))
+      }
       return
     }
 
-    if (defaultAgentId) {
-      setPreferredNewSessionAgentId(defaultAgentId)
-      msg.warning(t('chat.entry.invalidAgentFallback'))
-      return
-    }
+    const displayName = seeded?.label || seedAgentId
+    setPreferredNewSessionAgentId(seedAgentId)
 
-    setPreferredNewSessionAgentId(undefined)
-    msg.warning(t('chat.entry.noDefaultAgent'))
-  }, [agentOptions, agentsLoadedOnce, defaultAgentId, loadingAgents, msg, seedAgentId, status, t])
+    // 从智能体管理进入：必须切到该智能体主会话，不能只预填「新建会话」默认值
+    // （Gateway 全局单例会保留上一个 sessionKey，否则会打开错 agent 的聊天页）
+    switchSession(`agent:${seedAgentId}:main`)
+    msg.info(t('chat.entry.prefilledAgentHint', { name: displayName }))
+  }, [
+    agentOptions,
+    agentsLoadedOnce,
+    defaultAgentId,
+    loadingAgents,
+    location.search,
+    msg,
+    seedAgentId,
+    status,
+    switchSession,
+    t,
+  ])
 
   // ========== Gateway 未运行状态 ==========
 
@@ -408,7 +448,7 @@ function ChatPage(): React.ReactElement {
       <ChatSessionsSider
         status={status}
         isStreaming={isStreaming}
-        sessions={sessions}
+        sessions={displaySessions}
         sessionKey={sessionKey}
         tokenBgContainer={token.colorBgContainer}
         tokenBorderColor={token.colorBorderSecondary}

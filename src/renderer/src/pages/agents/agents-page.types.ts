@@ -96,8 +96,15 @@ export interface SkillEntry {
   disabled: boolean
   blockedByAllowlist: boolean
   eligible: boolean
+  /** openclaw.json skills.entries 的 key，写入 env/apiKey 时需要 */
+  skillKey?: string
+  primaryEnv?: string
+  filePath?: string
+  baseDir?: string
+  error?: string
   missing?: {
     bins?: string[]
+    anyBins?: string[]
     env?: string[]
     config?: string[]
     os?: string[]

@@ -109,6 +109,17 @@ const api = {
     delete: (agentId: string): Promise<void> => ipcRenderer.invoke('agent:delete', agentId),
     setDefault: (agentId: string): Promise<void> =>
       ipcRenderer.invoke('agent:set-default', agentId),
+    /** 安装 skill 到 agent 私有 workspace/skills */
+    installSkills: (
+      agentId: string,
+      skillNames: string[]
+    ): Promise<{
+      agentId: string
+      workspaceSkillsDir: string
+      installed: string[]
+      missing: string[]
+      copied: string[]
+    }> => ipcRenderer.invoke('agent:install-skills', agentId, skillNames),
   },
 
   model: {
@@ -258,6 +269,15 @@ const api = {
       ipcRenderer.invoke('fs:save-as', opts),
   },
 
+  cron: {
+    /** 投递目标候选（按渠道从白名单/配对/历史收集） */
+    listDeliveryTargets: (
+      channel?: string
+    ): Promise<
+      Array<{ value: string; label: string; channel?: string; source?: string; kind?: string }>
+    > => ipcRenderer.invoke('cron:list-delivery-targets', channel),
+  },
+
   skill: {
     listMarketplaces: (): Promise<unknown> => ipcRenderer.invoke('skill:list-marketplaces'),
     search: (marketplaceId: string, query: string, opts?: { limit?: number }): Promise<unknown> =>
@@ -282,6 +302,31 @@ const api = {
     ): Promise<{ canceled: boolean; filePath?: string }> =>
       ipcRenderer.invoke('skill:export-zip', baseDir, skillName),
     openDir: (): Promise<string> => ipcRenderer.invoke('skill:open-dir'),
+    /** 一键安装缺失 CLI 工具（winget/brew） */
+    installBin: (
+      bin: string
+    ): Promise<{
+      success: boolean
+      bin: string
+      method?: string
+      command?: string
+      error?: string
+      gatewayRestarted?: boolean
+    }> => ipcRenderer.invoke('skill:install-bin', bin),
+    installBins: (
+      bins: string[]
+    ): Promise<{
+      results: Array<{
+        success: boolean
+        bin: string
+        method?: string
+        error?: string
+        gatewayRestarted?: boolean
+      }>
+      gatewayRestarted: boolean
+    }> => ipcRenderer.invoke('skill:install-bins', bins),
+    isBinInstallable: (bin: string): Promise<boolean> =>
+      ipcRenderer.invoke('skill:bin-installable', bin),
     vet: (
       marketplaceId: string,
       slug: string,

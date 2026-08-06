@@ -8,7 +8,7 @@
 
 - **产品名称：** ClickClaw（Click + Claw — "点击即装 OpenClaw"）
 - **包名 / App ID：** `cn.clickclaw.app`
-- **域名：** clickclaw.cn / clickclaw.cloud 
+- **域名：** 官网 https://www.apiniclaw.com ；API https://api.apiniclaw.com ；文档 https://docs.apiniclaw.com ；更新 https://update.apiniclaw.com 
 - **版本策略：** ClickClaw 应用本体使用 semver `x.y.z`；内置 OpenClaw 版本继续沿用其上游日历版本
 - **目标平台：** macOS（arm64 + x64）、Windows（x64 + arm64）
 

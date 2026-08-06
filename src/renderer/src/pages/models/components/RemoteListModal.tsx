@@ -15,8 +15,10 @@ export function RemoteListModal({
   const [selected, setSelected] = useState<string[]>([])
 
   useEffect(() => {
-    if (open) setSelected([])
-  }, [open])
+    if (!open) return
+    // 拉取远程列表：默认全选尚未加入配置的模型
+    setSelected(remoteModels.filter((id) => !existingModelIds.includes(id)))
+  }, [open, remoteModels, existingModelIds])
 
   const toggle = (id: string) => {
     if (existingModelIds.includes(id)) return

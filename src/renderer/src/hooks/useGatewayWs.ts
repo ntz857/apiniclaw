@@ -32,6 +32,9 @@ import {
   extractPresentationsFromToolArgs,
   type MessagePresentation,
 } from '../pages/chat/presentation-display'
+import { parseSessionLabel } from '../pages/chat/session-display'
+
+export { parseSessionLabel }
 
 // ========== 类型定义 ==========
 
@@ -485,17 +488,6 @@ function mergeToolCalls(
     }
   }
   return next
-}
-
-/** 从 sessionKey 解析显示名称（格式：agent:<agentId>:<channelName>） */
-export function parseSessionLabel(key: string): string {
-  const parts = (key || '').split(':')
-  if (parts.length < 3) return key || '未知'
-  const agent = parts[1] || 'main'
-  const channel = parts.slice(2).join(':')
-  if (agent === 'main' && channel === 'main') return '主会话'
-  if (agent === 'main') return channel
-  return `${agent} / ${channel}`
 }
 
 function isDraftSessionKey(key?: string | null): boolean {

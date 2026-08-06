@@ -163,6 +163,52 @@ exports.default = async function afterPack(context) {
       "runtime",
       appOutDir
     );
+
+    // 强制写入 exe 图标，避免任务栏仍显示旧 ClickClaw 图标
+    try {
+      const productName = context.packager.appInfo.productFilename || "ApiniClaw";
+      const exePath = path.join(appOutDir, `${productName}.exe`);
+      const icoPath = path.join(__dirname, "..", "assets", "icon.ico");
+      if (fs.existsSync(exePath) && fs.existsSync(icoPath)) {
+        // 优先用 rcedit npm API，否则调用 electron-winstaller 自带的 rcedit.exe
+        let applied = false;
+        try {
+          const rcedit = require("rcedit");
+          await rcedit(exePath, { icon: icoPath });
+          applied = true;
+        } catch {
+          // fall through
+        }
+        if (!applied) {
+          const { spawnSync } = require("child_process");
+          const candidates = [
+            path.join(__dirname, "..", "node_modules", "electron-winstaller", "vendor", "rcedit.exe"),
+            path.join(__dirname, "..", "node_modules", "rcedit", "bin", "rcedit.exe"),
+          ];
+          const bin = candidates.find((p) => fs.existsSync(p));
+          if (bin) {
+            const res = spawnSync(bin, [exePath, "--set-icon", icoPath], {
+              encoding: "utf8",
+              windowsHide: true,
+            });
+            if (res.status === 0) applied = true;
+            else {
+              console.warn(
+                "[afterPack] rcedit.exe 失败:",
+                res.stderr || res.stdout || `exit ${res.status}`
+              );
+            }
+          }
+        }
+        if (applied) {
+          console.log(`[afterPack] 已写入 exe 图标: ${path.basename(exePath)}`);
+        } else {
+          console.warn("[afterPack] 未找到可用 rcedit，跳过 exe 图标写入");
+        }
+      }
+    } catch (err) {
+      console.warn("[afterPack] 写入 exe 图标失败:", err && err.message ? err.message : err);
+    }
   }
 
   // ── macOS：删除注入的 runtime/bin/node 节省空间（打包模式下不使用）──

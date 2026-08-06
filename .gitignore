@@ -4,7 +4,13 @@ node_modules/
 # 构建产物
 out/
 dist/
+dist-*/
+dist-apini/
+dist-apini-*/
 *.tsbuildinfo
+# 误落在仓库根的 asar 抽出物
+/index.js
+/index-*.js
 
 # electron-vite 输出
 out/

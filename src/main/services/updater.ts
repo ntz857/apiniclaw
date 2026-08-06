@@ -2,7 +2,7 @@
  * 自动更新服务
  *
  * 基于 electron-updater（Generic CDN provider）
- * CDN 地址：https://update.clickclaw.cn
+ * CDN 地址：https://update.apiniclaw.com
  *
  * 更新状态流转：
  *   idle → checking → not-available / available → downloading → downloaded

@@ -68,7 +68,12 @@ function LastRunBadge({
   // 优先读 state 嵌套字段（实际 API），兼容旧版扁平字段
   const startedAt = job.state?.lastRunAtMs ?? job.lastRun?.startedAt ?? job.lastRunAt
   const status = job.state?.lastRunStatus ?? job.lastRun?.status ?? job.lastRunStatus
-  const error = job.lastRun?.error
+  const error =
+    job.lastRun?.error ||
+    (job.state as { lastError?: string } | undefined)?.lastError ||
+    (job.state?.lastDeliveryStatus && job.state.lastDeliveryStatus !== 'ok'
+      ? `delivery: ${job.state.lastDeliveryStatus}`
+      : undefined)
 
   if (!startedAt || !status) return null
   if (status === 'ok')
@@ -82,11 +87,12 @@ function LastRunBadge({
     )
   if (status === 'error')
     return (
-      <Tooltip title={error}>
+      <Tooltip title={error || t('cron.runs.statusError')}>
         <Space size={4}>
           <CloseCircleFilled style={{ color: '#ff4d4f' }} />
           <Text type="danger" style={{ fontSize: 12 }}>
             {relativeTime(startedAt, t)}
+            {error ? ` · ${error.length > 40 ? `${error.slice(0, 40)}…` : error}` : ''}
           </Text>
         </Space>
       </Tooltip>
@@ -127,7 +133,11 @@ export default function CronJobCard({
     <Card
       title={title}
       size="small"
-      style={{ borderRadius: 10 }}
+      style={{
+        borderRadius: 10,
+        // 暂停任务仍展示，仅弱化，避免被误认为删除
+        opacity: job.enabled ? 1 : 0.72,
+      }}
       styles={{ body: { paddingBottom: 10 } }}
     >
       {/* 任务名称 */}
@@ -136,8 +146,19 @@ export default function CronJobCard({
       </Text>
 
       {/* 消息预览：兼容 agentTurn(message) 和 systemEvent(text) */}
-      <Text type="secondary" ellipsis style={{ fontSize: 12, display: 'block', marginBottom: 10 }}>
+      <Text type="secondary" ellipsis style={{ fontSize: 12, display: 'block', marginBottom: 6 }}>
         {job.payload?.message ?? job.payload?.text}
+      </Text>
+
+      {/* 投递方式 */}
+      <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 10 }}>
+        {job.agentId ? `${t('cron.card.agent')}: ${job.agentId}` : t('cron.card.agentDefault')}
+        {' · '}
+        {job.delivery?.mode === 'announce'
+          ? `${t('cron.card.deliveryAnnounce')}${job.delivery.channel ? `/${job.delivery.channel}` : ''}${job.delivery.to ? ` → ${job.delivery.to}` : ''}`
+          : job.delivery?.mode === 'webhook'
+            ? `${t('cron.card.deliveryWebhook')}${job.delivery.to ? ` → ${job.delivery.to}` : ''}`
+            : t('cron.card.deliveryNone')}
       </Text>
 
       {/* 上次 / 下次 */}

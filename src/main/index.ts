@@ -72,9 +72,14 @@ function createWindow(): void {
   const isMac = process.platform === 'darwin'
 
   // 开发模式：从源码 assets/ 目录读取；打包模式：从 extraResources 注入的 resources/ 读取
+  // Windows 任务栏/窗口图标优先用 .ico（多尺寸），PNG 作回退
   const iconPath = is.dev
-    ? join(__dirname, '../../assets/icon-256.png')
-    : join(process.resourcesPath, 'icon-256.png')
+    ? process.platform === 'win32'
+      ? join(__dirname, '../../assets/icon.ico')
+      : join(__dirname, '../../assets/icon-256.png')
+    : process.platform === 'win32'
+      ? join(process.resourcesPath, 'icon.ico')
+      : join(process.resourcesPath, 'icon-256.png')
 
   mainWindow = new BrowserWindow({
     ...(savedBounds
@@ -83,7 +88,7 @@ function createWindow(): void {
     minWidth: 900,
     minHeight: 600,
     show: false,
-    title: 'ClickClaw',
+    title: 'ApiniClaw',
     autoHideMenuBar: true,
     icon: iconPath,
     // macOS：隐藏标题栏保留红绿灯；Windows/Linux：完全无边框，由渲染层 TitleBar 接管
@@ -95,6 +100,16 @@ function createWindow(): void {
       sandbox: false,
     },
   })
+
+  // Windows：显式 setIcon，避免任务栏仍用 exe 内嵌旧图标缓存
+  if (process.platform === 'win32') {
+    const winIcon = nativeImage.createFromPath(iconPath)
+    if (!winIcon.isEmpty()) {
+      mainWindow.setIcon(winIcon)
+    } else {
+      log.warn('window icon load failed:', iconPath)
+    }
+  }
 
   mainWindow.on('ready-to-show', () => {
     mainWindow?.show()
@@ -168,9 +183,9 @@ if (!gotTheLock) {
 
   app.whenReady().then(() => {
     // macOS 开发态默认会显示 "Electron"，这里强制应用名与 About 信息使用产品名
-    app.setName('ClickClaw')
+    app.setName('ApiniClaw')
     app.setAboutPanelOptions({
-      applicationName: 'ClickClaw',
+      applicationName: 'ApiniClaw',
       applicationVersion: app.getVersion(),
       version: app.getVersion(),
     })
@@ -184,7 +199,8 @@ if (!gotTheLock) {
       }
     }
 
-    electronApp.setAppUserModelId('cn.clickclaw.app')
+    // 新 AUMID 避免 Windows 任务栏缓存旧 ClickClaw 图标
+    electronApp.setAppUserModelId('cn.apiniclaw.app')
 
     // 注册 app:// 协议处理器，将请求映射到 renderer 静态文件
     // 打包后：Origin 头固定为 "app://localhost"，写入 allowedOrigins 即可

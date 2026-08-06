@@ -9,7 +9,7 @@ import StepChannel from './StepChannel'
 import StepConfirm from './StepConfirm'
 import StepLaunch from './StepLaunch'
 import SetupActionBar from './SetupActionBar'
-import logoSvg from '../../assets/logo.svg'
+import logoSvg from '../../assets/logo.png'
 import LanguageSelect from '../../components/LanguageSelect'
 import AppVersion from '../../components/AppVersion'
 
@@ -104,9 +104,13 @@ function SetupPage(): React.ReactElement {
 
         {/* Logo + 品牌名 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 40 }}>
-          <img src={logoSvg} alt="ClickClaw" style={{ width: 28, height: 28 }} />
+          <img
+            src={logoSvg}
+            alt="ApiniClaw"
+            style={{ width: 28, height: 28, borderRadius: 6 }}
+          />
           <span style={{ color: '#fff', fontWeight: 700, fontSize: 16, letterSpacing: '-0.02em' }}>
-            ClickClaw
+            ApiniClaw
           </span>
         </div>
 
@@ -185,7 +189,7 @@ function SetupPage(): React.ReactElement {
             letterSpacing: '0.02em',
           }}
         >
-          <span>ClickClaw · OpenClaw</span>
+          <span>ApiniClaw · OpenClaw</span>
           <AppVersion style={{ color: 'rgba(255,255,255,0.42)' }} />
         </div>
       </div>

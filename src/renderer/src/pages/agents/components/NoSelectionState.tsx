@@ -26,13 +26,13 @@ export function NoSelectionState({ onCreate }: NoSelectionStateProps): React.Rea
         {t('agents.noSelectionHint')}
       </Typography.Text>
       <Button
-        type="dashed"
+        type="primary"
         icon={<PlusOutlined />}
         size="small"
         onClick={onCreate}
-        style={{ marginTop: 4 }}
+        style={{ marginTop: 4, background: '#FF4D2A', borderColor: '#FF4D2A' }}
       >
-        {t('agents.create')}
+        {t('agents.presets.addFromTemplate')}
       </Button>
     </div>
   )

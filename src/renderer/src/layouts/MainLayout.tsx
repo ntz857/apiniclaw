@@ -12,7 +12,6 @@ import {
   SettingOutlined,
   DatabaseOutlined,
   ScheduleOutlined,
-  InfoCircleOutlined,
 } from '@ant-design/icons'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -76,7 +75,8 @@ function MainLayout(): React.ReactElement {
         { key: '/logs', icon: <FileTextOutlined />, label: t('sidebar.logs') },
         { key: '/backup', icon: <DatabaseOutlined />, label: t('sidebar.backup') },
         { key: '/settings', icon: <SettingOutlined />, label: t('sidebar.settings') },
-        { key: '/about', icon: <InfoCircleOutlined />, label: t('sidebar.about') },
+        // 临时隐藏关于页（待 fork 品牌/更新源就绪后恢复）
+        // { key: '/about', icon: <InfoCircleOutlined />, label: t('sidebar.about') },
       ],
     },
   ]

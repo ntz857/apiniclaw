@@ -1,4 +1,4 @@
-# Build Windows x64 + macOS arm64/x64 (Intel) and attach to an existing GitHub Release.
+﻿# Build Windows x64 + macOS arm64/x64 (Intel) and attach to an existing GitHub Release.
 # Designed for community forks without Apple Developer / R2 secrets.
 name: Release packages (win + mac)
 
@@ -8,7 +8,7 @@ on:
       tag:
         description: 'Release tag to upload assets into (e.g. v0.3.3)'
         required: true
-        default: 'v0.3.3'
+        default: 'v0.3.4'
       openclaw_version:
         description: 'openclaw package version for bundled runtime'
         required: true
@@ -70,7 +70,7 @@ jobs:
         with:
           name: dist-win-x64
           path: |
-            dist/ClickClaw-Setup-*.exe
+            dist/ApiniClaw-Setup-*.exe
             dist/latest.yml
           if-no-files-found: error
           retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
@@ -127,8 +127,8 @@ jobs:
         with:
           name: dist-mac-arm64
           path: |
-            dist/ClickClaw-*.dmg
-            dist/ClickClaw-*.zip
+            dist/ApiniClaw-*.dmg
+            dist/ApiniClaw-*.zip
             dist/latest-mac.yml
           if-no-files-found: error
           retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
@@ -184,8 +184,8 @@ jobs:
         with:
           name: dist-mac-x64
           path: |
-            dist/ClickClaw-*.dmg
-            dist/ClickClaw-*.zip
+            dist/ApiniClaw-*.dmg
+            dist/ApiniClaw-*.zip
             dist/latest-mac.yml
           if-no-files-found: error
           retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
@@ -209,14 +209,14 @@ jobs:
           set -euo pipefail
           mkdir -p release/final
 
-          cp release/dist-win-x64/ClickClaw-Setup-*.exe release/final/
+          cp release/dist-win-x64/ApiniClaw-Setup-*.exe release/final/
           cp release/dist-win-x64/latest.yml release/final/
 
           # macOS: both arches (filenames include arch, e.g. ClickClaw-0.3.3-arm64.dmg / -x64.dmg)
-          cp release/dist-mac-arm64/ClickClaw-*.dmg release/final/
-          cp release/dist-mac-arm64/ClickClaw-*.zip release/final/
-          cp release/dist-mac-x64/ClickClaw-*.dmg release/final/
-          cp release/dist-mac-x64/ClickClaw-*.zip release/final/
+          cp release/dist-mac-arm64/ApiniClaw-*.dmg release/final/
+          cp release/dist-mac-arm64/ApiniClaw-*.zip release/final/
+          cp release/dist-mac-x64/ApiniClaw-*.dmg release/final/
+          cp release/dist-mac-x64/ApiniClaw-*.zip release/final/
 
           # Merge multi-arch auto-update manifests when helper exists
           if [ -f scripts/merge-latest-yml.js ]; then

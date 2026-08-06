@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import PageHeader from '../../components/PageHeader'
 import { AgentCreateDrawer } from './components/AgentCreateDrawer'
 import { AgentDetailPanel } from './components/AgentDetailPanel'
+import { AgentPresetPickerDrawer } from './components/AgentPresetPickerDrawer'
 import { AgentSideItem } from './components/AgentSideItem'
 import { NoSelectionState } from './components/NoSelectionState'
 import { useAgentPage } from './hooks/useAgentPage'
@@ -17,13 +18,17 @@ export default function AgentPage(): React.ReactElement {
     selectedAgent,
     setSelectedId,
     drawerOpen,
+    presetPickerOpen,
     creating,
     callRpc,
     wsReady,
     openCreateDrawer,
+    openCustomCreateDrawer,
     closeCreateDrawer,
+    closePresetPicker,
     handleSaveAgent,
     handleCreateAgent,
+    handleCreateFromPreset,
     handleDelete,
     handleSetDefault,
   } = useAgentPage()
@@ -106,6 +111,15 @@ export default function AgentPage(): React.ReactElement {
           )}
         </div>
       </div>
+
+      <AgentPresetPickerDrawer
+        open={presetPickerOpen}
+        existingIds={agents.map((a) => a.id)}
+        creating={creating}
+        onClose={closePresetPicker}
+        onPickPreset={handleCreateFromPreset}
+        onPickCustom={openCustomCreateDrawer}
+      />
 
       <AgentCreateDrawer
         open={drawerOpen}

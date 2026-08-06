@@ -2,8 +2,14 @@ import { Conversations } from '@ant-design/x'
 import { Button, Layout } from 'antd'
 import { ClearOutlined, DeleteOutlined, MessageOutlined } from '@ant-design/icons'
 import type { TFunction } from 'i18next'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 const { Sider } = Layout
+
+const WIDTH_STORAGE_KEY = 'clickclaw.chat.sessionsSiderWidth'
+const MIN_WIDTH = 180
+const MAX_WIDTH = 480
+const DEFAULT_WIDTH = 240
 
 interface ChatSessionItem {
   key: string
@@ -26,6 +32,17 @@ interface ChatSessionsSiderProps {
   t: TFunction
 }
 
+function loadSiderWidth(): number {
+  try {
+    const raw = window.localStorage.getItem(WIDTH_STORAGE_KEY)
+    const n = raw ? Number(raw) : NaN
+    if (Number.isFinite(n) && n >= MIN_WIDTH && n <= MAX_WIDTH) return Math.round(n)
+  } catch {
+    // ignore
+  }
+  return DEFAULT_WIDTH
+}
+
 export function ChatSessionsSider({
   status,
   isStreaming,
@@ -40,6 +57,58 @@ export function ChatSessionsSider({
   onDeleteSession,
   t,
 }: ChatSessionsSiderProps): React.ReactElement {
+  const [width, setWidth] = useState<number>(() => loadSiderWidth())
+  const [dragging, setDragging] = useState(false)
+  const dragStateRef = useRef<{ startX: number; startWidth: number } | null>(null)
+
+  const persistWidth = useCallback((next: number) => {
+    const clamped = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, Math.round(next)))
+    try {
+      window.localStorage.setItem(WIDTH_STORAGE_KEY, String(clamped))
+    } catch {
+      // ignore
+    }
+    return clamped
+  }, [])
+
+  const onResizeMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      dragStateRef.current = { startX: e.clientX, startWidth: width }
+      setDragging(true)
+      document.body.style.cursor = 'col-resize'
+      document.body.style.userSelect = 'none'
+    },
+    [width]
+  )
+
+  useEffect(() => {
+    if (!dragging) return
+
+    const onMove = (e: MouseEvent): void => {
+      const state = dragStateRef.current
+      if (!state) return
+      const next = state.startWidth + (e.clientX - state.startX)
+      setWidth(Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, Math.round(next))))
+    }
+
+    const onUp = (): void => {
+      dragStateRef.current = null
+      setDragging(false)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+      setWidth((w) => persistWidth(w))
+    }
+
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+  }, [dragging, persistWidth])
+
   const now = new Date()
   const todayKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`
   const yesterday = new Date(now)
@@ -67,13 +136,18 @@ export function ChatSessionsSider({
     []
   )
 
+  // 图标 + 右侧菜单 + 左右边距，预留给标题文本
+  const labelMaxWidth = Math.max(80, width - 86)
+
   return (
     <Sider
-      width={220}
+      width={width}
       style={{
         background: tokenBgContainer,
         borderRight: `1px solid ${tokenBorderColor}`,
         overflow: 'hidden',
+        position: 'relative',
+        flex: '0 0 auto',
       }}
     >
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -126,7 +200,7 @@ export function ChatSessionsSider({
                           title={s.label}
                           style={{
                             display: 'inline-block',
-                            maxWidth: 138,
+                            maxWidth: labelMaxWidth,
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
@@ -167,6 +241,31 @@ export function ChatSessionsSider({
           )}
         </div>
       </div>
+
+      {/* 左右拖动调宽手柄 */}
+      <div
+        role="separator"
+        aria-orientation="vertical"
+        aria-label={t('chat.sessions.resizeHandle')}
+        title={t('chat.sessions.resizeHandle')}
+        onMouseDown={onResizeMouseDown}
+        style={{
+          position: 'absolute',
+          top: 0,
+          right: -3,
+          width: 6,
+          height: '100%',
+          cursor: 'col-resize',
+          zIndex: 20,
+          background: dragging ? 'rgba(255, 77, 42, 0.35)' : 'transparent',
+        }}
+        onMouseEnter={(e) => {
+          if (!dragging) e.currentTarget.style.background = 'rgba(255, 77, 42, 0.18)'
+        }}
+        onMouseLeave={(e) => {
+          if (!dragging) e.currentTarget.style.background = 'transparent'
+        }}
+      />
     </Sider>
   )
 }

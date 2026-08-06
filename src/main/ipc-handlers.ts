@@ -66,6 +66,7 @@ import {
   getCurrentOpenclawVersion,
 } from './services/openclaw-updater'
 import { createAgentViaCli, deleteAgentViaCli } from './services/agent-lifecycle'
+import { installSkillsForAgent } from './services/agent-skills-install'
 import { createLogger } from './logger'
 import { getRuntime } from './runtime'
 import { readFileSync, existsSync, mkdirSync } from 'fs'
@@ -111,6 +112,8 @@ import {
   cancelWeixinQrScan,
 } from './services/weixin-qr'
 import { resolveInitialRoute } from './app-routing'
+import { listDeliveryTargets } from './services/delivery-targets'
+import { isBinInstallable, installToolBin, installToolBins } from './services/tool-installer'
 
 const execFileAsync = promisify(execFile)
 
@@ -481,7 +484,7 @@ export function registerIpcHandlers(): void {
         origins.push('app://localhost')
       }
       cui.allowedOrigins = origins
-      writeConfig(config, { source: 'auto', summary: 'ClickClaw 自动配对：更新 allowedOrigins' })
+      writeConfig(config, { source: 'auto', summary: 'ApiniClaw 自动配对：更新 allowedOrigins' })
       log.info('auto-pair-device: allowedOrigins updated')
       const identity = loadOrCreateDeviceIdentity()
       return { success: true, deviceId: identity.deviceId }
@@ -611,6 +614,11 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('agent:set-default', (_event, agentId: string) => {
     setDefaultAgent(agentId)
+  })
+
+  /** 将 skill 复制到指定 agent 的 workspace/skills（模板一键创建用） */
+  ipcMain.handle('agent:install-skills', (_event, agentId: string, skillNames: string[]) => {
+    return installSkillsForAgent(agentId, skillNames || [])
   })
 
   // ========== Model ==========
@@ -1177,6 +1185,32 @@ export function registerIpcHandlers(): void {
     const dir = getSkillsDir()
     mkdirSync(dir, { recursive: true })
     return shell.openPath(dir)
+  })
+
+  /** 一键安装技能缺失的命令行工具（winget / brew 白名单） */
+  ipcMain.handle('skill:install-bin', async (_e, bin: string) => {
+    return installToolBin(String(bin || ''))
+  })
+
+  /** 批量一键安装 */
+  ipcMain.handle('skill:install-bins', async (_e, bins: string[]) => {
+    const list = Array.isArray(bins) ? bins.map(String) : []
+    return installToolBins(list)
+  })
+
+  /** 查询某 bin 是否支持一键安装 */
+  ipcMain.handle('skill:bin-installable', (_e, bin: string) => {
+    return isBinInstallable(String(bin || ''))
+  })
+
+  /** 定时任务：列出某渠道可用的投递目标（白名单 / 配对 / 历史） */
+  ipcMain.handle('cron:list-delivery-targets', (_e, channel?: string) => {
+    try {
+      return listDeliveryTargets(channel ? String(channel) : undefined)
+    } catch (err) {
+      log.warn('cron:list-delivery-targets failed:', err)
+      return []
+    }
   })
 
   // ========== Dialog ==========

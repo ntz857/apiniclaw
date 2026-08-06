@@ -17,7 +17,8 @@ import {
   AppstoreOutlined,
 } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
-import logo from '../../assets/logo.svg'
+import { CLICKCLAW_WEBSITE_URL } from '@shared/urls'
+import logo from '../../assets/logo.png'
 
 type ElectronStyle = React.CSSProperties & { WebkitAppRegion?: string }
 type UpdateInfo = {
@@ -36,7 +37,7 @@ type UpdateInfo = {
 
 const BG = '#161616'
 const BORDER = 'rgba(255,255,255,0.07)'
-const WEBSITE_URL = 'https://www.clickclaw.cn'
+const WEBSITE_URL = CLICKCLAW_WEBSITE_URL
 
 export default function TrayPopupPage(): React.ReactElement {
   const { t } = useTranslation()
@@ -225,22 +226,22 @@ export default function TrayPopupPage(): React.ReactElement {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <img
             src={logo}
-            alt="ClickClaw"
+            alt="ApiniClaw"
             width={20}
             height={20}
-            style={{ filter: 'drop-shadow(0 0 5px rgba(255,77,42,0.5))' }}
+            style={{ borderRadius: 4, filter: 'drop-shadow(0 0 5px rgba(255,77,42,0.5))' }}
           />
           <span
             style={{
               fontWeight: 700,
               fontSize: 14,
-              background: 'linear-gradient(135deg, #FF7A5C 0%, #FF4D2A 100%)',
+              background: 'linear-gradient(135deg, #FF7A5C 0%, #4DA3FF 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
             }}
           >
-            ClickClaw
+            ApiniClaw
           </span>
         </div>
         <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 11 }}>{version}</span>
@@ -374,7 +375,7 @@ export default function TrayPopupPage(): React.ReactElement {
         <RightOutlined style={{ color: 'rgba(255,255,255,0.25)', fontSize: 10 }} />
       </MenuItem>
 
-      {/* ── 检查更新 ── */}
+      {/* 临时隐藏：检查更新（待切换到自有 GitHub Release 后再恢复）
       <MenuItem onClick={handleUpdateClick}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <SyncOutlined style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }} />
@@ -382,6 +383,7 @@ export default function TrayPopupPage(): React.ReactElement {
         </span>
         {renderUpdateRightIcon()}
       </MenuItem>
+      */}
 
       <Divider style={{ margin: 0, borderColor: BORDER }} />
 

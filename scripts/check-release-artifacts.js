@@ -41,15 +41,15 @@ if (files.length === 0) {
 }
 
 if (platform === "win") {
-  const installers = findMatches(files, /^ClickClaw-Setup-.*\.exe$/);
+  const installers = findMatches(files, /^(ApiniClaw|ClickClaw)-Setup-.*\.exe$/);
   const manifests = findMatches(files, /^latest\.yml$/);
   if (installers.length === 0) fail(`未找到 Windows 安装包: ${absDir}`);
   if (manifests.length === 0) fail(`未找到 Windows 更新清单 latest.yml: ${absDir}`);
   console.log(`[release-artifacts] win installers: ${installers.join(", ")}`);
   console.log(`[release-artifacts] win manifest: ${manifests.join(", ")}`);
 } else {
-  const dmgs = findMatches(files, /^ClickClaw-.*\.dmg$/);
-  const zips = findMatches(files, /^ClickClaw-.*\.zip$/);
+  const dmgs = findMatches(files, /^(ApiniClaw|ClickClaw)-.*\.dmg$/);
+  const zips = findMatches(files, /^(ApiniClaw|ClickClaw)-.*\.zip$/);
   const manifests = findMatches(files, /^latest-mac\.yml$/);
   if (dmgs.length === 0) fail(`未找到 macOS DMG: ${absDir}`);
   if (zips.length === 0) fail(`未找到 macOS ZIP: ${absDir}`);

@@ -28,7 +28,7 @@
   Upstream:
   <a href="https://github.com/clickclaw/clickclaw">clickclaw/clickclaw</a>
   · Site (reference):
-  <a href="https://www.clickclaw.cn">clickclaw.cn</a>
+  <a href="https://www.apiniclaw.com">www.apiniclaw.com</a>
 </p>
 
 ---

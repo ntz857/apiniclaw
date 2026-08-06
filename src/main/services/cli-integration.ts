@@ -211,7 +211,7 @@ function winIsInPath(binDir: string): boolean {
 export function posixBuildRcBlock(binDir: string): string {
   return [
     RC_BLOCK_START,
-    '# Added by ClickClaw — https://clickclaw.cn',
+    '# Added by ApiniClaw — https://www.apiniclaw.com',
     `export PATH="${binDir}:$PATH"`,
     RC_BLOCK_END,
   ].join('\n')

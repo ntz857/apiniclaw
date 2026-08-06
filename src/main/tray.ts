@@ -41,10 +41,29 @@ function createTrayIcon() {
     return createMacTrayIcon()
   }
 
-  const iconPath = is.dev
+  // Windows 托盘优先 .ico（系统原生多尺寸），失败再回退 PNG
+  const icoPath = is.dev
+    ? join(__dirname, '../../assets/icon.ico')
+    : join(process.resourcesPath, 'icon.ico')
+  const pngPath = is.dev
     ? join(__dirname, '../../assets/icon-256.png')
     : join(process.resourcesPath, 'icon-256.png')
-  return nativeImage.createFromPath(iconPath)
+
+  let icon = nativeImage.createFromPath(icoPath)
+  if (icon.isEmpty()) {
+    log.warn('tray ico load failed, fallback png:', icoPath)
+    icon = nativeImage.createFromPath(pngPath)
+  }
+  if (icon.isEmpty()) {
+    log.warn('tray icon load failed:', pngPath)
+  } else if (process.platform === 'win32') {
+    // 托盘建议 16/32，避免大图缩放发糊
+    const size = icon.getSize()
+    if (size.width > 32 || size.height > 32) {
+      icon = icon.resize({ width: 32, height: 32 })
+    }
+  }
+  return icon
 }
 
 function showMainWindow(win: BrowserWindow): void {
@@ -61,7 +80,7 @@ function buildMacTrayMenu(win: BrowserWindow): Menu {
 
   return Menu.buildFromTemplate([
     {
-      label: '显示 ClickClaw',
+      label: '显示 ApiniClaw',
       click: () => showMainWindow(win),
     },
     { type: 'separator' },
@@ -92,7 +111,7 @@ function buildMacTrayMenu(win: BrowserWindow): Menu {
     },
     { type: 'separator' },
     {
-      label: '退出 ClickClaw',
+      label: '退出 ApiniClaw',
       click: () => app.quit(),
     },
   ])
@@ -174,12 +193,12 @@ function togglePopup(): void {
 function updateTooltip(state: string): void {
   if (!tray) return
   const tips: Record<string, string> = {
-    stopped: 'ClickClaw — Gateway 已停止',
-    starting: 'ClickClaw — Gateway 启动中...',
-    running: 'ClickClaw — Gateway 运行中',
-    stopping: 'ClickClaw — Gateway 停止中...',
+    stopped: 'ApiniClaw — Gateway 已停止',
+    starting: 'ApiniClaw — Gateway 启动中...',
+    running: 'ApiniClaw — Gateway 运行中',
+    stopping: 'ApiniClaw — Gateway 停止中...',
   }
-  tray.setToolTip(tips[state] ?? 'ClickClaw')
+  tray.setToolTip(tips[state] ?? 'ApiniClaw')
 }
 
 // ========== 初始化 ==========
@@ -190,7 +209,7 @@ export function createTray(win: BrowserWindow): void {
   const isMac = process.platform === 'darwin'
   const icon = createTrayIcon()
   tray = new Tray(icon)
-  tray.setToolTip('ClickClaw')
+  tray.setToolTip('ApiniClaw')
 
   if (isMac) {
     const syncMenu = (): void => {

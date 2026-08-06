@@ -26,7 +26,7 @@ export function VersionsSection({
 
   const copyOpenclawError = async (): Promise<void> => {
     const lines = [
-      `ClickClaw Version: ${version}`,
+      `ApiniClaw Version: ${version}`,
       `OpenClaw Current Version: ${openclawUpdateInfo.currentVersion || 'unknown'}`,
       `OpenClaw Target Version: ${openclawUpdateInfo.latestVersion || 'unknown'}`,
       `OpenClaw Update Status: ${openclawUpdateInfo.status}`,

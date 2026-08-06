@@ -579,6 +579,17 @@ declare global {
       save: (agent: Partial<AgentConfig> & { id?: string }) => Promise<AgentConfig>
       delete: (agentId: string) => Promise<void>
       setDefault: (agentId: string) => Promise<void>
+      /** 将 skill 复制到 agent 私有 workspace/skills */
+      installSkills: (
+        agentId: string,
+        skillNames: string[]
+      ) => Promise<{
+        agentId: string
+        workspaceSkillsDir: string
+        installed: string[]
+        missing: string[]
+        copied: string[]
+      }>
     }
 
     /** Model/Provider 管理 */
@@ -734,6 +745,20 @@ declare global {
       }) => Promise<{ canceled: true } | { canceled: false; filePath: string }>
     }
 
+    /** 定时任务辅助 */
+    cron: {
+      /** 投递目标候选（白名单 / 配对 / 历史） */
+      listDeliveryTargets: (channel?: string) => Promise<
+        Array<{
+          value: string
+          label: string
+          channel?: string
+          source?: string
+          kind?: string
+        }>
+      >
+    }
+
     /** Skill 市场管理 */
     skill: {
       /** 列出所有已注册的 skill 市场 */
@@ -769,6 +794,28 @@ declare global {
       ) => Promise<{ canceled: boolean; filePath?: string }>
       /** 打开 skills 目录 */
       openDir: () => Promise<string>
+      /** 一键安装技能缺失的命令行工具（winget / brew 白名单） */
+      installBin: (bin: string) => Promise<{
+        success: boolean
+        bin: string
+        method?: string
+        command?: string
+        error?: string
+        gatewayRestarted?: boolean
+      }>
+      /** 批量一键安装 */
+      installBins: (bins: string[]) => Promise<{
+        results: Array<{
+          success: boolean
+          bin: string
+          method?: string
+          error?: string
+          gatewayRestarted?: boolean
+        }>
+        gatewayRestarted: boolean
+      }>
+      /** 是否支持对该 bin 一键安装 */
+      isBinInstallable: (bin: string) => Promise<boolean>
       /** 安装前安全审查（下载 ZIP + AI 分析），返回风险报告 */
       vet: (
         marketplaceId: string,

@@ -11,7 +11,6 @@ import AgentPage from './pages/agents/AgentPage'
 import ModelPage from './pages/models/ModelPage'
 import ChannelsPage from './pages/channels/ChannelsPage'
 import SettingsPage from './pages/settings/SettingsPage'
-import AboutPage from './pages/about/AboutPage'
 import LogsPage from './pages/logs/LogsPage'
 import BackupPage from './pages/backup/BackupPage'
 import SkillsPage from './pages/skills/SkillsPage'
@@ -20,7 +19,7 @@ import MainLayout from './layouts/MainLayout'
 import ConfigFoundDialog from './components/ConfigFoundDialog'
 import TrayPopupPage from './pages/tray/TrayPopupPage'
 import { PairingApprovalModal } from './components/PairingApprovalModal'
-import logo from './assets/logo.svg'
+import logo from './assets/logo.png'
 
 // ─── 托盘弹窗入口（独立渲染，不走主应用路由流程）───────────────────────
 
@@ -105,10 +104,10 @@ function MainApp(): React.ReactElement {
         >
           <img
             src={logo}
-            alt="ClickClaw"
+            alt="ApiniClaw"
             style={{
-              width: 72,
-              height: 72,
+              width: 96,
+              height: 96,
               filter: 'drop-shadow(0 0 20px rgba(255,77,42,0.4))',
             }}
           />
@@ -121,7 +120,7 @@ function MainApp(): React.ReactElement {
               fontFamily: 'system-ui, -apple-system, sans-serif',
             }}
           >
-            ClickClaw
+            ApiniClaw
           </span>
         </div>
 
@@ -228,7 +227,8 @@ function MainApp(): React.ReactElement {
               <Route path="/logs" element={<LogsPage />} />
               <Route path="/backup" element={<BackupPage />} />
               <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/about" element={<AboutPage />} />
+              {/* 临时隐藏关于页：直链 /about 时回到设置 */}
+              <Route path="/about" element={<Navigate to="/settings" replace />} />
             </Route>
             <Route path="*" element={<Navigate to={initialRoute!} replace />} />
           </Routes>

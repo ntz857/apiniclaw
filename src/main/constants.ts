@@ -57,21 +57,21 @@ export const SKILL_VET_CACHE_PATH = join(CLICKCLAW_HOME, 'skill-vet-cache.json')
  */
 export const CLICKCLAW_GATEWAY_DIR = join(CLICKCLAW_HOME, 'gateway')
 
-// ========== ClickClaw 应用数据路径（跟随平台标准） ==========
+// ========== ApiniClaw 应用数据路径（跟随平台标准） ==========
 
 /**
- * ClickClaw 应用数据目录
- * - macOS: ~/Library/Application Support/ClickClaw/
- * - Windows: %LOCALAPPDATA%\ClickClaw\
+ * ApiniClaw 应用数据目录
+ * - macOS: ~/Library/Application Support/ApiniClaw/
+ * - Windows: %LOCALAPPDATA%\ApiniClaw\
  */
 export function resolveAppDataDir(): string {
   // Electron 的 app.getPath('userData') 自动处理平台差异
-  // macOS: ~/Library/Application Support/ClickClaw
-  // Windows: %APPDATA%\ClickClaw (Roaming)
+  // macOS: ~/Library/Application Support/ApiniClaw
+  // Windows: %APPDATA%\ApiniClaw (Roaming)
   // 但 Windows 更推荐用 LOCALAPPDATA（不跨机器漫游）
   if (IS_WIN) {
     const localAppData = process.env.LOCALAPPDATA || join(homedir(), 'AppData', 'Local')
-    return join(localAppData, 'ClickClaw')
+    return join(localAppData, 'ApiniClaw')
   }
   // macOS / Linux: 用 Electron 标准路径
   return app.getPath('userData')
@@ -125,7 +125,7 @@ export function resolveBundledNodeBin(): string {
   if (IS_MAC) {
     const helperPath = process.execPath.replace(
       /\.app\/Contents\/MacOS\/[^/]+$/,
-      '.app/Contents/Frameworks/ClickClaw Helper.app/Contents/MacOS/ClickClaw Helper'
+      '.app/Contents/Frameworks/ApiniClaw Helper.app/Contents/MacOS/ApiniClaw Helper'
     )
     return helperPath
   }

@@ -9,17 +9,31 @@ import {
   Input,
   InputNumber,
   Select,
+  AutoComplete,
   DatePicker,
   Radio,
   Switch,
   Button,
   Space,
+  Typography,
+  Alert,
+  Spin,
 } from 'antd'
 import { useTranslation } from 'react-i18next'
 import type { CronJob, CronFormValues } from '../../../stores/cronStore'
-import { scheduleToForm } from '../../../stores/cronStore'
+import { scheduleToForm, deliveryToForm, DELIVERY_CHANNEL_OPTIONS } from '../../../stores/cronStore'
 import { TITLE_BAR_HEIGHT } from '../../../components/TitleBar'
 import dayjs from 'dayjs'
+
+const { Text } = Typography
+
+interface DeliveryTargetOpt {
+  value: string
+  label: string
+  channel?: string
+  source?: string
+  kind?: string
+}
 
 interface CronFormDrawerProps {
   open: boolean
@@ -42,10 +56,15 @@ export default function CronFormDrawer({
   const [form] = Form.useForm<CronFormValues>()
   const scheduleKind = Form.useWatch('scheduleKind', form)
   const cronPreset = Form.useWatch('cronPreset', form)
+  const deliveryMode = Form.useWatch('deliveryMode', form)
+  const deliveryChannel = Form.useWatch('deliveryChannel', form)
 
   // Agent 选项列表
   const [agentOptions, setAgentOptions] = useState<{ value: string; label: string }[]>([])
   const [loadingAgents, setLoadingAgents] = useState(false)
+  // 投递目标候选（按渠道）
+  const [targetOptions, setTargetOptions] = useState<DeliveryTargetOpt[]>([])
+  const [loadingTargets, setLoadingTargets] = useState(false)
 
   // Drawer 打开时加载 agents
   const loadAgents = useCallback(async (): Promise<void> => {
@@ -73,11 +92,38 @@ export default function CronFormDrawer({
     }
   }, [])
 
+  const loadDeliveryTargets = useCallback(async (channel?: string): Promise<void> => {
+    if (!channel) {
+      setTargetOptions([])
+      return
+    }
+    setLoadingTargets(true)
+    try {
+      const list = await window.api.cron.listDeliveryTargets(channel)
+      setTargetOptions(Array.isArray(list) ? list : [])
+    } catch (err) {
+      console.warn('[cron] listDeliveryTargets failed', err)
+      setTargetOptions([])
+    } finally {
+      setLoadingTargets(false)
+    }
+  }, [])
+
+  // 切换投递渠道 / 打开抽屉时刷新目标列表
+  useEffect(() => {
+    if (!open || deliveryMode !== 'announce') {
+      if (!open) setTargetOptions([])
+      return
+    }
+    void loadDeliveryTargets(deliveryChannel)
+  }, [open, deliveryMode, deliveryChannel, loadDeliveryTargets])
+
   useEffect(() => {
     if (open) {
       loadAgents()
       if (editJob) {
         const schedPart = scheduleToForm(editJob.schedule)
+        const deliveryPart = deliveryToForm(editJob.delivery)
         form.setFieldsValue({
           name: editJob.name,
           description: editJob.description,
@@ -87,6 +133,7 @@ export default function CronFormDrawer({
           enabled: editJob.enabled,
           ...schedPart,
           runAt: schedPart.runAt,
+          ...deliveryPart,
         })
       } else {
         form.resetFields()
@@ -95,6 +142,7 @@ export default function CronFormDrawer({
           intervalAmount: 30,
           intervalUnit: 'minutes',
           cronPreset: 'daily9am',
+          deliveryMode: 'none',
           enabled: true,
         })
       }
@@ -240,6 +288,111 @@ export default function CronFormDrawer({
             }
           />
         </Form.Item>
+
+        {/* 结果投递 */}
+        <Form.Item
+          label={t('cron.form.deliveryMode')}
+          name="deliveryMode"
+          extra={<Text type="secondary" style={{ fontSize: 12 }}>{t('cron.form.deliveryHint')}</Text>}
+        >
+          <Radio.Group>
+            <Radio.Button value="none">{t('cron.form.delivery.none')}</Radio.Button>
+            <Radio.Button value="announce">{t('cron.form.delivery.announce')}</Radio.Button>
+            <Radio.Button value="webhook">{t('cron.form.delivery.webhook')}</Radio.Button>
+          </Radio.Group>
+        </Form.Item>
+
+        {deliveryMode === 'announce' && (
+          <>
+            <Alert
+              type="info"
+              showIcon
+              style={{ marginBottom: 12 }}
+              message={t('cron.form.announceTip')}
+            />
+            <Form.Item
+              label={t('cron.form.deliveryChannel')}
+              name="deliveryChannel"
+              rules={[{ required: true, message: t('cron.form.deliveryChannelRequired') }]}
+            >
+              <Select
+                placeholder={t('cron.form.deliveryChannelPlaceholder')}
+                options={DELIVERY_CHANNEL_OPTIONS.map((c) => ({
+                  value: c.value,
+                  label: t(c.labelKey),
+                }))}
+                showSearch
+                optionFilterProp="label"
+              />
+            </Form.Item>
+            <Form.Item
+              label={t('cron.form.deliveryTo')}
+              name="deliveryTo"
+              rules={[{ required: true, message: t('cron.form.deliveryToRequired') }]}
+              extra={
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  {loadingTargets
+                    ? t('cron.form.deliveryToLoading')
+                    : targetOptions.length > 0
+                      ? t('cron.form.deliveryToSelectHintCount', { n: targetOptions.length })
+                      : t('cron.form.deliveryToHint')}
+                </Text>
+              }
+            >
+              <AutoComplete
+                options={targetOptions.map((o) => ({
+                  value: o.value,
+                  // 用 label 展示来源；选中后框内仍是 value
+                  label: o.label,
+                }))}
+                placeholder={
+                  deliveryChannel
+                    ? t('cron.form.deliveryToPlaceholder')
+                    : t('cron.form.deliveryToNeedChannel')
+                }
+                disabled={!deliveryChannel}
+                allowClear
+                defaultOpen={false}
+                filterOption={(input, option) => {
+                  const v = String(option?.value ?? '')
+                  const l = String(option?.label ?? '')
+                  const q = input.toLowerCase()
+                  return v.toLowerCase().includes(q) || l.toLowerCase().includes(q)
+                }}
+                notFoundContent={
+                  loadingTargets ? (
+                    <Spin size="small" />
+                  ) : !deliveryChannel ? (
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      {t('cron.form.deliveryToNeedChannel')}
+                    </Text>
+                  ) : (
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      {t('cron.form.deliveryToEmpty')}
+                    </Text>
+                  )
+                }
+              />
+            </Form.Item>
+          </>
+        )}
+
+        {deliveryMode === 'webhook' && (
+          <Form.Item
+            label={t('cron.form.webhookUrl')}
+            name="deliveryTo"
+            rules={[
+              { required: true, message: t('cron.form.webhookUrlRequired') },
+              {
+                type: 'url',
+                message: t('cron.form.webhookUrlInvalid'),
+              },
+            ]}
+            extra={<Text type="secondary" style={{ fontSize: 12 }}>{t('cron.form.webhookUrlHint')}</Text>}
+          >
+            <Input placeholder="https://example.com/hooks/cron" />
+          </Form.Item>
+        )}
 
         {/* 启用开关 */}
         <Form.Item label={t('cron.form.enableNow')} name="enabled" valuePropName="checked">
