@@ -4,8 +4,11 @@
 
 ## [Unreleased]
 
+## [0.3.6] - 2026-08-07
+
 ### Changed
 - 模型预设彻底去掉 AIGC2D 兼容层：provider key `aigc2d` → `wanshiwu`，环境变量 `AIGC2D_API_KEY` → `WANSHIWU_API_KEY`；logo 与资源文件同步更名。
+- 不提供从 `aigc2d` / `AIGC2D_API_KEY` 的自动迁移。
 
 ## [0.3.5] - 2026-08-07
 
