@@ -46,7 +46,9 @@
   });
   showShot(tabs[0]?.dataset.shot || "dashboard");
 
-  // scroll reveal
+  // scroll reveal - generous rootMargin so lower sections appear early
+  document.documentElement.classList.add("js-ready");
+  const reveals = [...document.querySelectorAll(".reveal")];
   if (!reduce && "IntersectionObserver" in window) {
     const io = new IntersectionObserver(
       (entries) => {
@@ -57,11 +59,15 @@
           }
         });
       },
-      { threshold: 0.18, rootMargin: "0px 0px -40px 0px" },
+      { threshold: 0.08, rootMargin: "0px 0px 20% 0px" },
     );
-    document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+    reveals.forEach((el) => io.observe(el));
+    // fallback: force-show anything still hidden after 1.5s
+    setTimeout(() => {
+      reveals.forEach((el) => el.classList.add("is-in"));
+    }, 1500);
   } else {
-    document.querySelectorAll(".reveal").forEach((el) => el.classList.add("is-in"));
+    reveals.forEach((el) => el.classList.add("is-in"));
   }
 
   // year
