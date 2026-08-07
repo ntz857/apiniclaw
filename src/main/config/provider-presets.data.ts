@@ -23,10 +23,9 @@ export const PROVIDER_PRESETS: Record<string, ProviderPreset> = {
   // ==================== 国内 ====================
 
   /**
-   * 万事屋（原远程预设 AIGC2D 的本地替换）
-   * key 保持 aigc2d，兼容已写入 openclaw 配置 / 环境变量的用户
+   * 万事屋 — ApiniClaw 官方模型中转
    */
-  aigc2d: {
+  wanshiwu: {
     name: '万事屋',
     tagline: 'ApiniClaw 模型中转站，统一接入主流大模型。',
     group: 'china',
@@ -35,12 +34,12 @@ export const PROVIDER_PRESETS: Record<string, ProviderPreset> = {
     recommendedRank: 1,
     platforms: [
       {
-        key: 'aigc2d',
+        key: 'wanshiwu',
         name: '万事屋 MaaS',
         baseUrl: 'https://maas.apiniclaw.com/v1',
         api: 'openai-completions',
         apiKeyUrl: 'https://maas.apiniclaw.com/',
-        envKey: 'AIGC2D_API_KEY',
+        envKey: 'WANSHIWU_API_KEY',
         models: [
           // —— GPT-5.6 系列 ——
           {

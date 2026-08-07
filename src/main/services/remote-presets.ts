@@ -47,10 +47,10 @@ const SCHEMA_VERSION = 1
 const REMOTE_PRESETS_URL = `${APINICLAW_API_BASE_URL}/ai/provider.json`
 
 /**
- * 本地强制品牌：远程预设不得覆盖这些 key（例如把 AIGC2D 换成万事屋）
+ * 本地强制品牌：远程预设不得覆盖这些 key
  * 合并后始终以 PROVIDER_PRESETS 中的定义为准。
  */
-const LOCAL_BRAND_FORCE_KEYS = new Set(['aigc2d'])
+const LOCAL_BRAND_FORCE_KEYS = new Set(['wanshiwu'])
 
 // ========== 类型定义 ==========
 
@@ -229,7 +229,7 @@ export function getMergedProviderPresets(): Record<string, ProviderPreset> {
   if (!cache?.providers) return result
 
   for (const [key, patch] of Object.entries(cache.providers)) {
-    // 本地强制品牌：远程不得覆盖（例如 aigc2d → 万事屋）
+    // 本地强制品牌：远程不得覆盖
     if (LOCAL_BRAND_FORCE_KEYS.has(key)) {
       continue
     }
