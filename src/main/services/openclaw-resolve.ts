@@ -208,7 +208,6 @@ export async function runOpenclawCli(
       env: {
         ...process.env,
         ...inv.env,
-        ELECTRON_RUN_AS_NODE: process.env.ELECTRON_RUN_AS_NODE || '',
       },
       encoding: 'utf-8',
       maxBuffer: 10 * 1024 * 1024,

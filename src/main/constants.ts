@@ -110,27 +110,18 @@ export function resolveResourcesPath(): string {
 
 /**
  * 内置 Node.js 二进制路径
- * - 开发模式：resources/targets/<platform-arch>/runtime/bin/node
- * - macOS 打包：ELECTRON_RUN_AS_NODE=1 复用 Electron Helper
- * - Windows 打包：resources/runtime/node.exe
+ * - 开发模式：resources/targets/<platform-arch>/runtime/bin/node（或 node.exe）
+ * - 打包模式：resources/runtime/bin/node（macOS）或 resources/runtime/node.exe（Windows）
+ *
+ * 注意：不要用 Electron Helper + ELECTRON_RUN_AS_NODE。
+ * Electron 内嵌 Node 版本往往落后于 openclaw 的引擎要求（例如 v24.14.0 不满足 >=24.15.0）。
  */
 export function resolveBundledNodeBin(): string {
   const resources = resolveResourcesPath()
-
-  if (!isPackaged()) {
-    const ext = IS_WIN ? 'node.exe' : 'bin/node'
-    return join(resources, 'runtime', ext)
+  if (IS_WIN) {
+    return join(resources, 'runtime', 'node.exe')
   }
-
-  if (IS_MAC) {
-    const helperPath = process.execPath.replace(
-      /\.app\/Contents\/MacOS\/[^/]+$/,
-      '.app/Contents/Frameworks/ApiniClaw Helper.app/Contents/MacOS/ApiniClaw Helper'
-    )
-    return helperPath
-  }
-
-  return join(resources, 'runtime', 'node.exe')
+  return join(resources, 'runtime', 'bin', 'node')
 }
 
 /**

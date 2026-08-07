@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+## [0.3.7] - 2026-08-07
+
+### Fixed
+- **macOS Gateway 秒退 / 误报 health check timeout**：打包后改为注入独立 Node.js 22 运行时（`resources/runtime/bin/node`），不再使用 Electron Helper + `ELECTRON_RUN_AS_NODE`。Electron 内嵌 Node v24.14.0 不满足 openclaw 要求的 `>=24.15.0`，导致进程立即 exit 1。
+- Gateway 启动失败时优先展示子进程 stderr（如 Node 版本要求），避免把「进程秒退」统一显示成 health check timeout。
+
 ## [0.3.6] - 2026-08-07
 
 ### Changed

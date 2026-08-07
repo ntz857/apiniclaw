@@ -199,10 +199,6 @@ export class GatewayProcess {
         NODE_ENV: 'production',
         OPENCLAW_GATEWAY_TOKEN: this.token,
       }
-      // 仅在用 Electron Helper 当 node 时需要
-      if (spec.source === 'bundled' && process.platform === 'darwin') {
-        env.ELECTRON_RUN_AS_NODE = '1'
-      }
 
       log.info(`--- gateway start (source=${spec.source} v${spec.version}) ---`)
       log.info(`platform=${process.platform} arch=${process.arch}`)
@@ -282,7 +278,8 @@ export class GatewayProcess {
 
       if (!healthy) {
         // 健康检查超时或子进程已退出
-        if (this.isChildAlive(childPid!)) {
+        const childStillAlive = this.isChildAlive(childPid!)
+        if (childStillAlive) {
           this.killChild()
           await this.waitForExit(2500)
         }
@@ -293,8 +290,9 @@ export class GatewayProcess {
           await sleep(1500)
           return this.startInternal(true)
         }
-        this.setState('stopped', 'health check timeout')
-        return { success: false, port: this.port, error: 'health check timeout' }
+        const failMessage = this.formatStartupFailure(startupStderrLines, childStillAlive)
+        this.setState('stopped', failMessage)
+        return { success: false, port: this.port, error: failMessage }
       }
 
       log.info('[startup] phase=health done')
@@ -517,6 +515,32 @@ export class GatewayProcess {
 
   private isChildAlive(pid: number): boolean {
     return !!this.proc && this.proc.pid === pid && this.proc.exitCode === null
+  }
+
+  /**
+   * 启动失败文案：子进程秒退时优先展示 stderr，避免误报成 health check timeout。
+   */
+  private formatStartupFailure(stderrLines: string[], childWasAliveAtFail: boolean): string {
+    const stderr = stderrLines
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .join('\n')
+      .trim()
+    if (!childWasAliveAtFail) {
+      if (stderr) {
+        // 截断过长输出，保留可读前缀
+        const max = 800
+        const clipped = stderr.length > max ? `${stderr.slice(0, max)}…` : stderr
+        return `gateway exited during startup: ${clipped}`
+      }
+      return 'gateway exited during startup (no stderr)'
+    }
+    if (stderr) {
+      const max = 800
+      const clipped = stderr.length > max ? `${stderr.slice(0, max)}…` : stderr
+      return `health check timeout: ${clipped}`
+    }
+    return 'health check timeout'
   }
 
   private killChild(): void {

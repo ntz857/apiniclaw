@@ -5,11 +5,11 @@
  * 签名和生成安装包之前，将预构建的 Node.js + openclaw 资源注入到 app bundle。
  *
  * 目录结构（注入后）:
- *   macOS: ApiniClaw.app/Contents/Resources/gateway/
+ *   macOS: ApiniClaw.app/Contents/Resources/gateway/ + runtime/
  *   Windows: resources/gateway/ + resources/runtime/
  *
- * macOS 不需要注入 runtime/node，因为打包模式下 constants.ts 直接复用
- * Electron Helper binary（ELECTRON_RUN_AS_NODE=1），无需独立 Node.js 二进制。
+ * 全平台注入独立 Node.js 运行时（openclaw 对 Node 版本有硬性要求，
+ * 不能复用 Electron Helper 的内嵌 Node，例如 v24.14.0 不满足 openclaw 的 >=24.15.0）。
  */
 
 "use strict";
@@ -155,16 +155,36 @@ exports.default = async function afterPack(context) {
     );
   }
 
-  // ── 注入 runtime/（仅 Windows 需要，macOS 使用 Electron Helper 代替 Node.js）──
-  if (platform === "win32") {
-    injectDir(
-      path.join(sourceBase, "runtime"),
-      path.join(resourcesDir, "runtime"),
-      "runtime",
-      appOutDir
-    );
+  // ── 注入 runtime/（macOS + Windows：独立 Node.js，供 Gateway / CLI 使用）──
+  injectDir(
+    path.join(sourceBase, "runtime"),
+    path.join(resourcesDir, "runtime"),
+    "runtime",
+    appOutDir
+  );
 
-    // 强制写入 exe 图标，避免任务栏仍显示旧 ApiniClaw 图标
+  // 校验 Node 二进制存在
+  const nodeBin =
+    platform === "win32"
+      ? path.join(resourcesDir, "runtime", "node.exe")
+      : path.join(resourcesDir, "runtime", "bin", "node");
+  if (!fs.existsSync(nodeBin)) {
+    throw new Error(`[afterPack] 注入后未找到 Node 二进制: ${nodeBin}`);
+  }
+  if (platform !== "win32") {
+    try {
+      fs.chmodSync(nodeBin, 0o755);
+    } catch (err) {
+      console.warn(
+        "[afterPack] chmod node 失败:",
+        err && err.message ? err.message : err
+      );
+    }
+  }
+  console.log(`[afterPack] Node 运行时就绪: ${path.relative(appOutDir, nodeBin)}`);
+
+  // Windows：强制写入 exe 图标，避免任务栏仍显示旧图标
+  if (platform === "win32") {
     try {
       const productName = context.packager.appInfo.productFilename || "ApiniClaw";
       const exePath = path.join(appOutDir, `${productName}.exe`);
@@ -210,9 +230,6 @@ exports.default = async function afterPack(context) {
       console.warn("[afterPack] 写入 exe 图标失败:", err && err.message ? err.message : err);
     }
   }
-
-  // ── macOS：删除注入的 runtime/bin/node 节省空间（打包模式下不使用）──
-  // （macOS 不注入 runtime/ 所以无需处理）
 
   console.log("[afterPack] 资源注入完成");
 };

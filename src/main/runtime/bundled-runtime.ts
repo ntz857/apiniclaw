@@ -40,11 +40,6 @@ export class BundledRuntime implements OpenclawRuntime {
       env.OPENCLAW_LENIENT_CONFIG = '1'
     }
 
-    // macOS 打包模式 + 使用 Electron Helper 当 node 时
-    if (isPackaged() && process.platform === 'darwin' && launch.source === 'bundled') {
-      env.ELECTRON_RUN_AS_NODE = '1'
-    }
-
     env.NODE_OPTIONS = '--dns-result-order=ipv4first'
 
     const npmBin = resolveBundledNpmBin()
@@ -58,13 +53,9 @@ export class BundledRuntime implements OpenclawRuntime {
   async getNodeVersion(): Promise<string> {
     const nodePath = this.getNodePath()
     try {
-      const env: Record<string, string> = {}
-      if (isPackaged() && process.platform === 'darwin') {
-        env.ELECTRON_RUN_AS_NODE = '1'
-      }
       const { stdout } = await execFileAsync(nodePath, ['--version'], {
         timeout: 5000,
-        env: { ...process.env, ...env },
+        env: { ...process.env },
       })
       return stdout.trim().replace(/^v/, '')
     } catch {

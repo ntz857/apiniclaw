@@ -341,7 +341,6 @@ export async function installOpenclawUpdate(
     const child = spawn(nodeBin, args, {
       env: {
         ...process.env,
-        ELECTRON_RUN_AS_NODE: '1',
         // 防止 npm 尝试打开浏览器或交互
         npm_config_yes: 'true',
       },
