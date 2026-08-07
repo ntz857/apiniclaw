@@ -276,11 +276,14 @@ function pickV22(versions) {
   return v.version.slice(1);
 }
 
+// 变更提取逻辑时递增，强制重解压（例如补齐 npm/npx shim）
+const NODE_RUNTIME_LAYOUT = "npm-shim-v1";
+
 async function downloadAndExtractNode(version, platform, arch, runtimeDir) {
   const stampFile = path.join(runtimeDir, ".node-stamp");
-  const stamp = `${version}-${platform}-${arch}`;
+  const stamp = `${version}-${platform}-${arch}|${NODE_RUNTIME_LAYOUT}`;
   if (fs.existsSync(stampFile) && fs.readFileSync(stampFile, "utf-8").trim() === stamp) {
-    log(`runtime 已是 v${version}（${platform}-${arch}），跳过`);
+    log(`runtime 已是 v${version}（${platform}-${arch} / ${NODE_RUNTIME_LAYOUT}），跳过`);
     return;
   }
 
@@ -326,6 +329,54 @@ async function downloadAndExtractNode(version, platform, arch, runtimeDir) {
   fs.writeFileSync(stampFile, stamp);
 }
 
+/**
+ * 写入 PATH 可发现的 npm/npx 入口。
+ * openclaw 会 `spawn('npm', ...)`，仅有 npm-cli.js + OPENCLAW_NPM_BIN 不够。
+ */
+function writePosixNpmShims(runtimeDir) {
+  const binDir = path.join(runtimeDir, "bin");
+  ensureDir(binDir);
+  const shims = [
+    { name: "npm", relCli: "../lib/node_modules/npm/bin/npm-cli.js" },
+    { name: "npx", relCli: "../lib/node_modules/npm/bin/npx-cli.js" },
+  ];
+  for (const { name, relCli } of shims) {
+    const target = path.join(binDir, name);
+    const body = [
+      "#!/bin/sh",
+      'basedir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)',
+      `exec "$basedir/node" "$basedir/${relCli}" "$@"`,
+      "",
+    ].join("\n");
+    fs.writeFileSync(target, body, { mode: 0o755 });
+    try {
+      fs.chmodSync(target, 0o755);
+    } catch {}
+  }
+  log("已写入 macOS npm/npx shim → runtime/bin/");
+}
+
+function writeWinNpmShims(runtimeDir) {
+  const shims = [
+    { name: "npm.cmd", cli: "node_modules\\npm\\bin\\npm-cli.js" },
+    { name: "npx.cmd", cli: "node_modules\\npm\\bin\\npx-cli.js" },
+  ];
+  for (const { name, cli } of shims) {
+    const target = path.join(runtimeDir, name);
+    const body = [
+      "@ECHO off",
+      "SETLOCAL",
+      'SET "NODE_EXE=%~dp0node.exe"',
+      `SET "CLI_JS=%~dp0${cli}"`,
+      '"%NODE_EXE%" "%CLI_JS%" %*',
+      "exit /b %ERRORLEVEL%",
+      "",
+    ].join("\r\n");
+    fs.writeFileSync(target, body);
+  }
+  log("已写入 Windows npm/npx shim → runtime/");
+}
+
 function extractDarwin(tarPath, runtimeDir, version, arch) {
   log("解压 macOS Node.js 运行时...");
   const tmpDir = makeTmpDir(path.dirname(tarPath), `node-darwin-${arch}`);
@@ -338,12 +389,17 @@ function extractDarwin(tarPath, runtimeDir, version, arch) {
   fs.copyFileSync(path.join(src, "bin", "node"), path.join(binDest, "node"));
   fs.chmodSync(path.join(binDest, "node"), 0o755);
 
-  // lib/node_modules/npm — 供 OPENCLAW_NPM_BIN 使用
+  // lib/node_modules/npm — 供 OPENCLAW_NPM_BIN 与 shim 使用
   const npmSrc = path.join(src, "lib", "node_modules", "npm");
   if (fs.existsSync(npmSrc)) {
     ensureDir(path.join(runtimeDir, "lib", "node_modules"));
     copyDir(npmSrc, path.join(runtimeDir, "lib", "node_modules", "npm"));
+  } else {
+    die(`Node 发行包缺少 npm: ${npmSrc}`);
   }
+
+  // PATH 入口：openclaw 会 spawn('npm')，必须能在 PATH 上找到
+  writePosixNpmShims(runtimeDir);
 
   rmDir(tmpDir);
   log("macOS 运行时提取完成");
@@ -377,7 +433,12 @@ function extractWin32(zipPath, runtimeDir, version, arch) {
   if (fs.existsSync(npmSrc)) {
     ensureDir(path.join(runtimeDir, "node_modules"));
     copyDir(npmSrc, path.join(runtimeDir, "node_modules", "npm"));
+  } else {
+    die(`Node 发行包缺少 npm: ${npmSrc}`);
   }
+
+  // PATH 入口：openclaw 会 spawn('npm') / spawn('npm.cmd')
+  writeWinNpmShims(runtimeDir);
 
   rmDir(tmpDir);
   log("Windows 运行时提取完成");

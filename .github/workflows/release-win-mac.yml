@@ -45,7 +45,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: resources/targets/win32-x64
-          key: resources-win32-x64-openclaw-${{ env.OPENCLAW_PACKAGE_SOURCE }}-${{ hashFiles('package-lock.json') }}
+          key: resources-win32-x64-openclaw-${{ env.OPENCLAW_PACKAGE_SOURCE }}-${{ hashFiles('package-lock.json', 'scripts/package-resources.js') }}
 
       - name: Use bash for npm scripts on Windows
         run: npm config set script-shell "$(which bash)"
@@ -103,7 +103,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: resources/targets/darwin-arm64
-          key: resources-darwin-arm64-openclaw-${{ env.OPENCLAW_PACKAGE_SOURCE }}-${{ hashFiles('package-lock.json') }}
+          key: resources-darwin-arm64-openclaw-${{ env.OPENCLAW_PACKAGE_SOURCE }}-${{ hashFiles('package-lock.json', 'scripts/package-resources.js') }}
 
       - name: Package Node + openclaw resources
         if: steps.cache-resources.outputs.cache-hit != 'true'
@@ -162,7 +162,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: resources/targets/darwin-x64
-          key: resources-darwin-x64-openclaw-${{ env.OPENCLAW_PACKAGE_SOURCE }}-${{ hashFiles('package-lock.json') }}
+          key: resources-darwin-x64-openclaw-${{ env.OPENCLAW_PACKAGE_SOURCE }}-${{ hashFiles('package-lock.json', 'scripts/package-resources.js') }}
 
       - name: Package Node + openclaw resources
         if: steps.cache-resources.outputs.cache-hit != 'true'

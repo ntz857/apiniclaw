@@ -163,25 +163,39 @@ exports.default = async function afterPack(context) {
     appOutDir
   );
 
-  // 校验 Node 二进制存在
+  // 校验 Node + npm 入口存在（openclaw 会 spawn npm）
   const nodeBin =
     platform === "win32"
       ? path.join(resourcesDir, "runtime", "node.exe")
       : path.join(resourcesDir, "runtime", "bin", "node");
+  const npmShim =
+    platform === "win32"
+      ? path.join(resourcesDir, "runtime", "npm.cmd")
+      : path.join(resourcesDir, "runtime", "bin", "npm");
   if (!fs.existsSync(nodeBin)) {
     throw new Error(`[afterPack] 注入后未找到 Node 二进制: ${nodeBin}`);
   }
+  if (!fs.existsSync(npmShim)) {
+    throw new Error(
+      `[afterPack] 注入后未找到 npm 入口: ${npmShim}\n` +
+        `请重新执行: node scripts/package-resources.js --platform ${platform} --arch ${arch}`
+    );
+  }
   if (platform !== "win32") {
-    try {
-      fs.chmodSync(nodeBin, 0o755);
-    } catch (err) {
-      console.warn(
-        "[afterPack] chmod node 失败:",
-        err && err.message ? err.message : err
-      );
+    for (const p of [nodeBin, npmShim]) {
+      try {
+        fs.chmodSync(p, 0o755);
+      } catch (err) {
+        console.warn(
+          "[afterPack] chmod 失败:",
+          p,
+          err && err.message ? err.message : err
+        );
+      }
     }
   }
   console.log(`[afterPack] Node 运行时就绪: ${path.relative(appOutDir, nodeBin)}`);
+  console.log(`[afterPack] npm 入口就绪: ${path.relative(appOutDir, npmShim)}`);
 
   // Windows：强制写入 exe 图标，避免任务栏仍显示旧图标
   if (platform === "win32") {

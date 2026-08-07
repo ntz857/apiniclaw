@@ -125,6 +125,16 @@ export function resolveBundledNodeBin(): string {
 }
 
 /**
+ * 内置 Node 可执行文件所在目录（需加入 PATH，供 openclaw spawn('npm') 解析）
+ * - macOS: .../runtime/bin
+ * - Windows: .../runtime
+ */
+export function resolveBundledRuntimeBinDir(): string {
+  const resources = resolveResourcesPath()
+  return IS_WIN ? join(resources, 'runtime') : join(resources, 'runtime', 'bin')
+}
+
+/**
  * 内置 npm CLI 路径
  */
 export function resolveBundledNpmBin(): string {

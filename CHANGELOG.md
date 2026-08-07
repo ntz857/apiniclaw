@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+## [0.3.8] - 2026-08-07
+
+### Fixed
+- **Gateway `spawn npm ENOENT`**：内置 runtime 补齐 `npm`/`npx` 可执行 shim，并把 `runtime/bin` 注入 Gateway 启动 PATH。openclaw 在零系统 Node 环境下会 `spawn('npm')`，此前只打包了 `node` + npm 模块目录导致秒退。
+- CI 资源缓存 key 纳入 `package-resources.js`，避免布局变更仍命中旧 runtime 缓存。
+
 ## [0.3.7] - 2026-08-07
 
 ### Fixed

@@ -7,7 +7,12 @@ import { execFile } from 'child_process'
 import { existsSync } from 'fs'
 import { promisify } from 'util'
 import type { OpenclawRuntime, RuntimeInfo } from './types'
-import { resolveBundledNpmBin, isPackaged } from '../constants'
+import {
+  resolveBundledNpmBin,
+  resolveBundledRuntimeBinDir,
+  isPackaged,
+  IS_WIN,
+} from '../constants'
 import { resolveOpenclawLaunch } from '../services/openclaw-resolve'
 import { createLogger } from '../logger'
 
@@ -45,6 +50,18 @@ export class BundledRuntime implements OpenclawRuntime {
     const npmBin = resolveBundledNpmBin()
     if (existsSync(npmBin)) {
       env.OPENCLAW_NPM_BIN = npmBin
+    }
+
+    // openclaw 内部会 spawn('npm')，必须把内置 runtime 的 bin 放到 PATH 最前
+    // （仅 OPENCLAW_NPM_BIN 不够，官方 CLI 仍走 PATH 解析）
+    const runtimeBinDir = resolveBundledRuntimeBinDir()
+    if (existsSync(runtimeBinDir)) {
+      const sep = IS_WIN ? ';' : ':'
+      const prev = process.env.PATH || process.env.Path || ''
+      env.PATH = prev ? `${runtimeBinDir}${sep}${prev}` : runtimeBinDir
+      if (IS_WIN) {
+        env.Path = env.PATH
+      }
     }
 
     return env

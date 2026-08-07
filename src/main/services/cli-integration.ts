@@ -90,6 +90,8 @@ function buildWinWrapper(nodeBin: string, gatewayEntry: string): string {
     '  echo Error: ApiniClaw gateway entry not found: %APP_ENTRY% 1>&2',
     '  exit /b 127',
     ')',
+    'for %%I in ("%APP_NODE%") do set "APP_NODE_DIR=%%~dpI"',
+    'set "PATH=%APP_NODE_DIR%;%PATH%"',
     'set "OPENCLAW_NO_RESPAWN=1"',
     '"%APP_NODE%" "%APP_ENTRY%" %*',
     'exit /b %errorlevel%',
@@ -111,6 +113,8 @@ function buildPosixWrapper(nodeBin: string, gatewayEntry: string): string {
     '  echo "Error: ApiniClaw gateway entry not found: $APP_ENTRY" >&2',
     '  exit 127',
     'fi',
+    // openclaw 内部 spawn npm 需要 runtime bin 在 PATH 上
+    'export PATH="$(cd "$(dirname -- "$APP_NODE")" && pwd):$PATH"',
     'export OPENCLAW_NO_RESPAWN=1',
     'exec "$APP_NODE" "$APP_ENTRY" "$@"',
     '',

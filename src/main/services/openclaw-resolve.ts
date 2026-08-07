@@ -14,12 +14,14 @@ import { existsSync, readFileSync } from 'fs'
 import { join } from 'path'
 import { promisify } from 'util'
 import { createLogger } from '../logger'
+import { dirname } from 'path'
 import {
   APINICLAW_GATEWAY_DIR,
   IS_WIN,
   resolveBundledGatewayCwd,
   resolveBundledGatewayEntry,
   resolveBundledNodeBin,
+  resolveBundledRuntimeBinDir,
 } from '../constants'
 
 const execFileAsync = promisify(execFile)
@@ -163,6 +165,14 @@ export function resolveOpenclawLaunch(): OpenclawLaunch {
  */
 export function resolveOpenclawCliInvocation(): OpenclawCliInvocation {
   const launch = resolveOpenclawLaunch()
+  // 内置 node/npm 目录优先，避免 spawn npm ENOENT（零系统 Node 环境）
+  const runtimeBinDir = resolveBundledRuntimeBinDir()
+  const nodeDir = dirname(launch.nodePath)
+  const sep = IS_WIN ? ';' : ':'
+  const pathPrefix = [runtimeBinDir, nodeDir].filter(Boolean).join(sep)
+  const prevPath = process.env.PATH || process.env.Path || ''
+  const pathEnv = prevPath ? `${pathPrefix}${sep}${prevPath}` : pathPrefix
+
   return {
     source: launch.source,
     cmd: launch.nodePath,
@@ -172,9 +182,10 @@ export function resolveOpenclawCliInvocation(): OpenclawCliInvocation {
     env: {
       OPENCLAW_NO_RESPAWN: '1',
       FORCE_COLOR: '0',
+      PATH: pathEnv,
+      ...(IS_WIN ? { Path: pathEnv } : {}),
       // 系统 openclaw 不需要 lenient；bundled 旧版需要
       ...(launch.source === 'bundled' ? { OPENCLAW_LENIENT_CONFIG: '1' } : {}),
-      ...(IS_WIN ? {} : {}),
     },
   }
 }

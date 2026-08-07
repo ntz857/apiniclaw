@@ -1,7 +1,7 @@
 {
   "name": "apiniclaw",
-  "version": "0.3.7",
-  "description": "ApiniClaw — 点击即装的 OpenClaw 桌面管理工具",
+  "version": "0.3.8",
+  "description": "ApiniClaw \u2014 \u70b9\u51fb\u5373\u88c5\u7684 OpenClaw \u684c\u9762\u7ba1\u7406\u5de5\u5177",
   "main": "./out/main/index.js",
   "author": "ApiniClaw",
   "license": "AGPL-3.0",
