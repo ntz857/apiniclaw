@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+## [0.3.5] - 2026-08-07
+
+### Changed
+- **完整技术标识 rebrand**：数据目录由 `~/.clickclaw` 切换为 `~/.apiniclaw`（日志 `apiniclaw.log`、Gateway 用户升级目录 `~/.apiniclaw/gateway`）。
+- npm 包名、`appId`、仓库与文案统一为 ApiniClaw / `apiniclaw` / `com.apiniclaw.app`。
+- 不提供从 `~/.clickclaw` 的自动迁移；干净安装即可。
+
 ## [0.3.4] - 2026-08-06
 
 ### Added
