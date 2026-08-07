@@ -25,17 +25,26 @@
     btn.addEventListener("click", () => applyLang(btn.dataset.lang || "zh"));
   });
 
-  // showcase tabs
+  // showcase tabs - only one screenshot visible, absolute stack
   const tabs = [...document.querySelectorAll(".tab-btn")];
   const shots = [...document.querySelectorAll(".screen-body img")];
   const showShot = (id) => {
-    tabs.forEach((t) => t.classList.toggle("is-active", t.dataset.shot === id));
-    shots.forEach((img) => img.classList.toggle("is-visible", img.dataset.shot === id));
+    const key = id || "dashboard";
+    tabs.forEach((t) => {
+      const on = t.dataset.shot === key;
+      t.classList.toggle("is-active", on);
+      t.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    shots.forEach((img) => {
+      const on = img.dataset.shot === key;
+      img.classList.toggle("is-visible", on);
+      img.toggleAttribute("hidden", !on);
+    });
   };
   tabs.forEach((btn) => {
     btn.addEventListener("click", () => showShot(btn.dataset.shot || "dashboard"));
   });
-  if (tabs[0]) showShot(tabs[0].dataset.shot || "dashboard");
+  showShot(tabs[0]?.dataset.shot || "dashboard");
 
   // scroll reveal
   if (!reduce && "IntersectionObserver" in window) {

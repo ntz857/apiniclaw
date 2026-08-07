@@ -525,13 +525,13 @@ section {
 .showcase-layout {
   display: grid;
   gap: 1.25rem;
+  align-items: stretch;
 }
 
 @media (min-width: 900px) {
   .showcase-layout {
-    grid-template-columns: 280px 1fr;
-    align-items: start;
-    gap: 2rem;
+    grid-template-columns: minmax(200px, 260px) minmax(0, 1fr);
+    gap: 1.75rem;
   }
 }
 
@@ -540,11 +540,13 @@ section {
   flex-direction: row;
   flex-wrap: wrap;
   gap: 0.45rem;
+  min-width: 0;
 }
 
 @media (min-width: 900px) {
   .tabs {
     flex-direction: column;
+    flex-wrap: nowrap;
   }
 }
 
@@ -555,6 +557,15 @@ section {
   border: 1px solid transparent;
   color: var(--muted);
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+@media (min-width: 900px) {
+  .tab-btn {
+    flex: 0 0 auto;
+    width: 100%;
+  }
 }
 
 .tab-btn:hover {
@@ -568,18 +579,28 @@ section {
   border-color: rgba(255, 77, 42, 0.35);
 }
 
-.tab-btn strong {
+/* tab label stacks: only one language block visible */
+.tab-btn .tab-label {
+  display: block;
+  min-width: 0;
+}
+
+.tab-btn .tab-label strong {
   display: block;
   font-size: 0.95rem;
   margin-bottom: 0.15rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
-.tab-btn span {
+.tab-btn .tab-label span {
+  display: block;
   font-size: 0.8rem;
   color: var(--faint);
+  line-height: 1.35;
 }
 
-.tab-btn.is-active span {
+.tab-btn.is-active .tab-label span {
   color: var(--muted);
 }
 
@@ -589,6 +610,8 @@ section {
   background: #080706;
   overflow: hidden;
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+  min-width: 0;
+  width: 100%;
 }
 
 .screen-chrome {
@@ -617,23 +640,33 @@ section {
   background: #28c840;
 }
 
+/* Fixed viewport for stacked screenshots (do not let imgs expand flow) */
 .screen-body {
-  aspect-ratio: 16 / 10;
-  background: #0a0908;
   position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  background: #0a0908;
+  overflow: hidden;
 }
 
 .screen-body img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: top left;
+  object-fit: contain;
+  object-position: top center;
   opacity: 0;
-  transition: opacity 0.35s ease;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 0;
 }
 
 .screen-body img.is-visible {
   opacity: 1;
+  visibility: visible;
+  z-index: 1;
 }
 
 /* cta band */
@@ -726,17 +759,32 @@ section {
   }
 }
 
-/* i18n hide */
+/* i18n hide - keep display semantics for block/inline children */
 [data-lang-en] {
-  display: none;
+  display: none !important;
 }
 
 html[lang="en"] [data-lang-zh] {
-  display: none;
+  display: none !important;
 }
 
 html[lang="en"] [data-lang-en] {
-  display: revert;
+  display: revert !important;
+}
+
+/* tab language blocks must stay block when visible */
+.tab-btn .tab-label[data-lang-zh],
+.tab-btn .tab-label[data-lang-en] {
+  display: none !important;
+}
+
+html:not([lang="en"]) .tab-btn .tab-label[data-lang-zh],
+html[lang="zh-CN"] .tab-btn .tab-label[data-lang-zh] {
+  display: block !important;
+}
+
+html[lang="en"] .tab-btn .tab-label[data-lang-en] {
+  display: block !important;
 }
 
 html[lang="en"] .hero-copy h1 {

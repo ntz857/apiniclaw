@@ -321,33 +321,65 @@
           </div>
           <div class="showcase-layout reveal">
             <div class="tabs" role="tablist" aria-label="Product views">
-              <button class="tab-btn is-active" type="button" data-shot="dashboard" role="tab">
-                <strong data-lang-zh>仪表板</strong><strong data-lang-en>Dashboard</strong>
-                <span data-lang-zh>Gateway 状态与总览</span
-                ><span data-lang-en>Gateway status overview</span>
+              <button class="tab-btn is-active" type="button" data-shot="dashboard" role="tab" aria-selected="true">
+                <span class="tab-label" data-lang-zh>
+                  <strong>仪表板</strong>
+                  <span>Gateway 状态与总览</span>
+                </span>
+                <span class="tab-label" data-lang-en>
+                  <strong>Dashboard</strong>
+                  <span>Gateway status overview</span>
+                </span>
               </button>
-              <button class="tab-btn" type="button" data-shot="chat" role="tab">
-                <strong data-lang-zh>实时聊天</strong><strong data-lang-en>Live chat</strong>
-                <span data-lang-zh>流式对话与会话草稿</span
-                ><span data-lang-en>Streaming chat and drafts</span>
+              <button class="tab-btn" type="button" data-shot="chat" role="tab" aria-selected="false">
+                <span class="tab-label" data-lang-zh>
+                  <strong>实时聊天</strong>
+                  <span>流式对话与会话草稿</span>
+                </span>
+                <span class="tab-label" data-lang-en>
+                  <strong>Live chat</strong>
+                  <span>Streaming chat and drafts</span>
+                </span>
               </button>
-              <button class="tab-btn" type="button" data-shot="model" role="tab">
-                <strong data-lang-zh>模型配置</strong><strong data-lang-en>Models</strong>
-                <span data-lang-zh>服务商与主备模型</span
-                ><span data-lang-en>Providers and fallback models</span>
+              <button class="tab-btn" type="button" data-shot="model" role="tab" aria-selected="false">
+                <span class="tab-label" data-lang-zh>
+                  <strong>模型配置</strong>
+                  <span>服务商与主备模型</span>
+                </span>
+                <span class="tab-label" data-lang-en>
+                  <strong>Models</strong>
+                  <span>Providers and fallback models</span>
+                </span>
               </button>
-              <button class="tab-btn" type="button" data-shot="channel" role="tab">
-                <strong data-lang-zh>渠道管理</strong><strong data-lang-en>Channels</strong>
-                <span data-lang-zh>IM 接入与配对</span><span data-lang-en>IM connect and pairing</span>
+              <button class="tab-btn" type="button" data-shot="channel" role="tab" aria-selected="false">
+                <span class="tab-label" data-lang-zh>
+                  <strong>渠道管理</strong>
+                  <span>IM 接入与配对</span>
+                </span>
+                <span class="tab-label" data-lang-en>
+                  <strong>Channels</strong>
+                  <span>IM connect and pairing</span>
+                </span>
               </button>
-              <button class="tab-btn" type="button" data-shot="agents" role="tab">
-                <strong data-lang-zh>Agent</strong><strong data-lang-en>Agents</strong>
-                <span data-lang-zh>人格与工作区</span><span data-lang-en>Personas and workspaces</span>
+              <button class="tab-btn" type="button" data-shot="agents" role="tab" aria-selected="false">
+                <span class="tab-label" data-lang-zh>
+                  <strong>Agent</strong>
+                  <span>人格与工作区</span>
+                </span>
+                <span class="tab-label" data-lang-en>
+                  <strong>Agents</strong>
+                  <span>Personas and workspaces</span>
+                </span>
               </button>
-              <button class="tab-btn" type="button" data-shot="skill" role="tab">
-                <strong data-lang-zh>Skills</strong><strong data-lang-en>Skills</strong>
-                <span data-lang-zh>市场与安全审查</span
-                ><span data-lang-en>Marketplace and safety review</span>
+              <button class="tab-btn" type="button" data-shot="skill" role="tab" aria-selected="false">
+                <span class="tab-label" data-lang-zh>
+                  <strong>Skills</strong>
+                  <span>市场与安全审查</span>
+                </span>
+                <span class="tab-label" data-lang-en>
+                  <strong>Skills</strong>
+                  <span>Marketplace and safety review</span>
+                </span>
               </button>
             </div>
             <div class="screen-frame">
@@ -359,33 +391,56 @@
                   class="is-visible"
                   data-shot="dashboard"
                   src="assets/dashboard.png"
+                  width="1200"
+                  height="800"
                   alt="Dashboard screenshot"
                   loading="lazy"
+                  decoding="async"
                 />
-                <img data-shot="chat" src="assets/chat.png" alt="Chat screenshot" loading="lazy" />
+                <img
+                  data-shot="chat"
+                  src="assets/chat.png"
+                  width="1200"
+                  height="800"
+                  alt="Chat screenshot"
+                  loading="lazy"
+                  decoding="async"
+                />
                 <img
                   data-shot="model"
                   src="assets/model.png"
+                  width="1200"
+                  height="800"
                   alt="Model settings screenshot"
                   loading="lazy"
+                  decoding="async"
                 />
                 <img
                   data-shot="channel"
                   src="assets/channel.png"
+                  width="1200"
+                  height="800"
                   alt="Channels screenshot"
                   loading="lazy"
+                  decoding="async"
                 />
                 <img
                   data-shot="agents"
                   src="assets/agents.png"
+                  width="1200"
+                  height="800"
                   alt="Agents screenshot"
                   loading="lazy"
+                  decoding="async"
                 />
                 <img
                   data-shot="skill"
                   src="assets/skill.png"
+                  width="1200"
+                  height="800"
                   alt="Skills screenshot"
                   loading="lazy"
+                  decoding="async"
                 />
               </div>
             </div>
