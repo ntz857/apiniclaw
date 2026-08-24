@@ -286,6 +286,12 @@ jobs:
           sed -i 's/^          //' "$HOME/.cos.yaml"
           chmod 600 "$HOME/.cos.yaml"
 
-          echo "Syncing release/final → cos://${COS_BUCKET}/"
-          /tmp/coscli sync release/final/ "cos://${COS_BUCKET}/" --recursive --force
+          echo "Uploading release/final → cos://${COS_BUCKET}/"
+          # Prefer per-file cp (sync --recursive has been flaky across coscli versions)
+          shopt -s nullglob
+          for f in release/final/*; do
+            name=$(basename "$f")
+            echo "-> $name"
+            /tmp/coscli cp "$f" "cos://${COS_BUCKET}/${name}"
+          done
           echo "CDN sync done. Probe: https://update.apinibee.com/latest.yml"
