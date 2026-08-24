@@ -15,7 +15,7 @@
 | **App ID / AUMID** | `com.apiniclaw.app` |
 | **数据目录** | `~/.apiniclaw/`（日志 `apiniclaw.log`；用户 openclaw 升级目录 `~/.apiniclaw/gateway/`） |
 | **可执行文件** | Windows：`ApiniClaw.exe`；产物名：`ApiniClaw-Setup-*` / `ApiniClaw-*` |
-| **当前版本** | `0.3.8`（semver `x.y.z`） |
+| **当前版本** | `0.3.9`（semver `x.y.z`） |
 | **OpenClaw** | 内置/打包资源沿用上游日历版本（如 `2026.7.x`）；与应用 semver 解耦 |
 | **目标平台** | macOS（arm64 + x64）、Windows（x64 + arm64） |
 | **Git 仓库** | https://github.com/ntz857/apiniclaw |
@@ -28,7 +28,7 @@
 | 官网 | https://www.apiniclaw.com | `APINICLAW_WEBSITE_URL` |
 | API | https://api.apiniclaw.com | `APINICLAW_API_BASE_URL` |
 | 文档 | https://docs.apiniclaw.com | `APINICLAW_DOCS_URL` |
-| 自动更新 CDN | https://update.apiniclaw.com | `APINICLAW_UPDATE_BASE_URL` |
+| 自动更新 CDN | https://update.apinibee.com | `APINICLAW_UPDATE_BASE_URL` |
 
 技术标识一律使用 `APINICLAW_*` / `apiniclaw` / `~/.apiniclaw`。
 

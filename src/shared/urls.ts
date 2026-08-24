@@ -9,4 +9,4 @@ export const APINICLAW_WEBSITE_URL = 'https://www.apiniclaw.com'
 /** 文档站 */
 export const APINICLAW_DOCS_URL = 'https://docs.apiniclaw.com'
 /** 桌面端自动更新 CDN（electron-builder publish / dev-app-update） */
-export const APINICLAW_UPDATE_BASE_URL = 'https://update.apiniclaw.com'
+export const APINICLAW_UPDATE_BASE_URL = 'https://update.apinibee.com'

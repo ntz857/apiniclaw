@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+## [0.3.9] - 2026-08-24
+
+### Changed
+- 自动更新 CDN 切换为 `https://update.apinibee.com`（腾讯云 COS）。
+- 恢复设置页「版本与更新」入口。
+- Release CI 在上传 GitHub Release 后同步安装包与 `latest*.yml` 到 COS。
+
 ## [0.3.8] - 2026-08-07
 
 ### Fixed

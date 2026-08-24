@@ -6,8 +6,7 @@ import { LogsSection } from './components/LogsSection'
 import { ProxySection } from './components/ProxySection'
 import { RemotePresetsSection } from './components/RemotePresetsSection'
 import { SecuritySection } from './components/SecuritySection'
-// 临时隐藏：版本与更新（待切换到自有 GitHub Release 后再恢复）
-// import { VersionsSection } from './components/VersionsSection'
+import { VersionsSection } from './components/VersionsSection'
 import { TEXT_PRIMARY } from './settings-page.constants'
 import { useSettingsPage } from './hooks/useSettingsPage'
 
@@ -155,7 +154,6 @@ export default function SettingsPage(): React.ReactElement {
 
       <LogsSection logDir={paths?.logDir} onOpenPath={openPath} />
 
-      {/* 临时隐藏：版本与更新（app + openclaw 检查更新）
       <VersionsSection
         version={version}
         updateInfo={updateInfo}
@@ -166,7 +164,6 @@ export default function SettingsPage(): React.ReactElement {
         handleCheckOpenclawUpdate={handleCheckOpenclawUpdate}
         handleInstallOpenclawUpdate={handleInstallOpenclawUpdate}
       />
-      */}
     </div>
   )
 }

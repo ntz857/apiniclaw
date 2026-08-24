@@ -246,3 +246,46 @@ jobs:
           fi
           gh release upload "$TAG" "${files[@]}" --repo "${{ github.repository }}" --clobber
           echo "Uploaded to https://github.com/${{ github.repository }}/releases/tag/${TAG}"
+
+      # Sync installers + latest*.yml to Tencent COS (https://update.apinibee.com)
+      # Required secrets: COS_SECRET_ID, COS_SECRET_KEY, COS_BUCKET, COS_REGION
+      - name: Sync assets to update CDN (Tencent COS)
+        env:
+          COS_SECRET_ID: ${{ secrets.COS_SECRET_ID }}
+          COS_SECRET_KEY: ${{ secrets.COS_SECRET_KEY }}
+          COS_BUCKET: ${{ secrets.COS_BUCKET }}
+          COS_REGION: ${{ secrets.COS_REGION }}
+        run: |
+          set -euo pipefail
+          if [ -z "${COS_SECRET_ID:-}" ] || [ -z "${COS_SECRET_KEY:-}" ] || [ -z "${COS_BUCKET:-}" ] || [ -z "${COS_REGION:-}" ]; then
+            echo "::warning::COS secrets missing — skip CDN sync. Add COS_SECRET_ID/KEY/BUCKET/REGION to enable."
+            exit 0
+          fi
+
+          curl -fsSL -o /tmp/coscli \
+            "https://github.com/tencentyun/coscli/releases/download/v1.0.8/coscli-v1.0.8-linux-amd64"
+          chmod +x /tmp/coscli
+
+          # Write config directly (avoid interactive init / encryption surprises in CI)
+          cat > "$HOME/.cos.yaml" <<EOF
+          cos:
+            base:
+              secretid: ${COS_SECRET_ID}
+              secretkey: ${COS_SECRET_KEY}
+              sessiontoken: ""
+              protocol: https
+              disableencryption: "true"
+            buckets:
+              - name: ${COS_BUCKET}
+                alias: update
+                region: ${COS_REGION}
+                endpoint: cos.${COS_REGION}.myqcloud.com
+                ofs: false
+          EOF
+          # Fix accidental leading spaces from heredoc indentation
+          sed -i 's/^          //' "$HOME/.cos.yaml"
+          chmod 600 "$HOME/.cos.yaml"
+
+          echo "Syncing release/final → cos://${COS_BUCKET}/"
+          /tmp/coscli sync release/final/ "cos://${COS_BUCKET}/" --force
+          echo "CDN sync done. Probe: https://update.apinibee.com/latest.yml"

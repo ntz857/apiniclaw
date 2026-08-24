@@ -72,4 +72,4 @@ nsis:
 # latest.yml / latest-mac.yml 由 electron-builder 打包时自动生成并需上传到同一 CDN 目录
 publish:
   provider: generic
-  url: https://update.apiniclaw.com
+  url: https://update.apinibee.com
