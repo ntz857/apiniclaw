@@ -287,5 +287,5 @@ jobs:
           chmod 600 "$HOME/.cos.yaml"
 
           echo "Syncing release/final → cos://${COS_BUCKET}/"
-          /tmp/coscli sync release/final/ "cos://${COS_BUCKET}/" --force
+          /tmp/coscli sync release/final/ "cos://${COS_BUCKET}/" --recursive --force
           echo "CDN sync done. Probe: https://update.apinibee.com/latest.yml"
