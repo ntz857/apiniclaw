@@ -104,11 +104,29 @@ export function VersionsSection({
     }
     if (status === 'error') {
       return (
-        <Tooltip title={error}>
-          <Button size="small" danger onClick={() => window.api.update.check()}>
-            {t('settings.about.updateError')}
-          </Button>
-        </Tooltip>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, maxWidth: 360 }}>
+          <Tooltip title={error || t('settings.about.updateError')}>
+            <Button size="small" danger onClick={() => window.api.update.check()}>
+              {t('settings.about.updateError')}
+            </Button>
+          </Tooltip>
+          {error ? (
+            <span
+              style={{
+                fontSize: 11,
+                color: '#ff4d4f',
+                lineHeight: 1.3,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+              }}
+            >
+              {error}
+            </span>
+          ) : null}
+        </div>
       )
     }
     return (

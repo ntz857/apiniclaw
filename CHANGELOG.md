@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+## [0.3.11] - 2026-08-26
+
+### Fixed
+- **macOS 未签名包自动更新安装失败**：绕过 ShipIt 代码签名校验，下载完成后用脚本替换 `/Applications/ApiniClaw.app` 并 relaunch（社区构建无 Apple Developer 签名时的方案）。
+- 设置页更新错误展示真实失败原因，不再只显示笼统的「检查失败」。
+
 ## [0.3.10] - 2026-08-26
 
 ### Changed
