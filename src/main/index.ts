@@ -305,8 +305,18 @@ if (!gotTheLock) {
         log.error('Environment detection failed:', err)
       })
 
+    // macOS：点击 Dock 图标会触发 activate。
+    // 点窗口关闭按钮时我们是 hide（不是 destroy），所以 getAllWindows() 仍 > 0；
+    // 必须主动 show/focus 已有主窗口，否则 Dock 点击会「没反应」。
     app.on('activate', () => {
-      if (BrowserWindow.getAllWindows().length === 0) createWindow()
+      const hasMain = BrowserWindow.getAllWindows().some(
+        (w) => !w.isDestroyed() && !w.isAlwaysOnTop()
+      )
+      if (hasMain) {
+        focusExistingMainWindow()
+      } else {
+        createWindow()
+      }
     })
   })
 
