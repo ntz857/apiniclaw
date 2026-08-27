@@ -2152,6 +2152,16 @@
       "agentLabel": "智能体",
       "useExisting": "直接使用",
       "reconfigure": "重新配置"
+    },
+    "updatePrompt": {
+      "availableTitle": "发现新版本",
+      "availableDesc": "ApiniClaw {{version}} 已发布，建议尽快更新以获得修复与改进。",
+      "downloadedTitle": "更新已就绪",
+      "downloadedDesc": "ApiniClaw {{version}} 已下载完成，安装并重启即可完成升级。",
+      "downloadNow": "立即下载",
+      "installNow": "安装并重启",
+      "later": "稍后",
+      "hint": "也可随时在「设置 → 版本与更新」中手动检查。"
     }
   },
   "logs": {

@@ -2150,6 +2150,16 @@
       "agentLabel": "Agents",
       "useExisting": "Use Existing",
       "reconfigure": "Reconfigure"
+    },
+    "updatePrompt": {
+      "availableTitle": "Update Available",
+      "availableDesc": "ApiniClaw {{version}} is available. Updating is recommended for fixes and improvements.",
+      "downloadedTitle": "Update Ready",
+      "downloadedDesc": "ApiniClaw {{version}} has finished downloading. Install and restart to complete the upgrade.",
+      "downloadNow": "Download Now",
+      "installNow": "Install & Restart",
+      "later": "Later",
+      "hint": "You can also check anytime in Settings → Versions & Updates."
     }
   },
   "logs": {

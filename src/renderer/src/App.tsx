@@ -19,6 +19,7 @@ import MainLayout from './layouts/MainLayout'
 import ConfigFoundDialog from './components/ConfigFoundDialog'
 import TrayPopupPage from './pages/tray/TrayPopupPage'
 import { PairingApprovalModal } from './components/PairingApprovalModal'
+import { UpdatePromptModal } from './components/UpdatePromptModal'
 import logo from './assets/logo.png'
 
 // ─── 托盘弹窗入口（独立渲染，不走主应用路由流程）───────────────────────
@@ -235,6 +236,8 @@ function MainApp(): React.ReactElement {
         </HashRouter>
         {/* 全局配对审批弹窗：只在主应用（dashboard + 以后各页）中挂载 */}
         <PairingApprovalModal />
+        {/* 全局更新提示：发现新版本 / 下载完成可安装 */}
+        <UpdatePromptModal />
       </AntdApp>
     </ConfigProvider>
   )
