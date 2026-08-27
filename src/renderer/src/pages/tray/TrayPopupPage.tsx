@@ -29,6 +29,7 @@ type UpdateInfo = {
     | 'not-available'
     | 'downloading'
     | 'downloaded'
+    | 'installing'
     | 'error'
   version?: string
   progress?: number
@@ -152,6 +153,15 @@ export default function TrayPopupPage(): React.ReactElement {
         >
           <SyncOutlined spin style={{ fontSize: 12 }} />
           {t('tray.popup.updateDownloading', { progress: updateInfo.progress ?? 0 })}
+        </span>
+      )
+    if (status === 'installing')
+      return (
+        <span
+          style={{ color: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', gap: 6 }}
+        >
+          <SyncOutlined spin style={{ fontSize: 12 }} />
+          {t('tray.popup.updateInstalling')}
         </span>
       )
     if (status === 'downloaded')

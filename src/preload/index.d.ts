@@ -256,6 +256,7 @@ declare global {
     | 'not-available'
     | 'downloading'
     | 'downloaded'
+    | 'installing'
     | 'error'
 
   /** 自动更新信息快照 */

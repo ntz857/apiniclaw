@@ -2469,6 +2469,7 @@
       "updateAvailable": "发现新版本 {{version}}",
       "updateNotAvailable": "已是最新版本",
       "updateDownloading": "下载中 {{progress}}%",
+      "updateInstalling": "正在安装并重启…",
       "updateDownloaded": "新版本已就绪，重启即可安装",
       "updateError": "检查失败，请稍后重试",
       "downloadUpdate": "下载更新",
@@ -2656,6 +2657,7 @@
       "updateChecking": "检查中...",
       "updateAvailable": "发现新版本 {{version}}",
       "updateDownloading": "下载中 {{progress}}%",
+      "updateInstalling": "正在安装并重启…",
       "updateInstall": "安装并重启",
       "updateLatest": "已是最新版本",
       "quit": "退出 ApiniClaw"

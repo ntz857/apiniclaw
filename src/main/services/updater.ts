@@ -35,6 +35,7 @@ export type UpdateStatus =
   | 'not-available'
   | 'downloading'
   | 'downloaded'
+  | 'installing'
   | 'error'
 
 export interface UpdateInfo {
@@ -162,6 +163,68 @@ function findShipItExtractedApp(): string | null {
   return candidates[0] ?? null
 }
 
+/**
+ * electron-updater generic 下载缓存的 zip
+ * 典型路径：~/Library/Caches/apiniclaw-updater/pending/*.zip
+ *         或 ~/Library/Caches/apiniclaw-updater/update.zip
+ */
+function findCachedUpdateZip(version?: string): string | null {
+  const root = join(homedir(), 'Library', 'Caches', 'apiniclaw-updater')
+  const pending = join(root, 'pending')
+  const arch = process.arch === 'arm64' ? 'arm64' : 'x64'
+  const candidates: string[] = []
+
+  if (existsSync(pending)) {
+    for (const name of readdirSync(pending)) {
+      if (!name.endsWith('.zip')) continue
+      candidates.push(join(pending, name))
+    }
+  }
+  const legacy = join(root, 'update.zip')
+  if (existsSync(legacy)) candidates.push(legacy)
+
+  const scored = candidates
+    .filter((p) => existsSync(p) && statSync(p).size > 1024 * 1024)
+    .sort((a, b) => {
+      const an = a.toLowerCase()
+      const bn = b.toLowerCase()
+      const aArch = an.includes(`-${arch}.zip`) ? 2 : an.includes('.zip') ? 1 : 0
+      const bArch = bn.includes(`-${arch}.zip`) ? 2 : bn.includes('.zip') ? 1 : 0
+      if (aArch !== bArch) return bArch - aArch
+      if (version) {
+        const av = an.includes(version) ? 1 : 0
+        const bv = bn.includes(version) ? 1 : 0
+        if (av !== bv) return bv - av
+      }
+      return statSync(b).mtimeMs - statSync(a).mtimeMs
+    })
+
+  return scored[0] ?? null
+}
+
+async function extractZipToApp(zipPath: string): Promise<string> {
+  const work = await mkdtemp(join(tmpdir(), 'apiniclaw-update-'))
+  log.info(`extracting zip: ${zipPath} → ${work}`)
+  await new Promise<void>((resolve, reject) => {
+    const child = spawn('ditto', ['-x', '-k', zipPath, work], { stdio: ['ignore', 'pipe', 'pipe'] })
+    let err = ''
+    child.stderr?.on('data', (d: Buffer) => {
+      err += d.toString()
+    })
+    child.on('error', reject)
+    child.on('exit', (code) => {
+      if (code === 0) resolve()
+      else reject(new Error(`ditto extract failed code=${code}: ${err}`))
+    })
+  })
+
+  const extracted = join(work, 'ApiniClaw.app')
+  if (!existsSync(extracted)) {
+    throw new Error(`extracted ApiniClaw.app not found under ${work}`)
+  }
+  return extracted
+}
+
 /** 解析 latest-mac.yml，返回当前 arch 对应 zip 的绝对 URL */
 async function resolveMacZipUrl(versionHint?: string): Promise<string> {
   const ymlUrl = `${APINICLAW_UPDATE_BASE_URL}/latest-mac.yml`
@@ -199,41 +262,30 @@ async function downloadFile(url: string, dest: string): Promise<void> {
 }
 
 /**
- * 若 ShipIt 缓存没有解压好的 .app，则自行下载 zip 并用 ditto/unzip 解压。
- * 返回新 ApiniClaw.app 路径。
+ * 准备新 ApiniClaw.app：
+ * 1) ShipIt 已解压的 .app
+ * 2) electron-updater 已下载的本地 zip（优先，避免安装时再下 200MB+）
+ * 3) 最后才回退 CDN 重新下载
  */
 async function prepareNewAppBundle(version?: string): Promise<string> {
-  const cached = findShipItExtractedApp()
-  if (cached) {
-    log.info(`using ShipIt extracted app: ${cached}`)
-    return cached
+  const shipItApp = findShipItExtractedApp()
+  if (shipItApp) {
+    log.info(`using ShipIt extracted app: ${shipItApp}`)
+    return shipItApp
   }
 
-  log.info('ShipIt cache miss, downloading mac zip from CDN')
+  const cachedZip = findCachedUpdateZip(version)
+  if (cachedZip) {
+    log.info(`using cached updater zip: ${cachedZip}`)
+    return extractZipToApp(cachedZip)
+  }
+
+  log.info('no local update cache, downloading mac zip from CDN')
   const zipUrl = await resolveMacZipUrl(version)
   const work = await mkdtemp(join(tmpdir(), 'apiniclaw-update-'))
   const zipPath = join(work, 'update.zip')
   await downloadFile(zipUrl, zipPath)
-
-  // ditto 比 adm-zip 更能保留 .app 包结构
-  await new Promise<void>((resolve, reject) => {
-    const child = spawn('ditto', ['-x', '-k', zipPath, work], { stdio: ['ignore', 'pipe', 'pipe'] })
-    let err = ''
-    child.stderr?.on('data', (d: Buffer) => {
-      err += d.toString()
-    })
-    child.on('error', reject)
-    child.on('exit', (code) => {
-      if (code === 0) resolve()
-      else reject(new Error(`ditto extract failed code=${code}: ${err}`))
-    })
-  })
-
-  const extracted = join(work, 'ApiniClaw.app')
-  if (!existsSync(extracted)) {
-    throw new Error(`extracted ApiniClaw.app not found under ${work}`)
-  }
-  return extracted
+  return extractZipToApp(zipPath)
 }
 
 /**
@@ -308,19 +360,19 @@ echo "$(date '+%F %T') mac unsigned update done"
 
 async function quitAndInstallMacUnsigned(): Promise<void> {
   const version = currentInfo.version || pendingUpdateVersion
-  pushStatus({ status: 'downloading', progress: 100, version })
+  pushStatus({ status: 'installing', progress: 100, version, error: undefined })
   log.info('mac unsigned install: preparing new app bundle')
 
   const newApp = await prepareNewAppBundle(version)
+  log.info(`mac unsigned install: new app ready at ${newApp}`)
   await stopGatewayBeforeInstall()
   await launchMacReplaceScript(newApp)
 
-  pushStatus({ status: 'downloaded', version, progress: 100 })
   log.info('mac unsigned install: quitting for replace script')
   // 给脚本一点时间起来再退出
   setTimeout(() => {
     app.exit(0)
-  }, 300)
+  }, 400)
 }
 
 /** 退出并安装（仅 downloaded 状态有效） */

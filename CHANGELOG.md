@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+## [0.3.13] - 2026-08-27
+
+### Fixed
+- **macOS 点「安装并重启」无反应 / terminated**：安装阶段优先解压 `~/Library/Caches/apiniclaw-updater` 里已下载的 zip，不再重新从 CDN 拉 200MB+；并增加 `installing` 状态提示。
+
 ## [0.3.11] - 2026-08-26
 
 ### Fixed

@@ -84,6 +84,13 @@ export function VersionsSection({
         </div>
       )
     }
+    if (status === 'installing') {
+      return (
+        <Button size="small" loading disabled>
+          {t('settings.about.updateInstalling')}
+        </Button>
+      )
+    }
     if (status === 'downloaded') {
       return (
         <Button type="primary" size="small" onClick={() => window.api.update.install()}>
