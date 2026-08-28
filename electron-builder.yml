@@ -27,6 +27,14 @@ files:
   - "!scripts/*"
   - "!resources/*"
   - "!.cache/*"
+  # 官网/截图/文档：不进安装包（渲染层由 electron-vite 打进 out/）
+  - "!website{,/**}"
+  - "!screenshot{,/**}"
+  - "!discuss{,/**}"
+  - "!.rule{,/**}"
+  - "!{Agents.md,AGENTS.md,CLAUDE.md,README.en.md,LICENSE}"
+  - "!{eslint.config.mjs,vitest.config.ts,prettier.config.*,.prettierrc,.prettierignore}"
+  - "!.rules{,/**}"
   # 避免把历史 win-unpacked 产物打进 asar（会超 4.2GB / 递归膨胀）
   - "!dist{,/**}"
   - "!dist-*/**"

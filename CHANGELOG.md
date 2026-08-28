@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+## [0.3.17] - 2026-08-28
+
+### Changed
+- **安装包体积优化（asar 去重）**：将 antd / `@ant-design/*` / i18n / zustand / markdown 等已由 electron-vite 打进 `out/` 的 UI 依赖改为 `devDependencies`，安装包 asar 不再重复打入；并排除 `website/`、`screenshot/` 等非运行时文件。本地对比 mac arm64：`app.asar` 约 225MB → 16MB，整包 zip 约少 ~56MB。
+
 ## [0.3.16] - 2026-08-28
 
 ### Fixed
