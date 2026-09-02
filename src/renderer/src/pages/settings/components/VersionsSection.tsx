@@ -28,6 +28,7 @@ export function VersionsSection({
     const lines = [
       `ApiniClaw Version: ${version}`,
       `OpenClaw Current Version: ${openclawUpdateInfo.currentVersion || 'unknown'}`,
+      `OpenClaw Source: ${openclawUpdateInfo.source || 'unknown'}`,
       `OpenClaw Target Version: ${openclawUpdateInfo.latestVersion || 'unknown'}`,
       `OpenClaw Update Status: ${openclawUpdateInfo.status}`,
     ]
@@ -173,9 +174,22 @@ export function VersionsSection({
             <span style={{ fontSize: 13, color: '#595959', fontVariantNumeric: 'tabular-nums' }}>
               {openclawUpdateInfo.currentVersion || t('settings.openclaw.versionUnknown')}
             </span>
-            {openclawUpdateInfo.currentVersion && (
-              <Tag color="blue" style={{ fontSize: 11, padding: '0 6px', lineHeight: '18px' }}>
-                {t('settings.openclaw.tagBundled')}
+            {openclawUpdateInfo.currentVersion && openclawUpdateInfo.source && (
+              <Tag
+                color={
+                  openclawUpdateInfo.source === 'system'
+                    ? 'green'
+                    : openclawUpdateInfo.source === 'user'
+                      ? 'gold'
+                      : 'blue'
+                }
+                style={{ fontSize: 11, padding: '0 6px', lineHeight: '18px' }}
+              >
+                {openclawUpdateInfo.source === 'system'
+                  ? t('settings.openclaw.tagSystem')
+                  : openclawUpdateInfo.source === 'user'
+                    ? t('settings.openclaw.tagUser')
+                    : t('settings.openclaw.tagBundled')}
               </Tag>
             )}
           </div>

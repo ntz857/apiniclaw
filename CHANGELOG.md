@@ -4,6 +4,18 @@
 
 ## [Unreleased]
 
+## [0.3.18] - 2026-08-28
+
+### Changed
+- **引擎策略：内置改为本机补给介质**：本机全局 openclaw 探测补齐 Homebrew（`/opt/homebrew/...`）与 `npm root -g`；Gateway 启动前走引擎就绪编排——可连本机 Gateway 则托管，无本机包则离线复制安装包内置引擎到用户可写的 brew / `~/.npm-global`（不可写时降级 `~/.apiniclaw/gateway`，禁止 sudo）。详见 `discuss/2026-08-28-openclaw-engine-install-strategy.md`。
+- **设置页「引擎更新」语义对齐**：检查对比「本机正在用的版本」与「本安装包内置版本」（不再查询 npm 线上最新）；更新改为离线同步安装包引擎到本机全局，并自动重启 Gateway。
+
+### Fixed
+- **保存智能体报 EACCES / Config file is not readable**：识别 `~/.openclaw/openclaw.json` 属主异常（常见于曾用 sudo 运行 openclaw），给出可执行的 `chown` 修复提示，避免只显示 CLI 原始堆栈。
+- **设置页引擎版本误显示「内置」**：版本号与来源改为跟随 `resolveOpenclawLaunch`（本机 Homebrew/npm → 用户目录 → 内置）。
+- **设置页升级 OpenClaw 报 `node: command not found`（exit 127）**：升级时把内置 `runtime/bin` 与本机常见 node 目录注入 PATH，并开启 `scripts-prepend-node-path`。
+- **提示升级成功但仍跑旧 Gateway**：升级/同步后强制重启并禁止附着旧进程；清理阶段若端口仍被占用则强制结束监听进程；本机 system/user 多份引擎并存时选用版本更新的一份。
+
 ## [0.3.17] - 2026-08-28
 
 ### Changed

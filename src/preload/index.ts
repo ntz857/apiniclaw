@@ -386,10 +386,14 @@ const api = {
 
   openclawUpdate: {
     check: (): Promise<unknown> => ipcRenderer.invoke('openclaw-update:check'),
-    install: (version: string): Promise<{ success: boolean; error?: string }> =>
+    install: (
+      version: string
+    ): Promise<{ success: boolean; error?: string; gatewayRestarted?: boolean }> =>
       ipcRenderer.invoke('openclaw-update:install', version),
-    getInfo: (): Promise<{ currentVersion: string }> =>
-      ipcRenderer.invoke('openclaw-update:get-info'),
+    getInfo: (): Promise<{
+      currentVersion: string
+      source: 'system' | 'user' | 'bundled'
+    }> => ipcRenderer.invoke('openclaw-update:get-info'),
     onLog: (cb: (line: string) => void): void => {
       ipcRenderer.on('openclaw-update:log', (_e, line) => cb(line))
     },

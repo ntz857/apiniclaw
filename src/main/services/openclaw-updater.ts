@@ -1,34 +1,35 @@
 /**
  * OpenClaw 升级服务
  *
- * 方案 B：把新版 openclaw 安装到用户可写目录 ~/.apiniclaw/gateway/，
- * 避开 macOS app bundle 只读限制。
- *
- * 升级后：
- *   - resolveBundledGatewayEntry() / resolveBundledGatewayCwd() 自动优先读取用户目录
- *   - 调用 installCli() 更新 wrapper 脚本中的入口路径
- *   - 由 UI 触发 gateway:restart 使新版生效
+ * 优先装到可写全局前缀（brew / npm-global，与离线安装一致）；
+ * 不可写时降级 ~/.apiniclaw/gateway。升级成功后由主进程 restart Gateway。
  */
 
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync } from 'fs'
-import { join } from 'path'
-import { spawn } from 'child_process'
+import { dirname, join } from 'path'
 import {
   APINICLAW_GATEWAY_DIR,
   CONFIG_PATH,
+  IS_WIN,
   resolveBundledNodeBin,
-  resolveBundledNpmBin,
+  resolveBundledRuntimeBinDir,
   resolveResourcesPath,
 } from '../constants'
 import { installCli } from './cli-integration'
+import {
+  installBundledEngineOffline,
+  resolveBundledOpenclawMediaDir,
+} from './engine-offline-install'
 import { createLogger } from '../logger'
 import { readConfig, writeConfig } from '../config'
+import {
+  compareOpenclawVersion,
+  resolveOpenclawLaunch,
+  type OpenclawSource,
+} from './openclaw-resolve'
 
 const log = createLogger('openclaw-updater')
 
-// npm registry 地址（优先 npmmirror，对应站点 https://npmmirror.com/）
-// 注意：npm install 需要的是 registry API 端点，不是镜像站首页。
-const REGISTRY_MIRRORS = ['https://registry.npmmirror.com', 'https://registry.npmjs.org']
 const WEIXIN_PLUGIN_ID = 'openclaw-weixin'
 
 // ─── 类型定义 ───
@@ -44,13 +45,60 @@ export type OpenclawUpdateStatus =
 
 export interface OpenclawUpdateInfo {
   status: OpenclawUpdateStatus
-  /** 当前运行版本（用户目录优先，回退内置） */
+  /** 当前实际解析到的 openclaw 版本（与 Gateway 启动同源） */
   currentVersion: string
-  /** npm registry 上的最新版本 */
+  /** 版本来源：本机全局 / 用户升级目录 / 安装包内置 */
+  source?: OpenclawSource
+  /**
+   * 本安装包内置 openclaw 版本（同步目标）。
+   * 字段名保留 latestVersion 以兼容现有 UI；语义已不是 npm 线上最新。
+   */
   latestVersion?: string
+  /** 同 latestVersion，更明确的命名 */
+  bundledVersion?: string
   error?: string
-  /** npm install 流式输出日志行 */
+  /** 安装/同步日志行 */
   logLines: string[]
+}
+
+/**
+ * Electron GUI 的 PATH 通常只有 /usr/bin:/bin，不含 Homebrew / nvm。
+ * npm lifecycle（`sh -c node scripts/...`）必须能解析到 node。
+ */
+export function buildNpmInstallEnv(base: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
+  const sep = IS_WIN ? ';' : ':'
+  const prev = base.PATH || base.Path || ''
+  const extras: string[] = []
+  const push = (dir: string | null | undefined): void => {
+    if (!dir || extras.includes(dir) || !existsSync(dir)) return
+    extras.push(dir)
+  }
+
+  push(resolveBundledRuntimeBinDir())
+  push(dirname(resolveBundledNodeBin()))
+  if (IS_WIN) {
+    const pf = base.ProgramFiles || 'C:\\Program Files'
+    push(join(pf, 'nodejs'))
+    const local = base.LOCALAPPDATA
+    if (local) push(join(local, 'Programs', 'nodejs'))
+  } else {
+    push('/opt/homebrew/bin')
+    push('/usr/local/bin')
+  }
+
+  const pathEnv = extras.length
+    ? prev
+      ? `${extras.join(sep)}${sep}${prev}`
+      : extras.join(sep)
+    : prev
+  return {
+    ...base,
+    PATH: pathEnv,
+    ...(IS_WIN ? { Path: pathEnv } : {}),
+    npm_config_yes: 'true',
+    // 让 npm 把当前 node 所在目录插到脚本 PATH 最前
+    npm_config_scripts_prepend_node_path: 'true',
+  }
 }
 
 // ─── 版本解析 ───
@@ -69,14 +117,13 @@ function readPackageVersion(pkgJsonPath: string): string | null {
 }
 
 /**
- * 将应用内置的 extensions 同步到用户升级目录中的 openclaw/extensions。
- *
- * 背景：
- * - 安装包构建时，国内 IM 插件被注入到 app resources/gateway/node_modules/openclaw/extensions/
- * - 设置页升级 openclaw 时，会把新版安装到 ~/.apiniclaw/gateway/node_modules/openclaw/
- * - 运行时优先使用用户目录，因此若不复制 extensions，升级后这些插件会“消失”
+ * 将应用内置的 extensions 同步到指定 openclaw 包的 extensions/。
+ * 默认目标：用户升级目录（兼容旧调用）。
  */
-export function syncBundledExtensionsToUserGateway(onLog: (line: string) => void): string[] {
+export function syncBundledExtensionsToUserGateway(
+  onLog: (line: string) => void,
+  targetOpenclawDir?: string
+): string[] {
   const bundledExtensionsDir = join(
     resolveResourcesPath(),
     'gateway',
@@ -84,7 +131,8 @@ export function syncBundledExtensionsToUserGateway(onLog: (line: string) => void
     'openclaw',
     'extensions'
   )
-  const userOpenclawDir = join(APINICLAW_GATEWAY_DIR, 'node_modules', 'openclaw')
+  const userOpenclawDir =
+    targetOpenclawDir || join(APINICLAW_GATEWAY_DIR, 'node_modules', 'openclaw')
   const userExtensionsDir = join(userOpenclawDir, 'extensions')
 
   if (!existsSync(bundledExtensionsDir)) {
@@ -111,7 +159,7 @@ export function syncBundledExtensionsToUserGateway(onLog: (line: string) => void
   }
 
   if (copiedPluginIds.length > 0) {
-    const msg = `已同步内置插件到用户升级目录: ${copiedPluginIds.join(', ')}`
+    const msg = `已同步内置插件到 ${userOpenclawDir}: ${copiedPluginIds.join(', ')}`
     log.info(msg)
     onLog(`[ApiniClaw] ${msg}`)
   } else {
@@ -200,22 +248,20 @@ export function getBundledWeixinStatus(): {
 }
 
 /**
- * 获取当前运行的 openclaw 版本
- * 优先级：用户目录 > app 内置资源
+ * 当前实际用于 Gateway 的 openclaw 版本与来源。
+ * 必须与 spawn / attach 使用的 resolveOpenclawLaunch 一致：
+ * 本机全局（Homebrew/npm）> 用户升级目录 > 安装包内置。
+ */
+export function getCurrentOpenclawInfo(): { currentVersion: string; source: OpenclawSource } {
+  const launch = resolveOpenclawLaunch()
+  return { currentVersion: launch.version, source: launch.source }
+}
+
+/**
+ * 获取当前运行的 openclaw 版本（与 Gateway 启动同源）
  */
 export function getCurrentOpenclawVersion(): string {
-  // 1. 用户升级目录
-  const userPkg = join(APINICLAW_GATEWAY_DIR, 'node_modules', 'openclaw', 'package.json')
-  const userVersion = readPackageVersion(userPkg)
-  if (userVersion) return userVersion
-
-  // 2. app 内置资源
-  const resources = resolveResourcesPath()
-  const bundledPkg = join(resources, 'gateway', 'node_modules', 'openclaw', 'package.json')
-  const bundledVersion = readPackageVersion(bundledPkg)
-  if (bundledVersion) return bundledVersion
-
-  return 'unknown'
+  return getCurrentOpenclawInfo().currentVersion
 }
 
 /**
@@ -226,57 +272,52 @@ export function isUserUpgraded(): boolean {
   return existsSync(userPkg) && readPackageVersion(userPkg) !== null
 }
 
-// ─── Registry 查询 ───
+// ─── 安装包内置版本 ───
 
-/**
- * 从 npm registry 查询 openclaw 最新版本
- * 依次尝试国内镜像和官方 registry，返回版本号字符串
- */
-async function fetchLatestVersion(): Promise<string> {
-  const errors: string[] = []
-  for (const registry of REGISTRY_MIRRORS) {
-    const url = `${registry}/openclaw/latest`
-    try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(10_000) })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const data = (await res.json()) as { version?: string }
-      if (!data.version) throw new Error('no version field in response')
-      log.info(`从 ${registry} 获取到最新版本: ${data.version}`)
-      return data.version
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      log.warn(`registry ${registry} 失败: ${msg}`)
-      errors.push(`${registry}: ${msg}`)
-    }
-  }
-  throw new Error(`所有 registry 均不可用：${errors.join('; ')}`)
+/** 读取本安装包 / 开发 targets 内置的 openclaw 版本 */
+export function getBundledOpenclawVersion(): string | null {
+  const media = resolveBundledOpenclawMediaDir()
+  if (!media) return null
+  return readPackageVersion(join(media, 'package.json'))
 }
 
 // ─── 公开 API ───
 
 /**
- * 检查 openclaw 是否有可用更新
+ * 检查是否需要把「安装包内置引擎」同步到本机。
+ * 不再查询 npm 线上最新版（历史遗留已移除）。
  */
 export async function checkOpenclawUpdate(): Promise<OpenclawUpdateInfo> {
-  const currentVersion = getCurrentOpenclawVersion()
+  const { currentVersion, source } = getCurrentOpenclawInfo()
   const info: OpenclawUpdateInfo = {
     status: 'checking',
     currentVersion,
+    source,
     logLines: [],
   }
 
   try {
-    const latestVersion = await fetchLatestVersion()
-    info.latestVersion = latestVersion
+    const bundledVersion = getBundledOpenclawVersion()
+    if (!bundledVersion) {
+      info.status = 'error'
+      info.error = '安装包内未找到 openclaw 引擎介质'
+      return info
+    }
+
+    info.bundledVersion = bundledVersion
+    info.latestVersion = bundledVersion
 
     if (currentVersion === 'unknown') {
-      // 无法判断版本，认为有可用更新
       info.status = 'available'
-    } else if (latestVersion === currentVersion) {
+    } else if (currentVersion === bundledVersion) {
       info.status = 'up-to-date'
     } else {
-      // 简单字符串比较（semver 场景下 npm registry 返回的是最新稳定版，通常更大）
+      // 本机与安装包不一致即可同步（可能升级也可能对齐到包内版本）
       info.status = 'available'
+      log.info(
+        `engine sync available: current=${currentVersion} (${source}) bundled=${bundledVersion}` +
+          ` cmp=${compareOpenclawVersion(bundledVersion, currentVersion)}`
+      )
     }
   } catch (err) {
     info.status = 'error'
@@ -288,121 +329,53 @@ export async function checkOpenclawUpdate(): Promise<OpenclawUpdateInfo> {
 }
 
 /**
- * 执行 openclaw 升级
- *
- * 流程：
- * 1. 创建用户 gateway 目录
- * 2. 用内置 npm 安装指定版本到该目录
- * 3. 流式推送 npm 日志到 onLog 回调
- * 4. 安装成功后更新 CLI wrapper
- *
- * @param version 目标版本号（如 "0.8.5"）
- * @param onLog   日志行回调（流式）
+ * 将安装包内置 openclaw 离线同步到本机全局（brew / npm-global / 降级用户目录）。
+ * @param _version 保留参数以兼容旧 IPC/UI（实际始终同步安装包内置版本）
  */
 export async function installOpenclawUpdate(
-  version: string,
+  _version: string,
   onLog: (line: string) => void
-): Promise<{ success: boolean; error?: string }> {
-  log.info(`开始安装 openclaw@${version} 到 ${APINICLAW_GATEWAY_DIR}`)
-  onLog(`[ApiniClaw] 开始安装 openclaw@${version}...`)
+): Promise<{ success: boolean; error?: string; installPrefix?: string; packageDir?: string }> {
+  const bundledVersion = getBundledOpenclawVersion() || 'bundled'
+  log.info(`开始离线同步安装包内置 openclaw@${bundledVersion}`)
+  onLog(`[ApiniClaw] 开始离线同步安装包内置引擎 ${bundledVersion}…`)
 
-  // 1. 确保目标目录存在
-  try {
-    mkdirSync(APINICLAW_GATEWAY_DIR, { recursive: true })
-  } catch (err) {
-    const msg = `创建目录失败: ${err instanceof Error ? err.message : String(err)}`
-    log.error(msg)
+  const installed = installBundledEngineOffline((line) => onLog(`[ApiniClaw] ${line}`))
+  if (!installed.ok || !installed.packageDir) {
+    const msg = installed.error || '离线同步失败'
+    onLog(`[ApiniClaw] 错误：${msg}`)
     return { success: false, error: msg }
   }
 
-  // 2. 构建 npm install 命令
-  const nodeBin = resolveBundledNodeBin()
-  const npmCli = resolveBundledNpmBin()
-  const packageSpec = `openclaw@${version}`
-
-  // 优先用国内 registry
-  const registry = REGISTRY_MIRRORS[0]
-
-  const args = [
-    npmCli,
-    'install',
-    packageSpec,
-    '--prefix',
-    APINICLAW_GATEWAY_DIR,
-    '--omit=dev',
-    '--no-audit',
-    '--no-fund',
-    `--registry=${registry}`,
-  ]
-
-  log.info(`执行: ${nodeBin} ${args.join(' ')}`)
-
-  return new Promise((resolve) => {
-    const child = spawn(nodeBin, args, {
-      env: {
-        ...process.env,
-        // 防止 npm 尝试打开浏览器或交互
-        npm_config_yes: 'true',
-      },
-      stdio: ['ignore', 'pipe', 'pipe'],
-    })
-
-    const pushLine = (raw: string): void => {
-      raw
-        .split('\n')
-        .map((l) => l.trimEnd())
-        .filter(Boolean)
-        .forEach((line) => {
-          log.info(`[npm] ${line}`)
-          onLog(line)
-        })
+  try {
+    syncBundledExtensionsToUserGateway(onLog, installed.packageDir)
+  } catch (err) {
+    const msg = `同步内置插件失败: ${err instanceof Error ? err.message : String(err)}`
+    log.error(msg)
+    onLog(`[ApiniClaw] 错误：${msg}`)
+    return {
+      success: false,
+      error: msg,
+      installPrefix: installed.prefix?.nodeModulesDir,
+      packageDir: installed.packageDir,
     }
+  }
 
-    child.stdout?.on('data', (chunk: Buffer) => pushLine(chunk.toString('utf-8')))
-    child.stderr?.on('data', (chunk: Buffer) => pushLine(chunk.toString('utf-8')))
+  try {
+    installCli()
+    log.info('CLI wrapper 已更新')
+    onLog('[ApiniClaw] CLI wrapper 已更新')
+  } catch (err) {
+    log.warn('CLI wrapper 更新失败（不影响同步）:', err)
+    onLog(
+      `[ApiniClaw] 警告：CLI wrapper 更新失败（${err instanceof Error ? err.message : String(err)}）`
+    )
+  }
 
-    child.on('error', (err) => {
-      const msg = `npm 进程启动失败: ${err.message}`
-      log.error(msg)
-      onLog(`[ApiniClaw] 错误：${msg}`)
-      resolve({ success: false, error: msg })
-    })
-
-    child.on('close', (code) => {
-      if (code === 0) {
-        log.info(`openclaw@${version} 安装成功`)
-        onLog(`[ApiniClaw] openclaw@${version} 安装成功`)
-
-        // 3. 将构建时注入的内置插件同步到用户升级目录
-        try {
-          syncBundledExtensionsToUserGateway(onLog)
-        } catch (err) {
-          const msg = `同步内置插件失败: ${err instanceof Error ? err.message : String(err)}`
-          log.error(msg)
-          onLog(`[ApiniClaw] 错误：${msg}`)
-          resolve({ success: false, error: msg })
-          return
-        }
-
-        // 4. 更新 CLI wrapper（使其指向用户目录中的新版本）
-        try {
-          installCli()
-          log.info('CLI wrapper 已更新')
-          onLog('[ApiniClaw] CLI wrapper 已更新')
-        } catch (err) {
-          log.warn('CLI wrapper 更新失败（不影响升级）:', err)
-          onLog(
-            `[ApiniClaw] 警告：CLI wrapper 更新失败（${err instanceof Error ? err.message : String(err)}）`
-          )
-        }
-
-        resolve({ success: true })
-      } else {
-        const msg = `npm install 退出码: ${code}`
-        log.error(msg)
-        onLog(`[ApiniClaw] 安装失败（退出码 ${code}）`)
-        resolve({ success: false, error: msg })
-      }
-    })
-  })
+  onLog(`[ApiniClaw] 已同步到 ${installed.prefix?.label ?? installed.packageDir}`)
+  return {
+    success: true,
+    installPrefix: installed.prefix?.nodeModulesDir,
+    packageDir: installed.packageDir,
+  }
 }

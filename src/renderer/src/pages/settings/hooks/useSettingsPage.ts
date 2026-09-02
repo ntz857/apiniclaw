@@ -88,7 +88,7 @@ export function useSettingsPage() {
             models: Array<{ id: string; name: string }>
           }>
         )
-        applyUpdatesCurrentVersion(openclawInfo.currentVersion)
+        applyUpdatesCurrentVersion(openclawInfo)
       } finally {
         finishGeneralLoading()
       }

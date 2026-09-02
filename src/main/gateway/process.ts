@@ -61,6 +61,8 @@ export class GatewayProcess {
   private token: string = ''
   private lastCrashTime = 0
   private restartCount = 0
+  /** 下次 start 禁止 attach 旧 Gateway（升级/强制重启后使用） */
+  private forceRespawn = false
   private userStopped = false
 
   private stateChangeListeners: StateChangeCallback[] = []
@@ -150,6 +152,25 @@ export class GatewayProcess {
     const startupStderrLines: string[] = []
 
     try {
+      // 引擎就绪：可连本机 Gateway 则托管；无本机包则离线复制到全局
+      log.info('[startup] phase=engine-bootstrap begin')
+      const { ensureEngineReady } = await import('../services/engine-bootstrap')
+      const allowAttach = !this.forceRespawn
+      this.forceRespawn = false
+      const engine = await ensureEngineReady(this.port, { allowAttach })
+      log.info(
+        `[startup] phase=engine-bootstrap done mode=${engine.mode}${engine.message ? ` (${engine.message})` : ''}`
+      )
+      if (engine.conflict) {
+        log.warn(`[startup] engine conflict: ${engine.conflict}`)
+      }
+      if (engine.mode === 'attached') {
+        this.token = resolveGatewayToken()
+        this.userStopped = false
+        this.setState('running')
+        return { success: true, port: this.port }
+      }
+
       // 清理可能残留的旧 Gateway
       log.info('[startup] phase=cleanup begin')
       await this.cleanupStaleGateway()
@@ -160,7 +181,7 @@ export class GatewayProcess {
       this.token = resolveGatewayToken()
       log.info('[startup] phase=auth done')
 
-      // 获取 Runtime / 统一 openclaw 解析（优先系统 2026.7）
+      // 获取 Runtime / 统一 openclaw 解析（优先本机全局 / 用户目录）
       log.info('[startup] phase=runtime begin')
       const { getOpenclawSpawnSpec } = await import('../services/openclaw-resolve')
       const spec = getOpenclawSpawnSpec([
@@ -384,6 +405,7 @@ export class GatewayProcess {
    * 重启 Gateway
    */
   async restart(): Promise<GatewayStartResult> {
+    this.forceRespawn = true
     await this.stop()
     const stopped = await this.waitForState('stopped', 8000)
     if (!stopped) {
@@ -717,6 +739,18 @@ export class GatewayProcess {
       if (!portAlive && waitedEnough) {
         log.info('stale gateway cleared')
         return
+      }
+    }
+
+    // 强制清理仍占端口：杀掉任意占用者，避免 ensureEngineReady 误 attach 旧 Gateway
+    if (force && (await this.isPortListening())) {
+      log.warn(`port ${this.port} still busy after cleanup, force-killing listener`)
+      try {
+        const { killPortProcess } = await import('../services/install-detector')
+        await killPortProcess(this.port)
+        await sleep(800)
+      } catch (err) {
+        log.warn('force kill port listener failed:', err)
       }
     }
 

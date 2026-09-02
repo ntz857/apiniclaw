@@ -417,8 +417,10 @@ declare global {
   /** OpenClaw 升级信息 */
   interface OpenclawUpdateInfo {
     status: OpenclawUpdateStatus
-    /** 当前运行版本（用户目录优先，回退内置） */
+    /** 当前实际解析到的 openclaw 版本（与 Gateway 启动同源） */
     currentVersion: string
+    /** 版本来源：本机全局 / 用户升级目录 / 安装包内置 */
+    source?: 'system' | 'user' | 'bundled'
     /** npm registry 上的最新版本 */
     latestVersion?: string
     error?: string
@@ -853,14 +855,16 @@ declare global {
       refresh: () => Promise<RemotePresetsRefreshResult>
     }
 
-    /** OpenClaw 版本升级（仅 bundled 模式下有完整功能） */
+    /** OpenClaw 引擎：对比/同步安装包内置版本到本机 */
     openclawUpdate: {
-      /** 检查 npm registry 上的最新版本 */
+      /** 检查本机版本是否与安装包内置一致 */
       check: () => Promise<OpenclawUpdateInfo>
-      /** 执行升级（npm install openclaw@version 到用户目录） */
-      install: (version: string) => Promise<{ success: boolean; error?: string }>
+      /** 离线同步安装包内置引擎并自动重启 Gateway */
+      install: (
+        version: string
+      ) => Promise<{ success: boolean; error?: string; gatewayRestarted?: boolean }>
       /** 获取当前版本信息 */
-      getInfo: () => Promise<{ currentVersion: string }>
+      getInfo: () => Promise<{ currentVersion: string; source: 'system' | 'user' | 'bundled' }>
       /** 订阅 npm install 日志推送 */
       onLog: (cb: (line: string) => void) => void
       /** 取消订阅日志推送 */

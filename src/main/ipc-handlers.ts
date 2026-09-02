@@ -63,15 +63,12 @@ import {
   checkOpenclawUpdate,
   getBundledWeixinStatus,
   installOpenclawUpdate,
-  getCurrentOpenclawVersion,
+  getCurrentOpenclawInfo,
 } from './services/openclaw-updater'
 import { createAgentViaCli, deleteAgentViaCli } from './services/agent-lifecycle'
 import { installSkillsForAgent } from './services/agent-skills-install'
 import { createLogger } from './logger'
-import { getRuntime } from './runtime'
 import { readFileSync, existsSync, mkdirSync } from 'fs'
-import { execFile } from 'child_process'
-import { promisify } from 'util'
 import { getMarketplaces, getMarketplace } from './services/skill-marketplace'
 import type {
   SkillMarketplaceInfo,
@@ -114,8 +111,6 @@ import {
 import { resolveInitialRoute } from './app-routing'
 import { listDeliveryTargets } from './services/delivery-targets'
 import { isBinInstallable, installToolBin, installToolBins } from './services/tool-installer'
-
-const execFileAsync = promisify(execFile)
 
 const log = createLogger('ipc')
 
@@ -583,15 +578,35 @@ export function registerIpcHandlers(): void {
   })
 
   ipcMain.handle('openclaw-update:install', async (event, version: string) => {
-    return installOpenclawUpdate(version, (line) => {
+    const sendLog = (line: string): void => {
       if (!event.sender.isDestroyed()) {
         event.sender.send('openclaw-update:log', line)
       }
-    })
+    }
+    const result = await installOpenclawUpdate(version, sendLog)
+    if (!result.success) return result
+
+    // 升级装盘成功后必须重启 Gateway，否则会继续附着旧进程
+    try {
+      sendLog('[ApiniClaw] 正在重启 Gateway 以加载新引擎…')
+      const gw = getGatewayProcess()
+      const restarted = await gw.restart()
+      if (!restarted.success) {
+        const msg = restarted.error || 'Gateway 重启失败'
+        sendLog(`[ApiniClaw] 警告：${msg}（引擎文件已更新，请手动重启 Gateway）`)
+        return { ...result, gatewayRestarted: false, error: msg }
+      }
+      sendLog('[ApiniClaw] Gateway 已用新引擎重启')
+      return { ...result, gatewayRestarted: true }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      sendLog(`[ApiniClaw] 警告：自动重启 Gateway 失败：${msg}`)
+      return { ...result, gatewayRestarted: false, error: msg }
+    }
   })
 
   ipcMain.handle('openclaw-update:get-info', () => {
-    return { currentVersion: getCurrentOpenclawVersion() }
+    return getCurrentOpenclawInfo()
   })
 
   ipcMain.handle('channel:weixin-status', () => {
@@ -999,10 +1014,9 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('backup:create-full', async (_e, outputDir: string) => {
     try {
       const { runOpenclawCli } = await import('./services/openclaw-resolve')
-      const result = await runOpenclawCli(
-        ['backup', 'create', '--output', outputDir, '--verify'],
-        { timeoutMs: 120_000 }
-      )
+      const result = await runOpenclawCli(['backup', 'create', '--output', outputDir, '--verify'], {
+        timeoutMs: 120_000,
+      })
       if (result.code !== 0) {
         throw new Error(result.stderr || result.stdout || `exit ${result.code}`)
       }

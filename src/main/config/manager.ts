@@ -14,6 +14,7 @@ import { CONFIG_PATH, OPENCLAW_HOME } from '../constants'
 import { createLogger } from '../logger'
 import { createSnapshot, validateConfigContent } from './backup'
 import type { SnapshotSource } from './backup'
+import { wrapConfigAccessError } from './config-access-error'
 
 const log = createLogger('config')
 
@@ -162,6 +163,12 @@ export function readConfig(): OpenclawConfig {
     log.debug('config loaded successfully')
     return config
   } catch (err) {
+    // 权限错误必须抛出，避免上层误以为「空配置」再写回覆盖
+    const wrapped = wrapConfigAccessError(err)
+    if (wrapped.message !== (err instanceof Error ? err.message : String(err))) {
+      log.error('failed to read config (permission):', err)
+      throw wrapped
+    }
     log.error('failed to parse config:', err)
     return {}
   }
@@ -215,7 +222,12 @@ export function writeConfig(
     throw new Error(`config validation failed: ${validation.error}`)
   }
 
-  writeFileSync(CONFIG_PATH, content, 'utf-8')
+  try {
+    writeFileSync(CONFIG_PATH, content, 'utf-8')
+  } catch (err) {
+    log.error('failed to write config:', err)
+    throw wrapConfigAccessError(err)
+  }
 
   // 写后验证（读回检查）
   try {
@@ -223,7 +235,7 @@ export function writeConfig(
     JSON5.parse(readBack)
   } catch (err) {
     log.error('post-write validation failed:', err)
-    throw new Error('config written but post-write validation failed')
+    throw wrapConfigAccessError(err)
   }
 
   log.info('config written successfully')

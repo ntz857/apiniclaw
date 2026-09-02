@@ -32,9 +32,16 @@ export function useSettingsUpdates({ t, onSuccess, onError }: UseSettingsUpdates
     }
   }, [])
 
-  const applyInitialCurrentVersion = useCallback((currentVersion: string): void => {
-    setOpenclawUpdateInfo((prev) => ({ ...prev, currentVersion }))
-  }, [])
+  const applyInitialCurrentVersion = useCallback(
+    (info: { currentVersion: string; source?: 'system' | 'user' | 'bundled' }): void => {
+      setOpenclawUpdateInfo((prev) => ({
+        ...prev,
+        currentVersion: info.currentVersion,
+        source: info.source,
+      }))
+    },
+    []
+  )
 
   const handleCheckOpenclawUpdate = useCallback(async (): Promise<void> => {
     setOpenclawUpdateInfo((prev) => ({ ...prev, status: 'checking' }))
@@ -58,12 +65,18 @@ export function useSettingsUpdates({ t, onSuccess, onError }: UseSettingsUpdates
       try {
         const result = await window.api.openclawUpdate.install(versionToInstall)
         if (result.success) {
+          const info = await window.api.openclawUpdate.getInfo()
           setOpenclawUpdateInfo((prev) => ({
             ...prev,
             status: 'done',
-            currentVersion: versionToInstall,
+            currentVersion: info.currentVersion || versionToInstall,
+            source: info.source,
           }))
-          onSuccess(t('settings.openclaw.upgradeSuccess'))
+          if (result.gatewayRestarted === false) {
+            onError(t('settings.openclaw.upgradeRestartFailed'))
+          } else {
+            onSuccess(t('settings.openclaw.upgradeSuccess'))
+          }
         } else {
           setOpenclawUpdateInfo((prev) => ({
             ...prev,

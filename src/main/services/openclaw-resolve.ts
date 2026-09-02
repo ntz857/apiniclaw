@@ -2,19 +2,18 @@
  * 统一解析 OpenClaw 可执行入口。
  *
  * 优先级（与「正在跑的 Gateway 应尽量同版本」一致）：
- *   1. 系统/npm 全局 openclaw（如 2026.7.x）
+ *   1. 本机全局 openclaw（Homebrew / npm -g / 用户 prefix）
  *   2. 用户升级目录 ~/.apiniclaw/gateway/...
- *   3. ApiniClaw 安装包内置 openclaw（可能偏旧，如 2026.3.x）
+ *   3. ApiniClaw 安装包内置 openclaw（离线补给介质；长期应改为安装到本机后再跑）
  *
  * 所有 CLI / Gateway spawn 应优先走本模块，避免双轨版本导致 Config invalid、协议不兼容。
  */
 
-import { execFile, spawn } from 'child_process'
-import { existsSync, readFileSync } from 'fs'
-import { join } from 'path'
+import { execFile, execFileSync, spawn } from 'child_process'
+import { accessSync, constants as fsConstants, existsSync, readFileSync } from 'fs'
+import { dirname, join } from 'path'
 import { promisify } from 'util'
 import { createLogger } from '../logger'
-import { dirname } from 'path'
 import {
   APINICLAW_GATEWAY_DIR,
   IS_WIN,
@@ -26,6 +25,32 @@ import {
 
 const execFileAsync = promisify(execFile)
 const log = createLogger('openclaw-resolve')
+
+function canRead(path: string): boolean {
+  try {
+    accessSync(path, fsConstants.R_OK)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/** 同步探测命令输出（短超时）；失败返回 null */
+function tryExecCapture(cmd: string, args: string[], timeoutMs = 2500): string | null {
+  try {
+    const out = execFileSync(cmd, args, {
+      encoding: 'utf-8',
+      timeout: timeoutMs,
+      windowsHide: true,
+      stdio: ['ignore', 'pipe', 'ignore'],
+      env: process.env,
+    })
+    const trimmed = String(out || '').trim()
+    return trimmed || null
+  } catch {
+    return null
+  }
+}
 
 export type OpenclawSource = 'system' | 'user' | 'bundled'
 
@@ -81,23 +106,51 @@ function resolveSystemNode(): string | null {
   return null
 }
 
-function resolveSystemOpenclawEntry(): { entry: string; cwd: string } | null {
+/**
+ * 本机「全局」openclaw 候选包目录（用户级 brew/npm，禁止依赖 sudo 路径）。
+ * 顺序：常见固定路径 → brew --prefix → npm root -g
+ */
+export function listSystemOpenclawPackageCandidates(): string[] {
+  const candidates: string[] = []
+  const push = (p: string | null | undefined): void => {
+    if (!p) return
+    const normalized = p.trim()
+    if (!normalized) return
+    if (!candidates.includes(normalized)) candidates.push(normalized)
+  }
+
   if (IS_WIN) {
     const appData = process.env.APPDATA || ''
-    if (appData) {
-      const cwd = join(appData, 'npm', 'node_modules', 'openclaw')
-      const entry = join(cwd, 'openclaw.mjs')
-      if (existsSync(entry)) return { entry, cwd }
+    if (appData) push(join(appData, 'npm', 'node_modules', 'openclaw'))
+    const localAppData = process.env.LOCALAPPDATA || ''
+    if (localAppData) {
+      push(join(localAppData, 'npm', 'node_modules', 'openclaw'))
+      push(join(localAppData, 'Programs', 'nodejs', 'node_modules', 'openclaw'))
     }
   } else {
-    const homes = [
-      join(process.env.HOME || '', '.npm-global', 'lib', 'node_modules', 'openclaw'),
-      '/usr/local/lib/node_modules/openclaw',
-      '/usr/lib/node_modules/openclaw',
-    ]
-    for (const cwd of homes) {
-      const entry = join(cwd, 'openclaw.mjs')
-      if (existsSync(entry)) return { entry, cwd }
+    const home = process.env.HOME || ''
+    push(join(home, '.npm-global', 'lib', 'node_modules', 'openclaw'))
+    // Apple Silicon Homebrew（此前缺失，导致误判走 bundled）
+    push('/opt/homebrew/lib/node_modules/openclaw')
+    // Intel Homebrew / 手动 /usr/local
+    push('/usr/local/lib/node_modules/openclaw')
+    push('/usr/lib/node_modules/openclaw')
+
+    const brewPrefix = tryExecCapture('brew', ['--prefix'])
+    if (brewPrefix) push(join(brewPrefix, 'lib', 'node_modules', 'openclaw'))
+  }
+
+  const npmRoot = tryExecCapture('npm', ['root', '-g'])
+  if (npmRoot) push(join(npmRoot, 'openclaw'))
+
+  return candidates
+}
+
+function resolveSystemOpenclawEntry(): { entry: string; cwd: string } | null {
+  for (const cwd of listSystemOpenclawPackageCandidates()) {
+    const entry = join(cwd, 'openclaw.mjs')
+    if (existsSync(entry) && canRead(entry)) {
+      return { entry, cwd }
     }
   }
   return null
@@ -111,13 +164,70 @@ function resolveUserOpenclawEntry(): { entry: string; cwd: string } | null {
 }
 
 /**
+ * 比较 openclaw 版本号（支持 2026.7.1 / 2026.7.1-2）。
+ * 返回 >0 表示 a 更新，<0 表示 b 更新，0 相等或无法比较时偏保守。
+ */
+export function compareOpenclawVersion(a: string, b: string): number {
+  if (a === b) return 0
+  if (!a || a === 'unknown') return -1
+  if (!b || b === 'unknown') return 1
+  const parts = (v: string): number[] =>
+    v
+      .replace(/^v/i, '')
+      .split(/[.-]/)
+      .map((p) => {
+        const n = Number.parseInt(p, 10)
+        return Number.isFinite(n) ? n : 0
+      })
+  const pa = parts(a)
+  const pb = parts(b)
+  const len = Math.max(pa.length, pb.length)
+  for (let i = 0; i < len; i++) {
+    const da = pa[i] ?? 0
+    const db = pb[i] ?? 0
+    if (da !== db) return da < db ? -1 : 1
+  }
+  return 0
+}
+
+/**
  * 解析 Node + openclaw.mjs 启动参数（Gateway spawn / CLI 通用）。
+ * system 与 user 并存时，选用版本更新的一份，避免「设置页升级到用户目录却仍跑旧 brew」。
  */
 export function resolveOpenclawLaunch(): OpenclawLaunch {
   const systemNode = resolveSystemNode()
   const systemOc = resolveSystemOpenclawEntry()
+  const userOc = resolveUserOpenclawEntry()
+  const nodePath = systemNode || resolveBundledNodeBin()
+
+  if (systemOc && userOc) {
+    const systemVersion = readVersion(systemOc.cwd)
+    const userVersion = readVersion(userOc.cwd)
+    if (compareOpenclawVersion(userVersion, systemVersion) > 0) {
+      const launch: OpenclawLaunch = {
+        source: 'user',
+        nodePath,
+        entryPath: userOc.entry,
+        cwd: userOc.cwd,
+        version: userVersion,
+      }
+      log.info(`resolve: prefer newer user openclaw v${userVersion} over system v${systemVersion}`)
+      return launch
+    }
+    const launch: OpenclawLaunch = {
+      source: 'system',
+      nodePath,
+      entryPath: systemOc.entry,
+      cwd: systemOc.cwd,
+      version: systemVersion,
+    }
+    log.debug(
+      `resolve: system openclaw v${launch.version} entry=${launch.entryPath} node=${launch.nodePath}`
+    )
+    return launch
+  }
+
   if (systemOc) {
-    const nodePath = systemNode || resolveBundledNodeBin()
     const launch: OpenclawLaunch = {
       source: 'system',
       nodePath,
@@ -131,11 +241,10 @@ export function resolveOpenclawLaunch(): OpenclawLaunch {
     return launch
   }
 
-  const userOc = resolveUserOpenclawEntry()
   if (userOc) {
     const launch: OpenclawLaunch = {
       source: 'user',
-      nodePath: systemNode || resolveBundledNodeBin(),
+      nodePath,
       entryPath: userOc.entry,
       cwd: userOc.cwd,
       version: readVersion(userOc.cwd),

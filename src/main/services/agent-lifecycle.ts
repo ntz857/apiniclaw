@@ -11,6 +11,7 @@ import { join } from 'path'
 import { createLogger } from '../logger'
 import { OPENCLAW_HOME } from '../constants'
 import { getAgents, readConfig, saveAgent, type AgentConfig } from '../config'
+import { formatConfigPermissionError, isConfigPermissionError } from '../config/config-access-error'
 
 const log = createLogger('agent-lifecycle')
 
@@ -90,8 +91,12 @@ async function runOpenclawCli(args: string[]): Promise<string> {
     log.warn(`openclaw cli [${result.source}] stderr: ${result.stderr.trim()}`)
   }
   if (result.code !== 0) {
+    const detail = (result.stderr || result.stdout).trim()
+    if (isConfigPermissionError(detail)) {
+      throw new Error(formatConfigPermissionError(detail.slice(0, 240)))
+    }
     throw new Error(
-      `openclaw CLI failed (exit ${result.code}, source=${result.source}): ${(result.stderr || result.stdout).trim().slice(0, 400)}`
+      `openclaw CLI failed (exit ${result.code}, source=${result.source}): ${detail.slice(0, 400)}`
     )
   }
   return result.stdout
